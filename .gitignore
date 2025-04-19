@@ -176,3 +176,9 @@ cython_debug/
 # Slurm
 interactive.sh
 .nfs*
+
+# Output models
+output/
+
+# Output logs
+wandb/
