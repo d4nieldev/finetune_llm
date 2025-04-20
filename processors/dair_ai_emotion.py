@@ -3,7 +3,7 @@ from transformers import TrainerCallback
 import evaluate
 
 from callbacks import ClassEvalCallback
-from .processor import BaseProcessor
+from .base import BaseProcessor
 
 
 class EmotionProcessor(BaseProcessor):
