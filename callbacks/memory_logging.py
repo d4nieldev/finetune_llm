@@ -1,6 +1,6 @@
 import torch
 import wandb
-from transformers import TrainerCallback
+from transformers.trainer_callback import TrainerCallback
 
 
 class MemoryLoggingCallback(TrainerCallback):

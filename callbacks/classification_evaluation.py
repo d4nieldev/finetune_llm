@@ -6,6 +6,7 @@ from tqdm import tqdm
 from transformers.trainer_callback import TrainerCallback
 from transformers.tokenization_utils import PreTrainedTokenizer
 from transformers.modeling_utils import PreTrainedModel
+from peft import PeftModel, PeftMixedModel
 from datasets import DatasetDict, IterableDatasetDict
 from evaluate import EvaluationModule
 
@@ -17,7 +18,7 @@ class ClassEvalCallback(TrainerCallback):
     def __init__(
         self, 
         eval_ds: Union[DatasetDict, IterableDatasetDict], 
-        model: PreTrainedModel, 
+        model: Union[PreTrainedModel, PeftModel, PeftMixedModel], 
         tokenizer: PreTrainedTokenizer, 
         metrics: List[EvaluationModule],
         eval_steps: int, 

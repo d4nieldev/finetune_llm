@@ -6,9 +6,6 @@ from callbacks import ClassEvalCallback
 from .base import BaseProcessor
 
 
-CustomCallback = TypeVar("CustomCallback", bound=TrainerCallback)
-
-
 class EmotionProcessor(BaseProcessor):
     def __init__(
         self, 
@@ -45,7 +42,7 @@ class EmotionProcessor(BaseProcessor):
         }
         
 
-    def get_callbacks(self) -> List[CustomCallback]:
+    def get_callbacks(self) -> List[ClassEvalCallback]:
         return [
             ClassEvalCallback(
                 eval_ds=self.tokenized_validation,

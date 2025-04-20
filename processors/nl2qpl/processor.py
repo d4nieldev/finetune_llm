@@ -3,7 +3,7 @@ import json
 from typing import List
 
 import pydash
-from transformers import TrainerCallback
+from transformers.trainer_callback import TrainerCallback
 
 from ..base import BaseProcessor
 

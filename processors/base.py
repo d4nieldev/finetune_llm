@@ -41,7 +41,7 @@ class BaseProcessor(ABC):
         
         
     @property
-    def processed_train(self):
+    def processed_train(self) -> Union[DatasetDict, IterableDatasetDict]:
         """
         Returns the processed training dataset.
         """
@@ -56,7 +56,7 @@ class BaseProcessor(ABC):
 
 
     @property
-    def tokenized_validation(self):
+    def tokenized_validation(self) -> Union[DatasetDict, IterableDatasetDict]:
         """
         Returns the processed validation dataset.
         """
