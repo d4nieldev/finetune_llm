@@ -1,9 +1,12 @@
-from typing import List
-from transformers import TrainerCallback
+from typing import List, TypeVar
+from transformers.trainer_callback import TrainerCallback
 import evaluate
 
 from callbacks import ClassEvalCallback
 from .base import BaseProcessor
+
+
+CustomCallback = TypeVar("CustomCallback", bound=TrainerCallback)
 
 
 class EmotionProcessor(BaseProcessor):
@@ -42,7 +45,7 @@ class EmotionProcessor(BaseProcessor):
         }
         
 
-    def get_callbacks(self) -> List[TrainerCallback]:
+    def get_callbacks(self) -> List[CustomCallback]:
         return [
             ClassEvalCallback(
                 eval_ds=self.tokenized_validation,

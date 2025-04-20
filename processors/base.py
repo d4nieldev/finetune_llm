@@ -1,7 +1,10 @@
 from typing import Dict, Literal, Any, List, Union, Optional
 from abc import ABC, abstractmethod
-from transformers import TrainerCallback, PreTrainedTokenizer, PreTrainedModel
+from transformers.trainer_callback import TrainerCallback
+from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers.modeling_utils import PreTrainedModel
 from datasets import DatasetDict, Dataset, IterableDatasetDict, IterableDataset
+from peft import PeftModel, PeftMixedModel
 
 
 class BaseProcessor(ABC):
@@ -12,9 +15,9 @@ class BaseProcessor(ABC):
     def __init__(
         self,
         *,
-        model: PreTrainedModel,
+        model: Union[PreTrainedModel, PeftModel, PeftMixedModel],
         tokenizer: PreTrainedTokenizer,
-        dataset: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset],
+        dataset: Union[DatasetDict, IterableDatasetDict],
         max_input_tokens: Optional[int],
         max_output_tokens: Optional[int],
     ):
@@ -125,7 +128,7 @@ class BaseProcessor(ABC):
         
     def _preprocess_eval(
         self, 
-        examples: List[Dict[str, Any]], 
+        examples: Dict[str, List[Any]], 
     ):
         """
         Preprocesses the evaluation dataset by tokenizing the input and output sequences.

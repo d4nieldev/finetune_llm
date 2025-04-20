@@ -2,10 +2,11 @@ import re
 from typing import Union, List
 
 import torch
-import wandb
 from tqdm import tqdm
-from transformers import TrainerCallback, PreTrainedTokenizer, PreTrainedModel
-from datasets import DatasetDict, Dataset,IterableDatasetDict, IterableDataset
+from transformers.trainer_callback import TrainerCallback
+from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers.modeling_utils import PreTrainedModel
+from datasets import DatasetDict, IterableDatasetDict
 from evaluate import EvaluationModule
 
 
@@ -15,7 +16,7 @@ class ClassEvalCallback(TrainerCallback):
     """
     def __init__(
         self, 
-        eval_ds: Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset], 
+        eval_ds: Union[DatasetDict, IterableDatasetDict], 
         model: PreTrainedModel, 
         tokenizer: PreTrainedTokenizer, 
         metrics: List[EvaluationModule],
@@ -95,8 +96,9 @@ class ClassEvalCallback(TrainerCallback):
             
             
     def _extract_label(self, txt: str) -> int:
-        match = re.search(r"(\w+)", txt).group(1).lower()
-        if match in self.labels_list:
-            return self.labels_list.index(match)
-        else:
-            return -1
+        match = re.search(r"(\w+)", txt)
+        if match:
+            match = match.group(1).lower()
+            if match in self.labels_list:
+                return self.labels_list.index(match)
+        return -1

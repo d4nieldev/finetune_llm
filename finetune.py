@@ -1,14 +1,16 @@
 import argparse
 from typing import Type
+import importlib
 
 from processors import BaseProcessor
 from callbacks import MemoryLoggingCallback
+from utils.argparse_utils import collect_kwargs
 
-from transformers import (
-    AutoModelForCausalLM, AutoTokenizer,
-    Trainer, TrainingArguments,
-    DataCollatorForLanguageModeling,
-)
+from transformers.models.auto.tokenization_auto import AutoTokenizer
+from transformers.models.auto.modeling_auto import AutoModelForCausalLM
+from transformers.trainer import Trainer
+from transformers.training_args import TrainingArguments
+from transformers.data.data_collator import DataCollatorForLanguageModeling
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model, TaskType
 
@@ -21,7 +23,12 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="dair-ai/emotion", help="Dataset ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--dataset_id", type=str, default="d4nieldev/nl2qpl", help="Dataset ID to use for fine-tuning.")
+
+    processor_group = parser.add_argument_group("Processor")
+    processor_group.add_argument("--processor_class", type=str, default="NL2QPLProcessor", 
+                                 help="Processor class to use for fine-tuning. If the processor requires additional keyword arguments, "
+                                      "please provide them in the format 'p_key=value' - the acceptable types are [int | str | float | list | dict].")
     
     train_config_group = parser.add_argument_group("Training config")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
@@ -29,9 +36,9 @@ def parse_args():
     train_config_group.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate.")
     train_config_group.add_argument("--num_train_epochs", type=int, default=2, help="Number of training epochs.")
     
-    monitoring_group = parser.add_argument_group("Observation")
+    monitoring_group = parser.add_argument_group("Monitoring")
     monitoring_group.add_argument("--logging_steps", type=int, default=500, help="Log every N steps.")
-    monitoring_group.add_argument("--save_steps", type=int, default=8000, help="Save checkpoint every N steps.")
+    monitoring_group.add_argument("--save_steps", type=int, default=5000, help="Save checkpoint every N steps.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
     
     lora_config_group = parser.add_argument_group("LoRA config")
@@ -43,7 +50,12 @@ def parse_args():
     memory_management_group.add_argument("--max_input_tokens", type=int, help="Maximum number of input tokens. Don't provide this argument for automatic inference (according to dataset).")
     memory_management_group.add_argument("--max_output_tokens", type=int, help="Maximum number of output tokens. Don't provide this argument for automatic inference (according to dataset).")
     
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    args, unknown = parser.parse_known_args()
+    processor_kwargs = collect_kwargs(unknown, prefix="p_")
+
+    return args, processor_kwargs
 
 
 def train(processor_cls: Type[BaseProcessor], args, **processor_kwargs):
@@ -72,6 +84,8 @@ def train(processor_cls: Type[BaseProcessor], args, **processor_kwargs):
     
     # Step 2. Data preperation
     dataset = load_dataset(args.dataset_id)
+    if not isinstance(dataset, dict):
+        raise ValueError("Dataset should be a `DatasetDict` with train and validation splits.")
     
     processor = processor_cls(
         tokenizer=tokenizer,
@@ -105,24 +119,25 @@ def train(processor_cls: Type[BaseProcessor], args, **processor_kwargs):
     )
 
     trainer = Trainer(
-        model          = model,
-        args           = training_args,
-        train_dataset  = processor.processed_train,
-        tokenizer      = tokenizer,
-        data_collator  = data_collator,
-        callbacks      = [MemoryLoggingCallback()] + processor.get_callbacks(),
+        model            = model,
+        args             = training_args,
+        train_dataset    = processor.processed_train,
+        processing_class = tokenizer,
+        data_collator    = data_collator,
+        callbacks        = [MemoryLoggingCallback()] + processor.get_callbacks(),
     )
 
     trainer.train()
     
     
 if __name__ == "__main__":
-    from processors import EmotionProcessor
-    args = parse_args()
+    args, processor_kwargs = parse_args()
+
+    processors = importlib.import_module("processors")
+    processor_cls = getattr(processors, args.processor_class)
+    
     train(
-        processor_cls=EmotionProcessor,
+        processor_cls=processor_cls,
         args=args,
-        metrics=["accuracy"],
-        eval_steps=8000,
-        eval_batch_size=10,
+        **processor_kwargs
     )
