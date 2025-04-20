@@ -131,7 +131,3 @@ class NL2QPLProcessor(BaseProcessor):
         )
 
         return {"prompt": prompt, "response": f"{db_id} | {row['qpl']}"}
-        
-
-    def get_callbacks(self) -> List[TrainerCallback]:
-        return []

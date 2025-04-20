@@ -153,6 +153,15 @@ class BaseProcessor(ABC):
         inputs["labels"] = [row['response'] for row in parsed_rows]
         return inputs
     
+
+    def get_callbacks(self) -> List[TrainerCallback]:
+        """
+        Returns a list of callbacks to be used during training. This method should be implemented by subclasses.
+        Returns:
+            List[TrainerCallback]: A list of callbacks to be used during training.
+        """
+        return []
+    
     
     @abstractmethod
     def process_row(self, row: dict[str, Any]) -> Dict[Literal["prompt", "response"], str]:
@@ -165,12 +174,5 @@ class BaseProcessor(ABC):
         """
         pass
     
-    @abstractmethod
-    def get_callbacks(self) -> List[TrainerCallback]:
-        """
-        Returns a list of callbacks to be used during training. This method should be implemented by subclasses.
-        Returns:
-            List[TrainerCallback]: A list of callbacks to be used during training.
-        """
-        pass
+    
         
