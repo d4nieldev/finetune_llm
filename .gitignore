@@ -176,6 +176,7 @@ cython_debug/
 # Slurm
 interactive.sh
 .nfs*
+*.sbatch
 
 # Output models
 output/
