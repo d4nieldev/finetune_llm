@@ -44,7 +44,7 @@ class BaseProcessor(ABC):
         """
         if self._processed_train:
             return self._processed_train
-
+        
         self._processed_train = self._dataset["train"].map(
             self._preprocess_train, batched=True,
             remove_columns=self._dataset["train"].column_names
@@ -82,10 +82,10 @@ class BaseProcessor(ABC):
                 max_output = max(max_output, len(output.input_ids))
         
         if self._max_input_tokens is None:
-            self._max_input_tokens = max_input
+            self._max_input_tokens = int(max_input * 1.2)
             print(f"Auto-set max input tokens to {self._max_input_tokens}.")
         if self._max_output_tokens is None:
-            self._max_output_tokens = max_output
+            self._max_output_tokens = int(max_output * 1.2)
             print(f"Auto-set max output tokens to {self._max_output_tokens}.")
         
         
