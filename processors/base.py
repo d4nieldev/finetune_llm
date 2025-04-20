@@ -1,4 +1,4 @@
-from typing import Dict, Literal, Any, List, Union, Optional
+from typing import Dict, Literal, Any, List, Union, Optional, Tuple
 from abc import ABC, abstractmethod
 from transformers.trainer_callback import TrainerCallback
 from transformers.tokenization_utils import PreTrainedTokenizer
@@ -32,9 +32,8 @@ class BaseProcessor(ABC):
         self._model = model
         self._tokenizer = tokenizer
         self._dataset = dataset
-        self._max_input_tokens = max_input_tokens
-        self._max_output_tokens = max_output_tokens
-        self.__autoset_input_output_tokens()
+        self._max_input_tokens, self._max_output_tokens = self.__autoset_input_output_tokens(
+            max_input_tokens=max_input_tokens, max_output_tokens=max_output_tokens)
         
         self._processed_train = None
         self._tokenized_validation = None
@@ -69,9 +68,21 @@ class BaseProcessor(ABC):
         return self._tokenized_validation
     
     
-    def __autoset_input_output_tokens(self) -> None:
+    def __autoset_input_output_tokens(
+            self, 
+            max_input_tokens: Optional[int], 
+            max_output_tokens: Optional[int]
+        ) -> Tuple[int, int]:
         """
         Automatically sets the maximum input and output tokens based on the dataset.
+        The maximum input and output tokens are set to 20% more than the maximum length found in the dataset.
+        
+        Args:
+            max_input_tokens (Optional[int]): The maximum number of input tokens.
+            max_output_tokens (Optional[int]): The maximum number of output tokens.
+        
+        Returns:
+            Tuple[int, int]: The maximum number of input and output tokens.
         """
         max_input = 0
         max_output = 0
@@ -84,12 +95,14 @@ class BaseProcessor(ABC):
                 max_input = max(max_input, len(input.input_ids))
                 max_output = max(max_output, len(output.input_ids))
         
-        if self._max_input_tokens is None:
-            self._max_input_tokens = int(max_input * 1.2)
-            print(f"Auto-set max input tokens to {self._max_input_tokens}.")
-        if self._max_output_tokens is None:
-            self._max_output_tokens = int(max_output * 1.2)
-            print(f"Auto-set max output tokens to {self._max_output_tokens}.")
+        if max_input_tokens is None:
+            max_input_tokens = int(max_input * 1.2)
+            print(f"Auto-set max input tokens to {max_input_tokens}.")
+        if max_output_tokens is None:
+            max_output_tokens = int(max_output * 1.2)
+            print(f"Auto-set max output tokens to {max_output_tokens}.")
+
+        return max_input_tokens, max_output_tokens
         
         
     def _preprocess_train(

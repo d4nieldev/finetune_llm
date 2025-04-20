@@ -68,10 +68,10 @@ class ClassEvalCallback(TrainerCallback):
                     attention_mask=attention_mask,
                     max_new_tokens=self.max_out_tokens,
                     do_sample=False,
-                )
-                
+                ).cpu()  # type: ignore
+
                 # decode
-                raw_texts = self.tokenizer.batch_decode(gen.cpu(), skip_special_tokens=True)
+                raw_texts = self.tokenizer.batch_decode(gen, skip_special_tokens=True)
                 
                 # get labels
                 inputs = self.tokenizer.batch_decode(input_ids, skip_special_tokens=True)
