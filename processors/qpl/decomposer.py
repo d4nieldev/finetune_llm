@@ -5,9 +5,24 @@ from .nl2qpl import NL2QPLProcessor
 class QPLDecomposerProcessor(NL2QPLProcessor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        q_to_id = {}
+        for id, content in self._db_content.items():
+            q_to_id[content['question']] = id
+        self._q_to_id = q_to_id
     
     def process_row(self, row):
         db_id = self._db_content[row['id']]["db_id"]
+
+        # get id
+        id = self._q_to_id.get(row['question'])
+        if id is None:
+            # go to parent
+            for dataset in self._dataset.values():
+                for r in dataset:
+                    if row['question'] == r['sub_question_1'] or row['question'] == r['sub_question_2']:
+                        id = self._q_to_id[row['question']]
+                        break
 
         prompt = (
             "Given a database schema and a question in natural language, "
@@ -28,7 +43,7 @@ class QPLDecomposerProcessor(NL2QPLProcessor):
             + f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(row)}```\n\n"
+            + f"```DDL\n{self._create_table_prompt(id)}```\n\n"
 
             + f"""Question: {row["question"].strip()}\n\n"""
 

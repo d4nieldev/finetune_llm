@@ -57,14 +57,14 @@ class NL2QPLProcessor(BaseProcessor):
         super().__init__(dataset=dataset, **kwargs)
     
     def _create_table_prompt(
-        self, sample, add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
+        self, id, add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
     ):
-        db_id = self._db_content[sample["id"]]["db_id"]
+        db_id = self._db_content[id]["db_id"]
         tables = self._db_schemas[db_id]["tables"]
         pk = self._db_schemas[db_id].get("pk", None)
         fk = self._db_schemas[db_id].get("fk", None)
 
-        content = self._db_content[sample["id"]]["db_content"]
+        content = self._db_content[id]["db_content"]
 
         formatted_columns = lambda table_name, columns: ",\n".join(
             [
@@ -124,7 +124,7 @@ class NL2QPLProcessor(BaseProcessor):
 
         prompt = (
             f"{db_id}\n\n"
-            + self._create_table_prompt(row)
+            + self._create_table_prompt(row['id'])
             + "\n\n"
             + "-- Using valid QPL, answer the following questions for the tables provided above."
             + f"""\n\n-- {row["question"].strip()}\n\n[QPL]: """
