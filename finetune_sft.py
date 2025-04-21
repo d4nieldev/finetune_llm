@@ -96,6 +96,7 @@ def train(
     if len(tokenizer) != original_vocab_size:
         print("Tokenizer size was changed from {} to {}".format(original_vocab_size, len(tokenizer)))
         model.resize_token_embeddings(len(tokenizer))
+    logger.info(f"Memory footprint: {model.get_memory_footprint()}")
     
     
     # Step 3. Data preperation
@@ -188,6 +189,12 @@ if __name__ == "__main__":
         return {
             'messages': outputs
         }
+        
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
     
     train(
         to_chat_template=to_chat_template,
