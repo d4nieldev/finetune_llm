@@ -90,8 +90,8 @@ class BaseProcessor(ABC):
         for dataset in self._dataset.values():
             for row in dataset:
                 parsed_row = self.process_row(row)
-                input = self._tokenizer(parsed_row['prompt'], truncation=True, max_length=self._max_input_tokens)
-                output = self._tokenizer(parsed_row['response'], truncation=True, max_length=self._max_output_tokens)
+                input = self._tokenizer(parsed_row['prompt'])
+                output = self._tokenizer(parsed_row['response'])
                 max_input = max(max_input, len(input.input_ids))
                 max_output = max(max_output, len(output.input_ids))
         
