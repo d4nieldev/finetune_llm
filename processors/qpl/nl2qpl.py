@@ -33,29 +33,41 @@ def update_type(col_type):
 class NL2QPLProcessor(BaseProcessor):
     def __init__(
         self, 
-        *,
-        dataset,
         **kwargs
     ):
         """
         Args:
             **kwargs: Additional arguments passed to the BaseProcessor.
         """
-        parent_dir = os.path.dirname(os.path.realpath(__file__))
-        
-        with open(os.path.join(parent_dir, "db_schemas.json")) as f:
-            self._db_schemas = json.load(f)
-
-        with open(os.path.join(parent_dir, "db_content.json")) as f:
-            self._db_content = json.load(f)
-        
-        before_filter = len(dataset)
-        dataset = dataset.filter(lambda row: row["id"] in self._db_content)
-        after_filter = len(dataset)
-        print(f"Filtered {before_filter - after_filter} rows from the dataset.")
+        # before_filter = len(dataset)
+        # dataset = dataset.filter(lambda row: row["id"] in self._db_content)
+        # after_filter = len(dataset)
+        # print(f"Filtered {before_filter - after_filter} rows from the dataset.")
             
-        super().__init__(dataset=dataset, **kwargs)
+        super().__init__(**kwargs)
+
     
+    @property
+    def _db_content(self):
+        try:
+            return self.__db_content
+        except AttributeError:
+            parent_dir = os.path.dirname(os.path.realpath(__file__))
+            with open(os.path.join(parent_dir, "db_content.json")) as f:
+                self.__db_content = json.load(f)
+            return self.__db_content
+
+    @property
+    def _db_schemas(self):
+        try:
+            return self.__db_schemas
+        except AttributeError:
+            parent_dir = os.path.dirname(os.path.realpath(__file__))
+            with open(os.path.join(parent_dir, "db_schemas.json")) as f:
+                self.__db_schemas = json.load(f)
+            return self.__db_schemas    
+
+
     def _create_table_prompt(
         self, id, add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
     ):

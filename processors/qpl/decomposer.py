@@ -4,25 +4,32 @@ from .nl2qpl import NL2QPLProcessor
 
 class QPLDecomposerProcessor(NL2QPLProcessor):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
         q_to_id = {}
         for id, content in self._db_content.items():
             q_to_id[content['question']] = id
         self._q_to_id = q_to_id
-    
+
+        super().__init__(**kwargs)
+
+
     def process_row(self, row):
-        db_id = self._db_content[row['id']]["db_id"]
+        db_id = row['db_id']
 
         # get id
         id = self._q_to_id.get(row['question'])
-        if id is None:
-            # go to parent
+        question = row['question']
+        # go to parent recursively
+        while id is None:
             for dataset in self._dataset.values():
                 for r in dataset:
-                    if row['question'] == r['sub_question_1'] or row['question'] == r['sub_question_2']:
-                        id = self._q_to_id[row['question']]
+                    if question == r['sub_question_1'] or question == r['sub_question_2']:
+                        id = self._q_to_id.get(r['question'])
+                        if id is None:
+                            question = r['question']
                         break
+                if id is not None:
+                    break
 
         prompt = (
             "Given a database schema and a question in natural language, "
@@ -61,7 +68,7 @@ class QPLDecomposerProcessor(NL2QPLProcessor):
         indent = ' ' * 4
         response = '{\n%s"toplevel_operator": "%s",\n%s"subquestions": %s\n}' % (
             indent,
-            row["toplevel_operator"],
+            row["op"],
             indent,
             f'\n{indent}'.join(json.dumps(subquestions_lst, indent=len(indent)).splitlines()),
         )
