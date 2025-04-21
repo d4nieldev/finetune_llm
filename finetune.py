@@ -23,10 +23,10 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="d4nieldev/nl2qpl", help="Dataset ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--dataset_id", type=str, default="bgunlp/question_decomposer_ds", help="Dataset ID to use for fine-tuning.")
 
     processor_group = parser.add_argument_group("Processor")
-    processor_group.add_argument("--processor_class", type=str, default="NL2QPLProcessor", 
+    processor_group.add_argument("--processor_class", type=str, default="QPLDecomposerProcessor", 
                                  help="Processor class to use for fine-tuning. If the processor requires additional keyword arguments, "
                                       "please provide them in the format 'p_key=value' - the acceptable types are [int | str | float | list | dict].")
     
