@@ -1,23 +1,27 @@
+import os
 import argparse
 from typing import Callable, List, Dict, Any, TypedDict
+import logging
 
 from callbacks import MemoryLoggingCallback
-from utils.argparse_utils import collect_kwargs
 
 import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
-from trl import SFTTrainer, SFTConfig
+from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
 from datasets import load_dataset
 from peft import LoraConfig, get_peft_model, TaskType
 
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+logger = logging.getLogger(__name__)
 
 class ChatMessage(TypedDict):
     role: str
     content: str
 
-class ChatTemplate(TypedDict):
-    messages: List[ChatMessage]
+class ChatTemplates(TypedDict):
+    messages: List[List[ChatMessage]]
 
 
 def parse_args():
@@ -46,25 +50,29 @@ def parse_args():
     lora_config_group.add_argument("--alpha", type=int, default=32, help="LoRA alpha.")
     lora_config_group.add_argument("--dropout", type=float, default=0.05, help="LoRA dropout.")
     
-    memory_management_group = parser.add_argument_group("Memory management")
-    memory_management_group.add_argument("--max_input_tokens", type=int, help="Maximum number of input tokens. Don't provide this argument for automatic inference (according to dataset).")
-    memory_management_group.add_argument("--max_output_tokens", type=int, help="Maximum number of output tokens. Don't provide this argument for automatic inference (according to dataset).")
-    
     args = parser.parse_args()
 
     return args
 
 
 def train(
-    to_chat_template: Callable[[List[Dict[str, Any]]], List[ChatTemplate]],
+    to_chat_template: Callable[[Dict[str, List[Any]]], ChatTemplates],
     args
 ):
     print("Arguments:")
     for k, v in vars(args).items():
         print(f"{k}={v}")
     
-    # Step 1. Load model and tokenizer
+    # Step 1. Load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_id)
+    
+    original_vocab_size = len(tokenizer)
+    if not tokenizer.pad_token or tokenizer.pad_token == tokenizer.eos_token:
+        tokenizer.add_special_tokens({'pad_token': '<|pad|>'})
+    logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
+    
+    
+    # Step 2. Load model
     if 'gemma' in args.model_id:
         model = AutoModelForCausalLM.from_pretrained(args.model_id, attn_implementation="eager")
     else:
@@ -77,18 +85,57 @@ def train(
         lora_alpha=args.alpha,
         lora_dropout=args.dropout,
         target_modules=["q_proj", "v_proj"],
-        modules_to_save=["lm_head", "embed_token"],
+        # modules_to_save=["lm_head", "embed_token"],
         bias="none"
     )
     model = get_peft_model(model, lora_cfg)
     model = torch.compile(model)
     model.print_trainable_parameters()
     
-    # Step 2. Data preperation
+    # Resize token embeddings after adding special <|pad|> token
+    if len(tokenizer) != original_vocab_size:
+        print("Tokenizer size was changed from {} to {}".format(original_vocab_size, len(tokenizer)))
+        model.resize_token_embeddings(len(tokenizer))
+    
+    
+    # Step 3. Data preperation
     train_dataset = load_dataset(args.dataset_id, split="train")
     train_dataset = train_dataset.map(to_chat_template, batched=True, remove_columns=train_dataset.column_names)
-
-    # Step 3. Training
+    def to_model_prompt(example):
+        # example["messages"] is a list of {"role": "...", "content": "..."}
+        prompt_ids = tokenizer.apply_chat_template(
+            example["messages"],
+            tokenize=True,               # returns a tensor of token‑IDs
+            add_generation_prompt=False, # keep existing answers in the text
+            return_tensors="pt"
+        )[0]                             # remove batch dim
+        return {"input_ids": prompt_ids}
+    train_dataset = train_dataset.map(to_model_prompt, remove_columns=train_dataset.column_names)
+    
+    # Find instruction and response prefixes
+    ids = tokenizer.apply_chat_template([{"role": "user", "content": "a"}, {"role": "assistant", "content": "b"}])
+    
+    a_id = tokenizer.convert_tokens_to_ids('a')
+    b_id = tokenizer.convert_tokens_to_ids('b')
+    
+    instruction_template = ids[:ids.index(a_id)]
+    response_template = ids[ids.index(a_id)+1:ids.index(b_id)]
+    
+    data_collator = DataCollatorForCompletionOnlyLM(
+        instruction_template=instruction_template,
+        response_template=response_template,
+        tokenizer=tokenizer,
+    )
+    
+    # Find maximum number of tokens in a request and set max_length
+    max_tokens = 0
+    for example in train_dataset:
+        max_tokens = max(max_tokens, len(example["input_ids"]))
+    max_length = int(max_tokens * 1.2)
+    print(f"Max tokens in a request: {max_tokens}. Setting max_length to {max_length}.")
+    
+    
+    # Step 4. Training
     dirname = f"{args.model_id.split('/')[-1]}-{args.dataset_id.split('/')[-1]}"
     training_args = SFTConfig(
         output_dir                  = f"./output/{dirname}",
@@ -103,12 +150,15 @@ def train(
         save_steps                  = args.save_steps,
         seed                        = args.random_seed,
         report_to                   = ["wandb"],
-        max_length                  = 2048,  # FIXME: This should be generic!
+        max_length                  = max_length,
+        remove_unused_columns       = False, # 
+        save_safetensors            = False  # Safetensors can't save tensors that share the same memory
     )
 
     trainer = SFTTrainer(
         model            = model,
         args             = training_args,
+        data_collator    = data_collator,
         train_dataset    = train_dataset,
         processing_class = tokenizer,
         callbacks        = [MemoryLoggingCallback()]
@@ -116,25 +166,28 @@ def train(
 
     trainer.train()
     
+    trainer.save_model(output_dir=training_args.output_dir)
+    tokenizer.save_pretrained(training_args.output_dir)
+
+    
     
 if __name__ == "__main__":
     args = parse_args()
     
     labels_list = ["sadness","joy","love","anger","fear","surprise"]
     
-    def to_chat_template(batch: List[Dict[str, Any]]) -> List[ChatTemplate]:
+    def to_chat_template(batch: Dict[str, List[Any]]) -> ChatTemplates:
         outputs = []
-        for example in batch:
-            prompt = f"Below is a piece of text. Classify it into one of: {', '.join(labels_list)}.\n\n"
-            prompt += f"\"{example['text']}\"\n\nThe emotion in the above text is: "
-            response = f"{labels_list[example['label']]}"
-            outputs.append({
-                "messages": [
-                    {"role": "user", "content": prompt},
-                    {"role": "assistant", "content": response}
-                ]
-            })
-        return outputs
+        for text, label in zip(batch['text'], batch['label']):
+            prompt = f"Below is a piece of text. Classify it into one of: {', '.join(labels_list)}.\n\n\"{text}\""
+            response = f"The emotion in the above text is: {labels_list[label]}"
+            outputs.append([
+                {"role": "user", "content": prompt},
+                {"role": "assistant", "content": response}
+            ])
+        return {
+            'messages': outputs
+        }
     
     train(
         to_chat_template=to_chat_template,
