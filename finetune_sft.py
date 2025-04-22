@@ -104,20 +104,27 @@ def train(
     train_dataset = train_dataset.map(to_chat_template, batched=True, remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}
-        prompt_ids = tokenizer.apply_chat_template(
+        input_ids = tokenizer.apply_chat_template(
             example["messages"],
             tokenize=True,               # returns a tensor of token‑IDs
             add_generation_prompt=False, # keep existing answers in the text
+            continue_final_message=False,
             return_tensors="pt"
         )[0]                             # remove batch dim
-        return {"input_ids": prompt_ids}
+        return {"input_ids": input_ids}
     train_dataset = train_dataset.map(to_model_prompt, remove_columns=train_dataset.column_names)
     
     # Find instruction and response prefixes
-    ids = tokenizer.apply_chat_template([{"role": "user", "content": "a"}, {"role": "assistant", "content": "b"}])
+    ids = tokenizer.apply_chat_template(
+        [{"role": "user", "content": "!"}, {"role": "assistant", "content": "?"}],
+        tokenize=True,
+        add_generation_prompt=False,
+        continue_final_message=False,
+        return_tensors="pt"
+    )[0]
     
-    a_id = tokenizer.convert_tokens_to_ids('a')
-    b_id = tokenizer.convert_tokens_to_ids('b')
+    a_id = tokenizer.convert_tokens_to_ids('!')
+    b_id = tokenizer.convert_tokens_to_ids('?')
     
     instruction_template = ids[:ids.index(a_id)]
     response_template = ids[ids.index(a_id)+1:ids.index(b_id)]

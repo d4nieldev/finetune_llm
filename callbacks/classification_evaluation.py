@@ -97,9 +97,7 @@ class ClassEvalCallback(TrainerCallback):
             
             
     def _extract_label(self, txt: str) -> int:
-        match = re.search(r"(\w+)", txt)
-        if match:
-            match = match.group(1).lower()
-            if match in self.labels_list:
-                return self.labels_list.index(match)
+        for i, label in enumerate(self.labels_list):
+            if label in txt:
+                return i
         return -1
