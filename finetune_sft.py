@@ -25,7 +25,7 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="dair-ai/emotion", help="Dataset ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--dataset_id", type=str, default="bgunlp/question_decomposer_ds", help="Dataset ID to use for fine-tuning.")
     
     train_config_group = parser.add_argument_group("Training config")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
