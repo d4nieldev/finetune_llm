@@ -5,6 +5,7 @@ from custom_types import ChatTemplate, ChatMessage
 @ProcessorRegistry.register
 class EmotionProcessor(BaseProcessor):
     dataset_id = "dair-ai/emotion"
+    
     def __init__(self):
         self.labels_list = ["sadness","joy","love","anger","fear","surprise"]
         

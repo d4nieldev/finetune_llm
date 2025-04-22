@@ -4,7 +4,7 @@ import pydash
 from typing import Dict, Any
 from abc import abstractmethod
 
-from processors import BaseProcessor
+from processors.base import BaseProcessor
 
 
 def update_type(col_type):

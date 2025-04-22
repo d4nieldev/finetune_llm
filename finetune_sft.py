@@ -1,11 +1,9 @@
 import os
 import argparse
-from typing import Callable, List, Dict, Any
 import logging
 
 from callbacks import MemoryLoggingCallback
-from custom_types import ChatTemplate
-from processors import BaseProcessor, ProcessorRegistry
+from processors import ProcessorRegistry
 
 import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
@@ -115,8 +113,7 @@ def train(
         tokenize=True,
         add_generation_prompt=False,
         continue_final_message=False,
-        return_tensors="pt"
-    )[0]
+    )
     
     a_id = tokenizer.convert_tokens_to_ids('!')
     b_id = tokenizer.convert_tokens_to_ids('?')
