@@ -1,27 +1,22 @@
 import os
 import argparse
-from typing import Callable, List, Dict, Any, TypedDict
+from typing import Callable, List, Dict, Any
 import logging
 
 from callbacks import MemoryLoggingCallback
+from custom_types import ChatTemplate
+from processors import BaseProcessor, ProcessorRegistry
 
 import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
-from datasets import load_dataset
+from datasets import load_dataset, Dataset
 from peft import LoraConfig, get_peft_model, TaskType
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 logger = logging.getLogger(__name__)
-
-class ChatMessage(TypedDict):
-    role: str
-    content: str
-
-class ChatTemplates(TypedDict):
-    messages: List[List[ChatMessage]]
 
 
 def parse_args():
@@ -56,7 +51,6 @@ def parse_args():
 
 
 def train(
-    to_chat_template: Callable[[Dict[str, List[Any]]], ChatTemplates],
     args
 ):
     print("Arguments:")
@@ -100,8 +94,9 @@ def train(
     
     
     # Step 3. Data preperation
-    train_dataset = load_dataset(args.dataset_id, split="train")
-    train_dataset = train_dataset.map(to_chat_template, batched=True, remove_columns=train_dataset.column_names)
+    train_dataset: Dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
+    processor = ProcessorRegistry.get(args.dataset_id)()
+    train_dataset = train_dataset.map(processor.to_chat_template, remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}
         input_ids = tokenizer.apply_chat_template(
@@ -138,7 +133,7 @@ def train(
     # Find maximum number of tokens in a request and set max_length
     max_tokens = 0
     for example in train_dataset:
-        max_tokens = max(max_tokens, len(example["input_ids"]))
+        max_tokens = max(max_tokens, len(example["input_ids"]))  # type: ignore
     max_length = int(max_tokens * 1.2)
     print(f"Max tokens in a request: {max_tokens}. Setting max_length to {max_length}.")
     
@@ -164,7 +159,7 @@ def train(
     )
 
     trainer = SFTTrainer(
-        model            = model,
+        model            = model,  # type: ignore
         args             = training_args,
         data_collator    = data_collator,
         train_dataset    = train_dataset,
@@ -181,21 +176,6 @@ def train(
     
 if __name__ == "__main__":
     args = parse_args()
-    
-    labels_list = ["sadness","joy","love","anger","fear","surprise"]
-    
-    def to_chat_template(batch: Dict[str, List[Any]]) -> ChatTemplates:
-        outputs = []
-        for text, label in zip(batch['text'], batch['label']):
-            prompt = f"Below is a piece of text. Classify it into one of: {', '.join(labels_list)}.\n\n\"{text}\""
-            response = f"The emotion in the above text is: {labels_list[label]}"
-            outputs.append([
-                {"role": "user", "content": prompt},
-                {"role": "assistant", "content": response}
-            ])
-        return {
-            'messages': outputs
-        }
         
     logging.basicConfig(
         format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
@@ -204,6 +184,5 @@ if __name__ == "__main__":
     )
     
     train(
-        to_chat_template=to_chat_template,
         args=args,
     )

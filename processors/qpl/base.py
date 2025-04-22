@@ -1,11 +1,10 @@
 import os
 import json
-from typing import List
-
 import pydash
-from transformers.trainer_callback import TrainerCallback
+from typing import Dict, Any
+from abc import abstractmethod
 
-from ..base import BaseProcessor
+from processors import BaseProcessor
 
 
 def update_type(col_type):
@@ -30,53 +29,31 @@ def update_type(col_type):
         return "others"
 
 
-class NL2QPLProcessor(BaseProcessor):
-    def __init__(
-        self, 
-        **kwargs
-    ):
-        """
-        Args:
-            **kwargs: Additional arguments passed to the BaseProcessor.
-        """
-        # before_filter = len(dataset)
-        # dataset = dataset.filter(lambda row: row["id"] in self._db_content)
-        # after_filter = len(dataset)
-        # print(f"Filtered {before_filter - after_filter} rows from the dataset.")
-            
-        super().__init__(**kwargs)
+class QPLProcessor(BaseProcessor):
+    def __init__(self):
+        super().__init__()
+
+        # Load databases
+        parent_dir = os.path.dirname(os.path.realpath(__file__))
+
+        with open(os.path.join(parent_dir, "db_content.json")) as f:
+            self._db_content = json.load(f)
+        
+        with open(os.path.join(parent_dir, "db_schemas.json")) as f:
+            self._db_schemas = json.load(f)
 
     
-    @property
-    def _db_content(self):
-        try:
-            return self.__db_content
-        except AttributeError:
-            parent_dir = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(parent_dir, "db_content.json")) as f:
-                self.__db_content = json.load(f)
-            return self.__db_content
-
-    @property
-    def _db_schemas(self):
-        try:
-            return self.__db_schemas
-        except AttributeError:
-            parent_dir = os.path.dirname(os.path.realpath(__file__))
-            with open(os.path.join(parent_dir, "db_schemas.json")) as f:
-                self.__db_schemas = json.load(f)
-            return self.__db_schemas    
-
-
     def _create_table_prompt(
-        self, id, add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
+        self, example: Dict[str, Any], add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
     ):
-        db_id = self._db_content[id]["db_id"]
+        example_id = self._example_to_id(example)
+
+        db_id = self._db_content[example_id]["db_id"]
         tables = self._db_schemas[db_id]["tables"]
         pk = self._db_schemas[db_id].get("pk", None)
         fk = self._db_schemas[db_id].get("fk", None)
 
-        content = self._db_content[id]["db_content"]
+        content = self._db_content[example_id]["db_content"]
 
         formatted_columns = lambda table_name, columns: ",\n".join(
             [
@@ -129,17 +106,18 @@ class NL2QPLProcessor(BaseProcessor):
         )
 
         return prompt
+    
+    @abstractmethod
+    def _example_to_id(self, example: Dict[str, Any]) -> str:
+        """
+        Convert an example to its corresponding ID for extracting its db content.
+
+        Args:
+            example (Dict[str, Any]): The example to convert.
+
+        Returns:
+            str: The ID of the example.
+        """
+        raise NotImplementedError
 
 
-    def process_row(self, row):
-        db_id = self._db_content[row['id']]["db_id"]
-
-        prompt = (
-            f"{db_id}\n\n"
-            + self._create_table_prompt(row['id'])
-            + "\n\n"
-            + "-- Using valid QPL, answer the following questions for the tables provided above."
-            + f"""\n\n-- {row["question"].strip()}\n\n[QPL]: """
-        )
-
-        return {"prompt": prompt, "response": f"{db_id} | {row['qpl']}"}

@@ -1,35 +1,49 @@
-import json
-from .nl2qpl import NL2QPLProcessor
+from typing import Dict, Any
+
+from custom_types import ChatTemplate, ChatMessage
+from processors.qpl.base import QPLProcessor
+from processors.base import ProcessorRegistry
+
+from datasets import load_dataset
 
 
-class QPLDecomposerProcessor(NL2QPLProcessor):
-    def __init__(self, **kwargs):
+def update_type(col_type):
+    if "char" in col_type or col_type == "" or "text" in col_type or "var" in col_type:
+        return "text"
+    elif (
+        "int" in col_type
+        or "numeric" in col_type
+        or "decimal" in col_type
+        or "number" in col_type
+        or "id" in col_type
+        or "real" in col_type
+        or "double" in col_type
+        or "float" in col_type
+    ):
+        return "number"
+    elif "date" in col_type or "time" in col_type:
+        return "date"
+    elif "boolean" in col_type or col_type == "bit":
+        return "boolean"
+    else:
+        return "others"
 
+
+@ProcessorRegistry.register
+class QPLDecomposerProcessor(QPLProcessor):
+    dataset_id = "bgunlp/question_decomposer_ds"
+
+    def __init__(self):
         q_to_id = {}
         for id, content in self._db_content.items():
-            q_to_id[content['question']] = id
-        self._q_to_id = q_to_id
+            question = content["question"]
+            q_to_id[question] = id
+        
+        self.__q_to_id = q_to_id
+        self.__dataset = load_dataset(self.dataset_id)
 
-        super().__init__(**kwargs)
-
-
-    def process_row(self, row):
-        db_id = row['db_id']
-
-        # get id
-        id = self._q_to_id.get(row['question'])
-        question = row['question']
-        # go to parent recursively
-        while id is None:
-            for dataset in self._dataset.values():
-                for r in dataset:
-                    if question == r['sub_question_1'] or question == r['sub_question_2']:
-                        id = self._q_to_id.get(r['question'])
-                        if id is None:
-                            question = r['question']
-                        break
-                if id is not None:
-                    break
+    def to_chat_template(self, example):
+        db_id = example['db_id']
 
         prompt = (
             "Given a database schema and a question in natural language, "
@@ -38,39 +52,47 @@ class QPLDecomposerProcessor(NL2QPLProcessor):
 
             + "The toplevel operators are:\n"
             + "**Scan** - Scan all rows in a table with optional filtering predicate (no decomposition needed - the question is atomic)\n"
-            + "**Aggregate** - Aggregate a stream of tuples using a grouping criterion into a stream of groups (1 subquestion)\n"
-            + "**Filter** - Remove tuples from a stream that do not match a predicate (1 subquestion)\n"
-            + "**Sort** - Sort a stream according to a sorting expression (1 subquestion)\n"
-            + "**TopSort** - Select the top-K tuples from a stream according to a sorting expression (1 subquestion)\n"
-            + "**Join** - Perform a logical join operation between two streams based on a join condition (2 subquestions)\n"
-            + "**Except** - Compute the set difference between two streams of tuples (2 subquestions)\n"
-            + "**Intersect** - Compute the set intersection between two streams of tuples (2 subquestions)\n"
-            + "**Union** - Compute the set union between two streams of tuples (2 subquestions)\n\n"
+            + "**Aggregate** - Aggregate a stream of tuples using a grouping criterion into a stream of groups (1 sub-question)\n"
+            + "**Filter** - Remove tuples from a stream that do not match a predicate (1 sub-question)\n"
+            + "**Sort** - Sort a stream according to a sorting expression (1 sub-question)\n"
+            + "**TopSort** - Select the top-K tuples from a stream according to a sorting expression (1 sub-question)\n"
+            + "**Join** - Perform a logical join operation between two streams based on a join condition (2 sub-questions)\n"
+            + "**Except** - Compute the set difference between two streams of tuples (2 sub-questions)\n"
+            + "**Intersect** - Compute the set intersection between two streams of tuples (2 sub-questions)\n"
+            + "**Union** - Compute the set union between two streams of tuples (2 sub-questions)\n\n"
 
             + f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(id)}```\n\n"
+            + f"```DDL\n{self._create_table_prompt(example)}```\n\n"
 
-            + f"""Question: {row["question"].strip()}\n\n"""
+            + f"""Question: {example["question"].strip()}\n\n"""
 
-            + "Your output should be a JSON object with the following keys:\n"
-            + "- \"toplevel_operator\" (string) - the toplevel operator (one of the above)\n"
-            + "- \"subquestions\" (list of 0, 1, or 2 strings) - the list of subquestions. The list size depends on the selected toplevel operator\n"
+            + "The first line of the output should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
-        subquestions_lst = []
-        if row['sub_question_1']:
-            subquestions_lst.append(row['sub_question_1'])
-        if row['sub_question_2']:
-            subquestions_lst.append(row['sub_question_2'])
+        response = f"{example['op']}"
+        if example['sub_question_1']:
+            response += f"\n{example['sub_question_1']}"
+        if example['sub_question_2']:
+            response += f"\n{example['sub_question_2']}"
 
-        indent = ' ' * 4
-        response = '{\n%s"toplevel_operator": "%s",\n%s"subquestions": %s\n}' % (
-            indent,
-            row["op"],
-            indent,
-            f'\n{indent}'.join(json.dumps(subquestions_lst, indent=len(indent)).splitlines()),
+        return ChatTemplate(
+            messages=[
+                ChatMessage(role="user", content=prompt),
+                ChatMessage(role="assistant", content=response),
+            ]
         )
-
-        return {"prompt": prompt, "response": response}
+    
+    def _example_to_id(self, example: Dict[str, Any]) -> str:
+        # get id
+        id = self.__q_to_id.get(example['question'])
+        if id is None:
+            # return id of parent
+            for dataset in self.__dataset.values():  # type: ignore
+                for ex in dataset:
+                    if ex['sub_question_1'] == example['question'] or ex['sub_question_2'] == example['question']:
+                        return self._example_to_id(ex)
+            # parent not found
+            raise ValueError(f"Parent not found for question: {example['question']}")
+        return id
