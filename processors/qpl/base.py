@@ -3,6 +3,7 @@ import json
 import pydash
 from typing import Dict, Any
 from abc import abstractmethod
+import logging
 
 from processors.base import BaseProcessor
 
@@ -46,14 +47,21 @@ class QPLProcessor(BaseProcessor):
     def _create_table_prompt(
         self, example: Dict[str, Any], add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
     ):
-        example_id = self._example_to_id(example)
+        try:
+            example_id = self._example_to_id(example)
+        except ValueError as e:
+            logging.warning("%s", e)
+            db_id = example['db_id']
+            add_db_content = False
+        else:
+            db_id = self._db_content[example_id]["db_id"]
 
-        db_id = self._db_content[example_id]["db_id"]
         tables = self._db_schemas[db_id]["tables"]
         pk = self._db_schemas[db_id].get("pk", None)
         fk = self._db_schemas[db_id].get("fk", None)
 
-        content = self._db_content[example_id]["db_content"]
+        if add_db_content:
+            content = self._db_content[example_id]["db_content"]
 
         formatted_columns = lambda table_name, columns: ",\n".join(
             [
