@@ -138,7 +138,7 @@ def train(
     # Step 4. Training
     dirname = f"{args.model_id.split('/')[-1]}-{args.dataset_id.split('/')[-1]}"
     training_args = SFTConfig(
-        output_dir                  = f"./output/{dirname}",
+        output_dir                  = f"/workspace/output/{dirname}",
         per_device_train_batch_size = args.train_batch_size,
         gradient_accumulation_steps = args.gradient_accumulation_steps,
         learning_rate               = args.learning_rate,
