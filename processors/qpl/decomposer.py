@@ -35,7 +35,7 @@ class QPLDecomposerProcessor(QPLProcessor):
 
     def __init__(self):
         super().__init__()
-
+        
         q_to_id = {}
         for id, content in self._db_content.items():
             question = content["question"]
