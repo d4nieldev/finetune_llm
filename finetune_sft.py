@@ -14,6 +14,7 @@ from peft import LoraConfig, get_peft_model, TaskType
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"  # for LoRA: https://github.com/pytorch/pytorch/issues/93661
 logger = logging.getLogger(__name__)
 
 
@@ -77,12 +78,12 @@ def train(
         lora_alpha=args.alpha,
         lora_dropout=args.dropout,
         target_modules=["q_proj", "v_proj"],
-        # modules_to_save=["lm_head", "embed_token"],
+        modules_to_save=["lm_head", "embed_token"],
         bias="none"
     )
     model = get_peft_model(model, lora_cfg)
-    model = torch.compile(model)
     model.print_trainable_parameters()
+    model = torch.compile(model)
     
     # Resize token embeddings after adding special <|pad|> token
     if len(tokenizer) != original_vocab_size:
@@ -166,9 +167,9 @@ def train(
 
     trainer.train()
     
-    trainer.save_model(output_dir=training_args.output_dir)
+    lora_path = os.path.join(training_args.output_dir, "adapter")
+    model.save_pretrained(lora_path)
     tokenizer.save_pretrained(training_args.output_dir)
-
     
     
 if __name__ == "__main__":
