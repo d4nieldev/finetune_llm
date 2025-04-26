@@ -10,7 +10,7 @@ from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
 from datasets import load_dataset, Dataset
-from peft import LoraConfig, get_peft_model, TaskType
+from peft import LoraConfig, TaskType
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -26,7 +26,7 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="bgunlp/question_decomposer_ds", help="Dataset ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--dataset_id", type=str, default="dair-ai/emotion", help="Dataset ID to use for fine-tuning.")
     
     train_config_group = parser.add_argument_group("Training config")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
@@ -35,8 +35,8 @@ def parse_args():
     train_config_group.add_argument("--num_train_epochs", type=int, default=2, help="Number of training epochs.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
-    monitoring_group.add_argument("--logging_steps", type=int, default=500, help="Log every N steps.")
-    monitoring_group.add_argument("--save_steps", type=int, default=5000, help="Save checkpoint every N steps.")
+    monitoring_group.add_argument("--logging_steps", type=int, default=500, help="Log every N steps. If between 0 to 1, part of the epoch.")
+    monitoring_group.add_argument("--save_steps", type=int, default=5000, help="Save checkpoint every N steps. If between 0 to 1, part of the epoch.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
     
     lora_config_group = parser.add_argument_group("LoRA config")
@@ -47,6 +47,13 @@ def parse_args():
     args = parser.parse_args()
 
     return args
+
+
+def args_str(args):
+    model_id = args.model_id.split("/")[-1]
+    dataset_id = args.dataset_id.split("/")[-1]
+    other_args = "_".join([f"{k}={v}" for k, v in vars(args).items() if k not in ["model_id", "dataset_id"]])
+    return f"{model_id}_{dataset_id}_{other_args}"
 
 
 def train(
@@ -73,16 +80,11 @@ def train(
     
     lora_cfg = LoraConfig(
         task_type=TaskType.CAUSAL_LM,
-        inference_mode=False,
         r=args.r,
         lora_alpha=args.alpha,
         lora_dropout=args.dropout,
-        target_modules=["q_proj", "v_proj"],
-        modules_to_save=["lm_head", "embed_token"],
-        bias="none"
+        target_modules="all-linear",
     )
-    model = get_peft_model(model, lora_cfg)
-    model.print_trainable_parameters()
     model = torch.compile(model)
     
     # Resize token embeddings after adding special <|pad|> token
@@ -137,9 +139,9 @@ def train(
     
     
     # Step 4. Training
-    dirname = f"{args.model_id.split('/')[-1]}-{args.dataset_id.split('/')[-1]}"
+    dirname = args_str(args)
     training_args = SFTConfig(
-        output_dir                  = f"/workspace/output/{dirname}",
+        output_dir                  = f"./output/{dirname}",
         per_device_train_batch_size = args.train_batch_size,
         gradient_accumulation_steps = args.gradient_accumulation_steps,
         learning_rate               = args.learning_rate,
@@ -158,6 +160,7 @@ def train(
 
     trainer = SFTTrainer(
         model            = model,  # type: ignore
+        peft_config      = lora_cfg,
         args             = training_args,
         data_collator    = data_collator,
         train_dataset    = train_dataset,
@@ -166,9 +169,6 @@ def train(
     )
 
     trainer.train()
-    
-    lora_path = os.path.join(training_args.output_dir, "adapter")
-    model.save_pretrained(lora_path)
     tokenizer.save_pretrained(training_args.output_dir)
     
     
