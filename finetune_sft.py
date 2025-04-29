@@ -33,6 +33,7 @@ def parse_args():
     train_config_group.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Gradient accumulation steps.")
     train_config_group.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate.")
     train_config_group.add_argument("--num_train_epochs", type=int, default=2, help="Number of training epochs.")
+    train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=False, help="Enable gradient checkpointing.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
     monitoring_group.add_argument("--logging_steps", type=int, default=500, help="Log every N steps. If between 0 to 1, part of the epoch.")
@@ -40,6 +41,7 @@ def parse_args():
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
     
     lora_config_group = parser.add_argument_group("LoRA config")
+    lora_config_group.add_argument("--lora", action=argparse.BooleanOptionalAction, default=True, help="Use LoRA for fine-tuning.")
     lora_config_group.add_argument("--r", type=int, default=16, help="LoRA rank.")
     lora_config_group.add_argument("--alpha", type=int, default=32, help="LoRA alpha.")
     lora_config_group.add_argument("--dropout", type=float, default=0.05, help="LoRA dropout.")
@@ -53,7 +55,7 @@ def args_str(args):
     model_id = args.model_id.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     other_args = "_".join([f"{k}={v}" for k, v in vars(args).items() if k not in ["model_id", "dataset_id"]])
-    return f"{model_id}_{dataset_id}_{other_args}"
+    return f"{model_id}-{dataset_id}_{other_args}"
 
 
 def train(
@@ -63,11 +65,14 @@ def train(
     for k, v in vars(args).items():
         print(f"{k}={v}")
     
+
     # Step 1. Load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_id)
     
     original_vocab_size = len(tokenizer)
     if not tokenizer.pad_token or tokenizer.pad_token == tokenizer.eos_token:
+        # Make sure that pad_token is different from eos_token, because it requires a special treatment in the collator
+        # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#5-when-pad_token-equals-eos_token
         tokenizer.add_special_tokens({'pad_token': '<|pad|>'})
     logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
     
@@ -78,14 +83,19 @@ def train(
     else:
         model = AutoModelForCausalLM.from_pretrained(args.model_id)
     
-    lora_cfg = LoraConfig(
-        task_type=TaskType.CAUSAL_LM,
-        r=args.r,
-        lora_alpha=args.alpha,
-        lora_dropout=args.dropout,
-        target_modules="all-linear",
-    )
-    model = torch.compile(model)
+    trainer_kwargs = {}
+    if args.lora:
+        trainer_kwargs['peft_config'] = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            r=args.r,
+            lora_alpha=args.alpha,
+            lora_dropout=args.dropout,
+            target_modules="all-linear",
+        )
+    else:
+        # torch.compile is not compatible with LoRA
+        # https://huggingface.co/docs/peft/en/developer_guides/torch_compile?utm_source=chatgpt.com
+        model = model.compile(model)
     
     # Resize token embeddings after adding special <|pad|> token
     if len(tokenizer) != original_vocab_size:
@@ -100,13 +110,14 @@ def train(
     train_dataset = train_dataset.map(processor.to_chat_template, remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}
+        # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#6-applying-the-chat-template-is-not-a-homomorphism-with-respect-to-concatenation
         input_ids = tokenizer.apply_chat_template(
             example["messages"],
-            tokenize=True,               # returns a tensor of token‑IDs
-            add_generation_prompt=False, # keep existing answers in the text
-            continue_final_message=False,
-            return_tensors="pt"
-        )[0]                             # remove batch dim
+            tokenize=True,
+            return_tensors="pt",
+            add_generation_prompt=False,   # generation is included in the messages
+            continue_final_message=False,  # put eos token at the end of the last message
+        )[0]                               # remove batch dim
         return {"input_ids": input_ids}
     train_dataset = train_dataset.map(to_model_prompt, remove_columns=train_dataset.column_names)
     
@@ -142,11 +153,13 @@ def train(
     dirname = args_str(args)
     training_args = SFTConfig(
         output_dir                  = f"./output/{dirname}",
+        run_name                    = dirname,
         per_device_train_batch_size = args.train_batch_size,
         gradient_accumulation_steps = args.gradient_accumulation_steps,
+        gradient_checkpointing      = args.gradient_checkpointing,
         learning_rate               = args.learning_rate,
         num_train_epochs            = args.num_train_epochs,
-        eval_strategy               = "no",       # manual via callback
+        eval_strategy               = "no",
         logging_strategy            = "steps",
         logging_steps               = args.logging_steps,
         save_strategy               = "steps",
@@ -154,18 +167,23 @@ def train(
         seed                        = args.random_seed,
         report_to                   = ["wandb"],
         max_length                  = max_length,
-        remove_unused_columns       = False, # 
-        save_safetensors            = False  # Safetensors can't save tensors that share the same memory
+        remove_unused_columns       = False,
+        save_safetensors            = False # Safetensors can't save tensors that share the same memory
     )
+
+    if args.lora:
+        # to supress warning: No label_names provided for model class PeftModelForCausalLM. Since PeftModel hides base models input arguments, if label_names is not given, label_names can't be set automatically within Trainer
+        # https://github.com/unslothai/unsloth/issues/1788#issuecomment-2772497747
+        training_args.label_names = ["labels"]
 
     trainer = SFTTrainer(
         model            = model,  # type: ignore
-        peft_config      = lora_cfg,
         args             = training_args,
         data_collator    = data_collator,
         train_dataset    = train_dataset,
         processing_class = tokenizer,
-        callbacks        = [MemoryLoggingCallback()]
+        callbacks        = [MemoryLoggingCallback()],
+        **trainer_kwargs,
     )
 
     trainer.train()

@@ -1,8 +1,8 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Literal
 
 
 class ChatMessage(TypedDict):
-    role: str
+    role: Literal["user", "assistant"]
     content: str
 
 class ChatTemplate(TypedDict):
