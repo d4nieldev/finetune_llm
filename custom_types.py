@@ -2,7 +2,7 @@ from typing import TypedDict, List, Literal
 
 
 class ChatMessage(TypedDict):
-    role: Literal["user", "assistant"]
+    role: Literal["system", "user", "assistant"]
     content: str
 
 class ChatTemplate(TypedDict):
