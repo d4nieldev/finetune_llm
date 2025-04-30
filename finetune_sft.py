@@ -11,6 +11,7 @@ from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
 from datasets import load_dataset, Dataset
 from peft import LoraConfig, TaskType
+import wandb
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -51,11 +52,11 @@ def parse_args():
     return args
 
 
-def args_str(args):
+def args_str(args, run_id):
     model_id = args.model_id.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     other_args = "_".join([f"{k}={v}" for k, v in vars(args).items() if k not in ["model_id", "dataset_id"]])
-    return f"{model_id}-{dataset_id}_{other_args}"
+    return f"{run_id}_{model_id}-{dataset_id}_{other_args}"
 
 
 def train(
@@ -136,7 +137,7 @@ def train(
     response_template = ids[ids.index(a_id)+1:ids.index(b_id)]
     
     data_collator = DataCollatorForCompletionOnlyLM(
-        instruction_template=instruction_template,
+        instruction_template=instruction_template,  # can be None for single-turn conversations
         response_template=response_template,
         tokenizer=tokenizer,
     )
@@ -150,7 +151,14 @@ def train(
     
     
     # Step 4. Training
-    dirname = args_str(args)
+    run = wandb.init(
+        project=f"{args.model_id}-{args.dataset_id}",
+        config=vars(args),
+        resume="allow"
+    )
+    run_id = run.id
+    
+    dirname = args_str(args, run_id)
     training_args = SFTConfig(
         output_dir                  = f"./output/{dirname}",
         run_name                    = dirname,
@@ -188,6 +196,8 @@ def train(
 
     trainer.train()
     tokenizer.save_pretrained(training_args.output_dir)
+
+    run.finish()
     
     
 if __name__ == "__main__":
