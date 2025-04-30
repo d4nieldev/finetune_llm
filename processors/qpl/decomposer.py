@@ -47,7 +47,7 @@ class QPLDecomposerProcessor(QPLProcessor):
     def to_chat_template(self, example):
         db_id = example['db_id']
 
-        prompt = (
+        system = (
             "Given a database schema and a question in natural language, "
             + "you must predict the toplevel operator and if needed, decompose the input question into one or two "
             + "simpler sub-questions which describe the arguments of the toplevel operator.\n\n"
@@ -62,8 +62,10 @@ class QPLDecomposerProcessor(QPLProcessor):
             + "**Except** - Compute the set difference between two streams of tuples (2 sub-questions)\n"
             + "**Intersect** - Compute the set intersection between two streams of tuples (2 sub-questions)\n"
             + "**Union** - Compute the set union between two streams of tuples (2 sub-questions)\n\n"
+        )
 
-            + f"Database Name: {db_id}\n\n"
+        user = (
+            f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
             + f"```DDL\n{self._create_table_prompt(example)}```\n\n"
@@ -81,7 +83,8 @@ class QPLDecomposerProcessor(QPLProcessor):
 
         return ChatTemplate(
             messages=[
-                ChatMessage(role="user", content=prompt),
+                ChatMessage(role="system", content=system),
+                ChatMessage(role="user", content=user),
                 ChatMessage(role="assistant", content=response),
             ]
         )
