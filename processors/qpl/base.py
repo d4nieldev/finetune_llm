@@ -42,6 +42,8 @@ class QPLProcessor(BaseProcessor):
         
         with open(os.path.join(parent_dir, "db_schemas.json")) as f:
             self._db_schemas = json.load(f)
+        
+        self.__log_cache = set()
 
     
     def _create_table_prompt(
@@ -50,11 +52,17 @@ class QPLProcessor(BaseProcessor):
         try:
             example_id = self._example_to_id(example)
         except ValueError as e:
-            logging.warning("%s", e)
+            if str(e) not in self.__log_cache:
+                logging.warning("%s", e)
+            self.__log_cache.add(str(e))
             db_id = example['db_id']
             add_db_content = False
         else:
             db_id = self._db_content[example_id]["db_id"]
+
+        # problematic ids
+        if db_id == "car_11":
+            db_id = "car_1"
 
         tables = self._db_schemas[db_id]["tables"]
         pk = self._db_schemas[db_id].get("pk", None)
