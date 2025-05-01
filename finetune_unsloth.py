@@ -11,8 +11,8 @@ from datetime import datetime
 
 import torch
 from datasets import load_dataset
-from unsloth import FastLanguageModel, is_bfloat16_supported
-from unsloth.chat_templates import get_chat_template
+from unsloth import FastModel, is_bfloat16_supported
+from unsloth.chat_templates import get_chat_template, standardize_data_formats, train_on_responses_only
 from trl import SFTTrainer, SFTConfig
 
 from callbacks import MemoryLoggingCallback
@@ -31,7 +31,7 @@ def parse_args():
     )
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
-    hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--model_id", type=str, default="unsloth/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
     hf_ids_group.add_argument("--dataset_id", type=str, default="dair-ai/emotion", help="Dataset ID to use for fine-tuning.")
     
     train_config_group = parser.add_argument_group("Training config")
@@ -71,83 +71,109 @@ def train(
     for k, v in vars(args).items():
         print(f"{k}={v}")
     
-    max_seq_length = 50
+    max_seq_length = 1024
 
-    # Step 1. Load tokenizer
-    model, tokenizer = FastLanguageModel.from_pretrained(
+    # Step 1. Load model & tokenizer
+    model, tokenizer = FastModel.from_pretrained(
         args.model_id,
         max_seq_length=max_seq_length,
         load_in_4bit=False,
         dtype=None,
     )
+    
+    if args.lora:
+        model = FastModel.get_peft_model(
+            model,
+            finetune_vision_layers = False,
+            finetune_language_layers = True,
+            finetune_attention_modules = True,
+            finetune_mlp_modules = True,
+            r = args.r,
+            lora_alpha=args.alpha,
+            lora_dropout=args.dropout,
+            bias = "none",
+            random_state = args.random_seed,
+        )
 
     tokenizer = get_chat_template(
         tokenizer,
-        chat_template="chatml"
+        chat_template="gemma-3"
     )
-    
-    if args.lora:
-        model = FastLanguageModel.get_peft_model(
-            model,
-            r=args.r,
-            lora_alpha=args.alpha,
-            lora_dropout=args.dropout,
-            target_modules="all-linear",
-            use_rslora=True,
-            use_gradient_checkpointing="unsloth",
-        )
     
     
     # Step 3. Data preperation
     train_dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
     processor = ProcessorRegistry.get(args.dataset_id)()
     train_dataset = train_dataset.map(processor.to_chat_template, remove_columns=train_dataset.column_names)
+    train_dataset = train_dataset.rename_column("messages", "conversations")  # for standardization
+    train_dataset = standardize_data_formats(train_dataset)
 
-    def to_model_prompt(examples):
-        messages = examples["messages"]
-        text = [tokenizer.apply_chat_template(message, tokenize=False, add_generation_prompt=False) for message in messages]
-        return {"text": text}
+    print(f"AFTER STANDARTIZATION:\n\n{train_dataset[0]}\n\n")
+
+    def formatting_prompts_func(examples):
+        convos = examples["conversations"]
+        texts = [
+            tokenizer.apply_chat_template(
+                convo,
+                tokenize = False,
+                add_generation_prompt = False
+            ).removeprefix('<bos>') 
+            for convo in convos
+        ]
+        return { "text" : texts, }
     
-    train_dataset = train_dataset.map(to_model_prompt, batched=True, remove_columns=train_dataset.column_names)
+    train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
+
+    print(f"AFTER FORMATTING:\n\n{train_dataset[0]['text']}\n\n")
     
     
     # Step 4. Training
     dirname = args_str(args)
     training_args = SFTConfig(
-        output_dir                  = f"./output/unsloth/{dirname}",
-        run_name                    = dirname,
         dataset_text_field          = "text",
-        dataset_num_proc            = 2,
-        max_seq_length              = max_seq_length,
-        packing                     = True,
-        learning_rate               = args.learning_rate,
-        lr_scheduler_type           = "linear",
         per_device_train_batch_size = args.train_batch_size,
         gradient_accumulation_steps = args.gradient_accumulation_steps,
         num_train_epochs            = args.num_train_epochs,
-        fp16                        = not is_bfloat16_supported(),
-        bf16                        = is_bfloat16_supported(),
+        warmup_steps                = 5,
+        learning_rate               = args.learning_rate,
         logging_steps               = args.logging_steps,
+        output_dir                  = f"./output/unsloth/{dirname}",
+        run_name                    = dirname,
         weight_decay                = 0.01,
-        warmup_steps                = 10,
+        lr_scheduler_type           = "linear",
         seed                        = args.random_seed,
-        logging_strategy            = "steps",
-        save_strategy               = "steps",
-        save_steps                  = args.save_steps,
         report_to                   = ["wandb"],
-        max_grad_norm               = 1.0
+        dataset_num_proc            = 2,
+        max_seq_length              = max_seq_length,
+        # packing                     = True,
+        # fp16                        = not is_bfloat16_supported(),
+        # bf16                        = is_bfloat16_supported(),
+        # logging_strategy            = "steps",
+        # save_strategy               = "steps",
+        # save_steps                  = args.save_steps,
+        # max_grad_norm               = 1.0
     )
 
     trainer = SFTTrainer(
         model              = model,
         processing_class   = tokenizer,
-        train_dataset      = train_dataset,
+        train_dataset      = train_dataset, 
         args               = training_args,
         callbacks          = [MemoryLoggingCallback()],
     )
 
+    trainer = train_on_responses_only(
+        trainer,
+        instruction_part = "<start_of_turn>user\n",
+        response_part = "<start_of_turn>model\n"
+    )
+
+    print(f"SHOULD HAVE SINGLE <bos> TOKEN:\n\n{tokenizer.decode(trainer.train_dataset[0]['input_ids'])}\n\n")
+    print(f"MASKED EXAMPLE:\n\n{tokenizer.decode([tokenizer.pad_token_id if x == -100 else x for x in trainer.train_dataset[0]['labels']]).replace(tokenizer.pad_token, ' ')}\n\n")
+
+
     trainer.train()
-    tokenizer.save_pretrained(training_args.output_dir)
+    # tokenizer.save_pretrained(training_args.output_dir)
     
 
 if __name__ == "__main__":
