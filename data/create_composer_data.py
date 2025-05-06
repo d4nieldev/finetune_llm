@@ -167,8 +167,10 @@ def create_composer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
                 )
             rows_to_return.append(
                 {
+                    "db_id": root.db_id,
                     "question": root.question, 
-                    "prefix_qpl": root.prefix_qpl, 
+                    "prefix_qpl": root.prefix_qpl,
+                    "op": root.op.value,
                     "qpl_line": root.qpl_line
                 }
             )
