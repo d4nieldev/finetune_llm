@@ -7,28 +7,6 @@ from processors.base import ProcessorRegistry
 from datasets import load_dataset
 
 
-def update_type(col_type):
-    if "char" in col_type or col_type == "" or "text" in col_type or "var" in col_type:
-        return "text"
-    elif (
-        "int" in col_type
-        or "numeric" in col_type
-        or "decimal" in col_type
-        or "number" in col_type
-        or "id" in col_type
-        or "real" in col_type
-        or "double" in col_type
-        or "float" in col_type
-    ):
-        return "number"
-    elif "date" in col_type or "time" in col_type:
-        return "date"
-    elif "boolean" in col_type or col_type == "bit":
-        return "boolean"
-    else:
-        return "others"
-
-
 @ProcessorRegistry.register
 class QPLDecomposerProcessor(QPLProcessor):
     dataset_id = "bgunlp/question_decomposer_ds"
