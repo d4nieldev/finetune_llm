@@ -168,6 +168,7 @@ def create_composer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
             rows_to_return.append(
                 {
                     "db_id": root.db_id,
+                    "parent_question": root.parent.question if root.parent else None,
                     "question": root.question, 
                     "prefix_qpl": root.prefix_qpl,
                     "op": root.op.value,
