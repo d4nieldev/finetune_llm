@@ -1,1 +1,2 @@
 from .decomposer import QPLDecomposerProcessor
+from .composer import QPLComposerProcessor
