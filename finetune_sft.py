@@ -49,6 +49,9 @@ def parse_args():
     
     args = parser.parse_args()
 
+    if 0 < args.logging_steps < 1:
+        args.logging_steps /= args.gradient_accumulation_steps * args.train_batch_size
+
     return args
 
 
