@@ -13,3 +13,4 @@ unsloth==2025.4.1
 wandb==0.19.9
 pyodbc==5.2.0
 sqlalchemy==2.0.41
+regex==2024.11.6
