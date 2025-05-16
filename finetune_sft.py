@@ -174,7 +174,7 @@ def train(
         save_steps                  = args.save_steps,
         seed                        = args.random_seed,
         report_to                   = ["wandb"],
-        max_length                  = max_length,
+        max_seq_length              = max_length,
         remove_unused_columns       = False,
         save_safetensors            = False # Safetensors can't save tensors that share the same memory
     )
