@@ -22,7 +22,7 @@ class QPLDecomposerProcessor(QPLProcessor):
         self.__q_to_id = q_to_id
         self.__dataset = load_dataset(self.dataset_id)
 
-    def to_chat_template(self, example):
+    def to_chat_template(self, example, test: bool = False) -> ChatTemplate:
         db_id = example['db_id']
 
         system = (
@@ -53,19 +53,27 @@ class QPLDecomposerProcessor(QPLProcessor):
             + "The first line of the output should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
-        response = f"{example['op']}"
-        if example['sub_question_1']:
-            response += f"\n{example['sub_question_1']}"
-        if example['sub_question_2']:
-            response += f"\n{example['sub_question_2']}"
+        if test:
+            response = f"{example['op']}"
+            if example['sub_question_1']:
+                response += f"\n{example['sub_question_1']}"
+            if example['sub_question_2']:
+                response += f"\n{example['sub_question_2']}"
 
-        return ChatTemplate(
-            messages=[
-                ChatMessage(role="system", content=system),
-                ChatMessage(role="user", content=user),
-                ChatMessage(role="assistant", content=response),
-            ]
-        )
+            return ChatTemplate(
+                messages=[
+                    ChatMessage(role="system", content=system),
+                    ChatMessage(role="user", content=user),
+                    ChatMessage(role="assistant", content=response),
+                ]
+            )
+        else:
+            return ChatTemplate(
+                messages=[
+                    ChatMessage(role="system", content=system),
+                    ChatMessage(role="user", content=user),
+                ]
+            )
     
     def _example_to_id(self, example: Dict[str, Any]) -> str:
         # get id
