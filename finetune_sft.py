@@ -113,7 +113,7 @@ def train(
     # Step 3. Data preperation
     train_dataset: Dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
     processor = ProcessorRegistry.get(args.dataset_id)()
-    train_dataset = train_dataset.map(processor.to_chat_template, remove_columns=train_dataset.column_names)
+    train_dataset = train_dataset.map(lambda ex: processor.to_chat_template(ex, train=True), remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}
         # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#6-applying-the-chat-template-is-not-a-homomorphism-with-respect-to-concatenation

@@ -24,7 +24,7 @@ class QPLComposerProcessor(QPLProcessor):
         self.__q_to_id = q_to_id
         self.__dataset = load_dataset(self.dataset_id)
 
-    def to_chat_template(self, example, test: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example, train: bool = False) -> ChatTemplate:
         db_id = example['db_id']
 
         system = (
@@ -85,7 +85,7 @@ class QPLComposerProcessor(QPLProcessor):
             + f"```QPL\n{prefix_qpl_str}{line_start}"
         )
 
-        if test:
+        if train:
             response = f"{example['qpl_line'].replace(line_start, '')}\n```"
             return ChatTemplate(
                 messages=[

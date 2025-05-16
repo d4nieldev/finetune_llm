@@ -6,7 +6,7 @@ from custom_types import ChatTemplate
 
 class BaseProcessor(ABC):    
     @abstractmethod
-    def to_chat_template(self, example: Dict[str, Any], test: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example: Dict[str, Any], train: bool = False) -> ChatTemplate:
         """
         Convert an example from the dataset to a chat template.
 
