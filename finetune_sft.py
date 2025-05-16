@@ -51,6 +51,8 @@ def parse_args():
 
     if 0 < args.logging_steps < 1:
         args.logging_steps /= args.gradient_accumulation_steps * args.train_batch_size
+    if 0 < args.save_steps < 1:
+        args.save_steps /= args.gradient_accumulation_steps * args.train_batch_size
 
     return args
 
