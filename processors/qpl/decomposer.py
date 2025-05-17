@@ -22,7 +22,7 @@ class QPLDecomposerProcessor(QPLProcessor):
         self.__q_to_id = q_to_id
         self.__dataset = load_dataset(self.dataset_id)
 
-    def to_chat_template(self, example, train: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example, assistant_response: bool = False) -> ChatTemplate:
         db_id = example['db_id']
 
         system = (
@@ -46,14 +46,14 @@ class QPLDecomposerProcessor(QPLProcessor):
             f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=train)}```\n\n"
+            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=assistant_response)}```\n\n"
 
             + f"""Question: {example["question"].strip()}\n\n"""
 
             + "The first line of the output should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
-        if train:
+        if assistant_response:
             response = f"{example['op']}"
             if example['sub_question_1']:
                 response += f"\n{example['sub_question_1']}"

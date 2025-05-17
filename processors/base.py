@@ -6,12 +6,13 @@ from custom_types import ChatTemplate
 
 class BaseProcessor(ABC):    
     @abstractmethod
-    def to_chat_template(self, example: Mapping[str, Any], train: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example: Mapping[str, Any], assistant_response: bool = False) -> ChatTemplate:
         """
         Convert an example from the dataset to a chat template.
 
         Args:
             example (Mapping[str, Any]): A dictionary representing a single example from the dataset.
+            assistant_response (bool): Whether the chat should also include the assistant's response.
 
         Returns:
             ChatTemplate: A dictionary representing the chat template.
