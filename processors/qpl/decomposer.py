@@ -46,7 +46,7 @@ class QPLDecomposerProcessor(QPLProcessor):
             f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example)}```\n\n"
+            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=train)}```\n\n"
 
             + f"""Question: {example["question"].strip()}\n\n"""
 

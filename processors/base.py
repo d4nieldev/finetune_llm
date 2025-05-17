@@ -1,17 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Type, Optional
+from typing import Any, Dict, Type, Mapping
 
 from custom_types import ChatTemplate
 
 
 class BaseProcessor(ABC):    
     @abstractmethod
-    def to_chat_template(self, example: Dict[str, Any], train: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example: Mapping[str, Any], train: bool = False) -> ChatTemplate:
         """
         Convert an example from the dataset to a chat template.
 
         Args:
-            batch (Dict[str, Any]): A dictionary representing a single example from the dataset.
+            example (Mapping[str, Any]): A dictionary representing a single example from the dataset.
 
         Returns:
             ChatTemplate: A dictionary representing the chat template.

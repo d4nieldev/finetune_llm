@@ -1,7 +1,7 @@
 import os
 import json
 import pydash
-from typing import Dict, Any
+from typing import Any, Mapping
 from abc import abstractmethod
 import logging
 
@@ -47,12 +47,18 @@ class QPLProcessor(BaseProcessor):
 
     
     def _create_table_prompt(
-        self, example: Dict[str, Any], add_db_content=True, add_column_types=True, add_pk=True, add_fk=True
+        self, 
+        example: Mapping[str, Any],
+        add_db_content=True,
+        add_column_types=True,
+        add_pk=True,
+        add_fk=True,
+        log_when_parent_not_found=True,
     ):
         try:
             example_id = self._example_to_id(example)
         except ValueError as e:
-            if str(e) not in self.__log_cache:
+            if log_when_parent_not_found and str(e) not in self.__log_cache:
                 logging.warning("%s", e)
             self.__log_cache.add(str(e))
             db_id = example['db_id']
@@ -124,12 +130,12 @@ class QPLProcessor(BaseProcessor):
         return prompt
     
     @abstractmethod
-    def _example_to_id(self, example: Dict[str, Any]) -> str:
+    def _example_to_id(self, example: Mapping[str, Any]) -> str:
         """
         Convert an example to its corresponding ID for extracting its db content.
 
         Args:
-            example (Dict[str, Any]): The example to convert.
+            example (Mapping[str, Any]): The example to convert.
 
         Returns:
             str: The ID of the example.
