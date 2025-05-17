@@ -27,6 +27,7 @@ class CompleterExample(TypedDict):
     question: str
     db_id: str
     prefix_qpl: str
+    line_num: int
     op: str
     parent_question: Optional[str]
 
@@ -54,7 +55,7 @@ class QPLTree:
     db_id: str
     op: Operator = None   # type: ignore
     qpl_line: str = None  # type: ignore
-    line_idx: int = None  # type: ignore
+    line_num: int = None  # type: ignore
     parent: Optional["QPLTree"] = None
     children: Optional[Union[Tuple["QPLTree"], Tuple["QPLTree", "QPLTree"]]] = None
 
@@ -197,7 +198,7 @@ def post_order_index_tree(tree: QPLTree, counter: int = 1) -> int:
     if tree.children:
         for child in tree.children:
             counter = post_order_index_tree(child, counter)
-    tree.line_idx = counter
+    tree.line_num = counter
     return counter + 1
 
 @torch.no_grad()
@@ -210,7 +211,7 @@ def complete(
         max_new_tokens: int = 128,
     ) -> None:
 
-    num_nodes = sum([tree.line_idx for tree in trees])
+    num_nodes = sum([tree.line_num for tree in trees])
     progress_bar = tqdm(total=num_nodes, desc="Completing QPL", unit="node")
 
     def rec(trees: List[QPLTree]) -> None:
@@ -234,6 +235,7 @@ def complete(
                 question=tree.question,
                 db_id=tree.db_id,
                 prefix_qpl=tree.prefix_qpl,
+                line_num=tree.line_num,
                 op=tree.op.value,
                 parent_question=tree.parent.question if tree.parent else None,
             )
@@ -253,7 +255,7 @@ def complete(
         # Parse the outputs and assign the QPL lines to the trees
         for tree, output in zip(trees, outputs):
             completion = output.split('\n')[0].strip()
-            tree.qpl_line = f"#{tree.line_idx} = {tree.op.value} {completion}"
+            tree.qpl_line = f"#{tree.line_num} = {tree.op.value} {completion}"
 
     return rec(trees)
 
