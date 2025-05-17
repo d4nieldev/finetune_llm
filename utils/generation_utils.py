@@ -1,8 +1,9 @@
-from typing import List, Dict, Literal
+from typing import List, Optional
 from typing_extensions import TypedDict
 
 from custom_types import ChatTemplate
 
+from tqdm import tqdm
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase, BatchEncoding
 
@@ -17,7 +18,7 @@ def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatTempl
         add_generation_prompt=True,
         continue_final_message=False,
     )
-    return {"prompt": prompt}
+    return ModelPrompt(prompt=prompt)
 
 
 def to_model_inputs_cuda(tokenizer: PreTrainedTokenizerBase, model_prompts: List[ModelPrompt]) -> BatchEncoding:
@@ -45,8 +46,9 @@ def generate_batch(
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizerBase,
         model_prompts: List[ModelPrompt],
+        batch_size: int = 8,
         max_new_tokens: int = 256,
-        batch_size: int = 16,
+        progress_bar: Optional[tqdm] = None
     ) -> List[str]:
     model_outputs = []
     for i in range(0, len(model_prompts), batch_size):
@@ -54,6 +56,8 @@ def generate_batch(
         batch_model_inputs_cuda = to_model_inputs_cuda(tokenizer, batch_model_prompts)
         batch_model_outputs = to_model_outputs(batch_model_inputs_cuda, model, tokenizer, max_new_tokens)
         model_outputs.extend(batch_model_outputs)
+        if progress_bar is not None:
+            progress_bar.update(len(batch_model_prompts))
     return model_outputs
 
 
