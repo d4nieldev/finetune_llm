@@ -104,16 +104,16 @@ def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, str], QPLTree]:
         db_id, qpl_code = [item.strip() for item in qpl.split("|")]
         qpl_rows = [qpl_row.strip() for qpl_row in qpl_code.split(";")]
 
-        nodes = [QPLTree() for _ in qpl_rows]
+        row_nodes = [QPLTree() for _ in qpl_rows]
         for qpl_row in qpl_rows:
-            matches = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
-            row_id = matches[0] - 1
-            children = [nodes[match - 1] for match in set(matches[1:])]
+            line_numbers = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
+            row_id = line_numbers[0] - 1
+            children = [row_nodes[line_num - 1] for line_num in set(line_numbers[1:])]
             assert len(children) <= 2, f"QPL row {qpl_row} has more than 2 children: {children}"
-            nodes[row_id].qpl_row = qpl_row
-            nodes[row_id].children = tuple(children)
+            row_nodes[row_id].qpl_row = qpl_row
+            row_nodes[row_id].children = tuple(children)
 
-        q_to_qpl_tree[(question, db_id)] = nodes[-1]
+        q_to_qpl_tree[(question, db_id)] = row_nodes[-1]
 
     return q_to_qpl_tree
 
