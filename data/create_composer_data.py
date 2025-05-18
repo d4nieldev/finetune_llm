@@ -188,7 +188,7 @@ def create_composer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
     
 
 if __name__ == "__main__":
-    nl2qpl_dataset_id = "d4nieldev/nl2qpl"
+    nl2qpl_dataset_id = "d4nieldev/nl2qpl-ds"
     decomposer_dataset_id = "bgunlp/question_decomposer_ds"
 
     dataset = {}
