@@ -188,7 +188,7 @@ def create_composer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
     
 
 if __name__ == "__main__":
-    nl2qpl_dataset_id = "d4nieldev/nl2qpl"
+    nl2qpl_dataset_id = "d4nieldev/nl2qpl-ds"
     decomposer_dataset_id = "bgunlp/question_decomposer_ds"
 
     dataset = {}
@@ -217,4 +217,4 @@ if __name__ == "__main__":
         split: Dataset.from_list(data) 
         for split, data in dataset.items()
     })
-    ds.push_to_hub("d4nieldev/qpl_composer")
+    ds.push_to_hub("d4nieldev/qpl-composer-ds")
