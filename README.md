@@ -33,4 +33,4 @@ accelerate launch finetune_sft.py \
   --dropout=0.05
 ```
 
-To see more information about the different arguments run: `python finetune_sft.py --help`.
+To see information about the different arguments run: `python finetune_sft.py --help`.
