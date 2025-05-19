@@ -7,7 +7,7 @@ from data.create_composer_data import Operator, Tuple
 
 @dataclass
 class QPLTree:
-    qpl_row: str = None
+    qpl_row: str = None  # type: ignore
     children: Optional[Union[Tuple["QPLTree"], Tuple["QPLTree", "QPLTree"]]] = None
 
     @property
@@ -28,5 +28,5 @@ def get_qpl_tree(qpl_lines: List[str]) -> QPLTree:
         row_id = line_numbers[0] - 1
         children = [row_nodes[line_num - 1] for line_num in set(line_numbers[1:])]
         row_nodes[row_id].qpl_row = qpl_row
-        row_nodes[row_id].children = tuple(children) if children else None
+        row_nodes[row_id].children = tuple(children) if children else None  # type: ignore
     return row_nodes[-1]
