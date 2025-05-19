@@ -46,7 +46,7 @@ class Partial(QPLType, Generic[E]):
     def __repr__(self):
         return f"Partial[{self.entity}]"
 
-
+@dataclass(unsafe_hash=True)
 class Reduced(QPLType, Generic[E]):
     entity: E
 
