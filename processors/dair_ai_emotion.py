@@ -6,13 +6,14 @@ from custom_types import ChatTemplate, ChatMessage
 class EmotionProcessor(BaseProcessor):
     dataset_id = "dair-ai/emotion"
     
-    def __init__(self):
+    def __init__(self, train: bool = False):
+        super().__init__(train)
         self.labels_list = ["sadness","joy","love","anger","fear","surprise"]
         
-    def to_chat_template(self, example, assistant_response: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatTemplate:
         prompt = f"Below is a piece of text. Classify it into one of: {', '.join(self.labels_list)}.\n\n\"{example['text']}\""
 
-        if assistant_response:
+        if self.train:
             response = f"The emotion in the above text is: {self.labels_list[example['label']]}"
             return ChatTemplate(
                 messages=[

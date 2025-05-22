@@ -11,8 +11,8 @@ from datasets import load_dataset
 class QPLDecomposerProcessor(QPLProcessor):
     dataset_id = "bgunlp/question_decomposer_ds"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, train: bool = False):
+        super().__init__(train)
         
         q_to_id = {}
         for id, content in self._db_content.items():
@@ -22,7 +22,7 @@ class QPLDecomposerProcessor(QPLProcessor):
         self.__q_to_id = q_to_id
         self.__dataset = load_dataset(self.dataset_id)
 
-    def to_chat_template(self, example, assistant_response: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
 
         system = (
@@ -53,7 +53,7 @@ class QPLDecomposerProcessor(QPLProcessor):
             + "The first line of the output should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
-        if assistant_response:
+        if self.train:
             response = f"{example['op']}"
             if example['sub_question_1']:
                 response += f"\n{example['sub_question_1']}"
@@ -77,13 +77,15 @@ class QPLDecomposerProcessor(QPLProcessor):
     
     def _example_to_id(self, example: Dict[str, Any]) -> str:
         # get id
-        id = self.__q_to_id.get(example['question'])
-        if id is None:
-            # return id of parent
-            for dataset in self.__dataset.values():  # type: ignore
-                for ex in dataset:
-                    if ex['sub_question_1'] == example['question'] or ex['sub_question_2'] == example['question']:
-                        return self._example_to_id(ex)
-            # parent not found
-            raise ValueError(f"Parent not found for question: {example['question']}")
-        return id
+        if self.train:
+            id = self.__q_to_id.get(example['question'])
+            if id is None:
+                # return id of parent
+                for dataset in self.__dataset.values():  # type: ignore
+                    for ex in dataset:
+                        if ex['sub_question_1'] == example['question'] or ex['sub_question_2'] == example['question']:
+                            return self._example_to_id(ex)
+                # parent not found
+                raise ValueError(f"Parent not found for question: {example['question']}")
+            return id
+        raise ValueError("Cannot get id in test mode")

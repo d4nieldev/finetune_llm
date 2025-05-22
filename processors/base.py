@@ -4,15 +4,17 @@ from typing import Any, Dict, Type, Mapping
 from custom_types import ChatTemplate
 
 
-class BaseProcessor(ABC):    
+class BaseProcessor(ABC):
+    def __init__(self, train: bool = False) -> None:
+        self.train = train
+
     @abstractmethod
-    def to_chat_template(self, example: Mapping[str, Any], assistant_response: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example: Mapping[str, Any]) -> ChatTemplate:
         """
         Convert an example from the dataset to a chat template.
 
         Args:
             example (Mapping[str, Any]): A dictionary representing a single example from the dataset.
-            assistant_response (bool): Whether the chat should also include the assistant's response.
 
         Returns:
             ChatTemplate: A dictionary representing the chat template.

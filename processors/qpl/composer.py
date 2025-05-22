@@ -13,8 +13,8 @@ from datasets import load_dataset
 class QPLComposerProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl_composer"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, train: bool = False):
+        super().__init__(train)
         
         q_to_id = {}
         for id, content in self._db_content.items():
@@ -24,7 +24,7 @@ class QPLComposerProcessor(QPLProcessor):
         self.__q_to_id = q_to_id
         self.__dataset = load_dataset(self.dataset_id)
 
-    def to_chat_template(self, example, assistant_response: bool = False) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
 
         system = (
@@ -86,7 +86,7 @@ class QPLComposerProcessor(QPLProcessor):
             + f"```QPL\n{prefix_qpl_str}{line_start}"
         )
 
-        if assistant_response:
+        if self.train:
             response = f"{example['qpl_line'].replace(line_start, '')}\n```"
             return ChatTemplate(
                 messages=[
@@ -105,13 +105,15 @@ class QPLComposerProcessor(QPLProcessor):
     
     def _example_to_id(self, example: Dict[str, Any]) -> str:
         # get id
-        id = self.__q_to_id.get(example['question'])
-        if id is None:
-            # return id of parent
-            for dataset in self.__dataset.values():  # type: ignore
-                for ex in dataset:
-                    if ex['question'] == example['parent_question']:
-                        return self._example_to_id(ex)
-            # parent not found
-            raise ValueError(f"Parent not found for question: {example['question']}")
-        return id
+        if self.train:
+            id = self.__q_to_id.get(example['question'])
+            if id is None:
+                # return id of parent
+                for dataset in self.__dataset.values():  # type: ignore
+                    for ex in dataset:
+                        if ex['question'] == example['parent_question']:
+                            return self._example_to_id(ex)
+                # parent not found
+                raise ValueError(f"Parent not found for question: {example['question']}")
+            return id
+        raise ValueError("Cannot get id in test mode")
