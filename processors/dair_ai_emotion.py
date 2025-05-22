@@ -6,8 +6,8 @@ from custom_types import ChatTemplate, ChatMessage
 class EmotionProcessor(BaseProcessor):
     dataset_id = "dair-ai/emotion"
     
-    def __init__(self, train: bool = False):
-        super().__init__(train)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.labels_list = ["sadness","joy","love","anger","fear","surprise"]
         
     def to_chat_template(self, example) -> ChatTemplate:
@@ -25,6 +25,5 @@ class EmotionProcessor(BaseProcessor):
             return ChatTemplate(
                 messages=[
                     ChatMessage(role="user",content=prompt),
-                    ChatMessage(role="assistant", content=response)
                 ]
             )

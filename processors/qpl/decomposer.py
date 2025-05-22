@@ -11,8 +11,8 @@ from datasets import load_dataset
 class QPLDecomposerProcessor(QPLProcessor):
     dataset_id = "bgunlp/question_decomposer_ds"
 
-    def __init__(self, train: bool = False):
-        super().__init__(train)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         
         q_to_id = {}
         for id, content in self._db_content.items():

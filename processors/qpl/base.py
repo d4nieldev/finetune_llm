@@ -31,8 +31,8 @@ def update_type(col_type):
 
 
 class QPLProcessor(BaseProcessor):
-    def __init__(self, train: bool = False):
-        super().__init__(train)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Load databases
         parent_dir = os.path.dirname(os.path.realpath(__file__))
