@@ -27,18 +27,18 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="dair-ai/emotion", help="Dataset ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--dataset_id", type=str, default="d4nieldev/qpl-composer-ds", help="Dataset ID to use for fine-tuning.")
     
     train_config_group = parser.add_argument_group("Training config")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
-    train_config_group.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Gradient accumulation steps.")
+    train_config_group.add_argument("--gradient_accumulation_steps", type=int, default=8, help="Gradient accumulation steps.")
     train_config_group.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate.")
-    train_config_group.add_argument("--num_train_epochs", type=int, default=2, help="Number of training epochs.")
-    train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=False, help="Enable gradient checkpointing.")
+    train_config_group.add_argument("--num_train_epochs", type=int, default=4, help="Number of training epochs.")
+    train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
-    monitoring_group.add_argument("--logging_steps", type=int, default=500, help="Log every N steps. If between 0 to 1, part of the epoch.")
-    monitoring_group.add_argument("--save_steps", type=int, default=5000, help="Save checkpoint every N steps. If between 0 to 1, part of the epoch.")
+    monitoring_group.add_argument("--logging_steps", type=int, default=0.01, help="Log every N steps. If between 0 to 1, part of the epoch.")
+    monitoring_group.add_argument("--save_steps", type=int, default=0.5, help="Save checkpoint every N steps. If between 0 to 1, part of the epoch.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
     
     lora_config_group = parser.add_argument_group("LoRA config")
@@ -157,7 +157,7 @@ def train(
     
     # Step 4. Training
     run = wandb.init(
-        project=f"{args.model_id}-{args.dataset_id}",
+        project=f"{args.model_id.replace('/', '-')}_{args.dataset_id.replace('/', '-')}",
         config=vars(args),
         resume="allow"
     )
