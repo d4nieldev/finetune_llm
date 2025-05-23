@@ -87,6 +87,8 @@ def text_to_sql(
         examples: List[DecomposerExample], 
         decomposer_model_path: str, 
         completer_model_path: str,
+        decomposer_generation_params: Dict[str, Any] = {'do_sample': False},
+        completer_generation_params: Dict[str, Any] = {'do_sample': False},
         decomposer_bsz: int = 8,
         decomposer_max_new_tokens: int = 256,
         completer_bsz: int = 8,
@@ -102,6 +104,7 @@ def text_to_sql(
         examples=examples,
         processor=decomposer_processor,
         model=decomposer_model,
+        generation_params=decomposer_generation_params,
         tokenizer=decomposer_tokenizer,
         batch_size=decomposer_bsz,
         max_new_tokens=decomposer_max_new_tokens,
@@ -126,6 +129,7 @@ def text_to_sql(
         trees=trees,
         processor=completer_processor,
         model=completer_model,
+        generation_params=completer_generation_params,
         tokenizer=completer_tokenizer,
         batch_size=completer_bsz,
         max_new_tokens=completer_max_new_tokens,
@@ -155,9 +159,10 @@ def decompose(
         examples: List[DecomposerExample],
         processor: QPLDecomposerProcessor,
         model: PreTrainedModel,
+        generation_params: Dict[str, Any],
         tokenizer: PreTrainedTokenizerBase,
-        batch_size: int = 8,
-        max_new_tokens: int = 256,
+        batch_size: int,
+        max_new_tokens: int,
     ) -> List[QPLTree]:
 
     def rec(examples: List[DecomposerExample], lvl: int = 1) -> List[QPLTree]:
@@ -222,9 +227,10 @@ def complete(
         trees: List[QPLTree],
         processor: QPLComposerProcessor,
         model: PreTrainedModel,
+        generation_params: Dict[str, Any],
         tokenizer: PreTrainedTokenizerBase,
-        batch_size: int = 16,
-        max_new_tokens: int = 128,
+        batch_size: int,
+        max_new_tokens: int,
     ) -> None:
 
     num_nodes = sum([tree.line_num for tree in trees])
