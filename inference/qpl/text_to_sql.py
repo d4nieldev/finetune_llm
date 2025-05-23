@@ -94,7 +94,7 @@ def text_to_sql(
         trees_ckpt_file: Path = Path('output/qpl/trees.json')
     ) -> List[Result]:
     # Decompose input questions
-    decomposer_processor = QPLDecomposerProcessor()
+    decomposer_processor = QPLDecomposerProcessor(train=False)
     decomposer_model = AutoPeftModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
     decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
     decomposer_model.eval()
@@ -180,6 +180,7 @@ def decompose(
             max_new_tokens=max_new_tokens,
             progress_bar=progress_bar,
         )
+        progress_bar.close()
 
         # Parse the outputs and create child QPL trees
         children_examples = []
