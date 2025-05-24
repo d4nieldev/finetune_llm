@@ -6,9 +6,8 @@ from typing import List
 
 import numpy as np
 import pandas as pd
-import requests
 import pyodbc
-
+from tqdm import tqdm
 
 connection_string = (
     'Driver={ODBC Driver 18 for SQL Server};'
@@ -187,10 +186,17 @@ def same_rs(grs, prs, qpl):
     return eq_resultset(grs, good_keys_prs, order_by)
 
 
-def exec_cte(cte: str) -> List:
-    conn = pyodbc.connect(connection_string, autocommit=True)
-    cursor = conn.cursor()
-    return cursor.execute(cte).fetchall()
+def execute_sql(cursor, sql):
+    cursor.execute(sql)
+
+    # Retrieve column names from cursor.description
+    columns = [column[0] for column in cursor.description]
+
+    # Fetch all rows and convert to list of dictionaries
+    results = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    return results
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Validate QPL resultset against gold resultset")
@@ -210,20 +216,33 @@ if __name__ == "__main__":
     with open(input_path, "r") as f:
         model_results = json.load(f)
 
+    conn = pyodbc.connect(connection_string, autocommit=True)
+    cursor = conn.cursor()
+
     accuracy = 0
     results = []
-    for model_result in model_results:
-        qpl = model_result["pred_qpl"]
+    for model_result in tqdm(model_results, desc="Evaluating QPL"):
+        qpl = model_result["pred_qpl"].split(' ; ')
         pred_cte = model_result["pred_cte"]
         gold_cte = model_result["gold_cte"]
-        prs = exec_cte(pred_cte)
-        grs = exec_cte(gold_cte)
-        same = same_rs(grs, prs, qpl)
-        if same:
-            accuracy += 1
-        results.append({**model_result, "is_correct": same})
+        err = None
+        try:
+            prs = execute_sql(cursor, pred_cte)
+        except Exception as e:
+            err = str(e)
+            same = False
+        else:
+            grs = execute_sql(cursor, gold_cte)
+            same = same_rs(grs, prs, qpl)
+            if same:
+                accuracy += 1
+        results.append({**model_result, "is_correct": same, "error": err})
+    
     accuracy = accuracy / len(model_results) * 100
     print(f"Accuracy: {accuracy:.2f}%")
+
+    with open(args.output, "w") as f:
+        json.dump(results, f, indent=2)
         
 
     
