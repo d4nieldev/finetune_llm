@@ -36,6 +36,8 @@ class CompleterExample(TypedDict):
 
 
 class Result(TypedDict):
+    db_id: str
+    question: str
     pred_qpl: str
     pred_cte: str
 
@@ -151,7 +153,7 @@ def text_to_sql(
             cte = f"Error parsing QPL: {e}"
             log.warning(f"Error parsing QPL: {flat_qpl} for database {db_id}. Error: {e}")
 
-    return [Result(pred_qpl=tree.qpl, pred_cte=cte) for tree, cte in zip(trees, ctes)]
+    return [Result(db_id=tree.db_id, question=tree.question, pred_qpl=tree.qpl, pred_cte=cte) for tree, cte in zip(trees, ctes)]
     
 
 @torch.no_grad()
