@@ -195,6 +195,7 @@ def exec_cte(cte: str) -> List:
 def parse_args():
     parser = argparse.ArgumentParser(description="Validate QPL resultset against gold resultset")
     parser.add_argument("--input", type=Path, required=True, help="Path to the input QPL file")
+    parser.add_argument("--output", type=Path, required=True, help="Path to the output file where results will be saved")
     args = parser.parse_args()
     return args
 
@@ -207,6 +208,24 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Input file {input_path} does not exist.")
 
     with open(input_path, "r") as f:
-        qpl = json.load(f)
+        model_results = json.load(f)
+
+    accuracy = 0
+    results = []
+    for model_result in model_results:
+        qpl = model_result["pred_qpl"]
+        pred_cte = model_result["pred_cte"]
+        gold_cte = model_result["gold_cte"]
+        prs = exec_cte(pred_cte)
+        grs = exec_cte(gold_cte)
+        same = same_rs(grs, prs, qpl)
+        if same:
+            accuracy += 1
+        results.append({**model_result, "is_correct": same})
+    accuracy = accuracy / len(model_results) * 100
+    print(f"Accuracy: {accuracy:.2f}%")
+        
+
+    
 
     
