@@ -59,27 +59,27 @@ class QPLTree:
     parent: Optional["QPLTree"] = None
     children: Optional[Union[Tuple["QPLTree"], Tuple["QPLTree", "QPLTree"]]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        try:
-            prefix_qpl = self.prefix_qpl
-        except Exception:
-            prefix_qpl = None
-        try:
-            qpl = self.qpl
-        except Exception:
-            qpl = None
-        return {
+    def to_dict(self) -> Dict[str, Any]:        
+        output = {
             "db_id": self.db_id,
             "question": self.question,
-            "op": self.op.value,
-            "qpl": qpl,
-            "prefix_qpl": prefix_qpl,
-            "line_num": self.line_num,
-            "qpl_line": self.qpl_line,
             "is_valid": self.is_valid,
-            "children": [child.to_dict() for child in self.children] if self.children else None,
+            "line_num": self.line_num,
         }
+
+        if self.is_valid:
+            output = {
+                **output,
+                "op": self.op.value,
+                "qpl": self.qpl,
+                "prefix_qpl": self.prefix_qpl,
+                "qpl_line": self.qpl_line,
+                "children": [child.to_dict() for child in self.children] if self.children else None,
+            }
+
+        return output
     
+
     @staticmethod
     def from_dict(tree_dict: Dict[str, Any]) -> "QPLTree":
         tree = QPLTree(
@@ -96,14 +96,20 @@ class QPLTree:
         return tree
 
     @property
-    def prefix_qpl(self) -> str:
-        if self.children is None:
-            return ""
-        return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line).strip() for child in self.children]).replace("\n", " ; ")
+    def prefix_qpl(self) -> Optional[str]:
+        try:
+            if self.children is None:
+                return ""
+            return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line).strip() for child in self.children]).replace("\n", " ; ")
+        except Exception as e:
+            return None
     
     @property
-    def qpl(self) -> str:
-        return f"{self.prefix_qpl} ; {self.qpl_line}" if self.prefix_qpl else self.qpl_line
+    def qpl(self) -> Optional[str]:
+        try:
+            return f"{self.prefix_qpl} ; {self.qpl_line}" if self.prefix_qpl else self.qpl_line
+        except Exception as e:
+            return None
     
     @property
     def is_valid(self) -> bool:
@@ -119,7 +125,7 @@ class DecomposerMode(Enum):
 class Result(TypedDict):
     db_id: str
     question: str
-    pred_qpl: str
+    pred_qpl: Optional[str]
 
 
 def text_to_qpl(
