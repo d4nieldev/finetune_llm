@@ -85,7 +85,7 @@ class QPLTree:
         tree = QPLTree(
             question=tree_dict["question"],
             db_id=tree_dict["db_id"],
-            op=Operator(tree_dict["op"]),
+            op=Operator(tree_dict["op"]) if tree_dict['is_valid'] else None,
             line_num=tree_dict["line_num"],
             qpl_line=tree_dict.get("qpl_line"),
         )
