@@ -2,7 +2,7 @@ import re
 from typing import List, Dict, Optional
 from enum import Enum
 
-from inference.qpl.types import *
+from inference.qpl.types.types import *
 from utils.qpl.tree import QPLTree, get_qpl_tree
 
 
