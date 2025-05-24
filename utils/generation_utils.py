@@ -52,36 +52,14 @@ def to_model_outputs(
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizerBase,
         max_new_tokens: int = 256,
+        first_greedy: bool = False,
         **generation_params
     ) -> List[str]:
     if generation_params.get('do_sample') is False:
         generation_params['top_p'] = None
         generation_params['top_k'] = None
-    generation_ids = model.generate(**model_inputs_cuda, max_new_tokens=max_new_tokens, **generation_params)
-    generation_ids = generation_ids[:, model_inputs_cuda["input_ids"].shape[1]:]
-    return tokenizer.batch_decode(generation_ids, skip_special_tokens=True)
-
-
-def to_model_outputs_first_greedy(
-        model_inputs_cuda: BatchEncoding,
-        model: PreTrainedModel,
-        tokenizer: PreTrainedTokenizerBase,
-        max_new_tokens: int = 256,
-        **generation_params
-    ) -> List[str]:
-    if generation_params.get('do_sample') is False:
-        generation_params['top_p'] = None
-        generation_params['top_k'] = None
-    
-    prompt_len = model_inputs_cuda['input_ids'].shape[1]
-    processor = GreedyFirstStep(prompt_len)
-
-    generation_ids = model.generate(
-        **model_inputs_cuda,
-        max_new_tokens=max_new_tokens,
-        logits_processor=[processor],
-        **generation_params
-    )
+    logits_processor = [GreedyFirstStep(model_inputs_cuda['input_ids'].shape[1])] if first_greedy else None
+    generation_ids = model.generate(**model_inputs_cuda, max_new_tokens=max_new_tokens, logits_processor=logits_processor, **generation_params)
     generation_ids = generation_ids[:, model_inputs_cuda["input_ids"].shape[1]:]
     return tokenizer.batch_decode(generation_ids, skip_special_tokens=True)
 
@@ -113,11 +91,7 @@ def generate_batch(
             # Generate model outputs for the current batch
             batch_model_prompts = remaining_prompts[i:i + batch_size]
             batch_model_inputs_cuda = to_model_inputs_cuda(tokenizer, batch_model_prompts)
-
-            if not first_greedy:
-                batch_model_outputs = to_model_outputs(batch_model_inputs_cuda, model, tokenizer, max_new_tokens, **generation_params)
-            else:
-                batch_model_outputs = to_model_outputs_first_greedy(batch_model_inputs_cuda, model, tokenizer, max_new_tokens, **generation_params)
+            batch_model_outputs = to_model_outputs(batch_model_inputs_cuda, model, tokenizer, max_new_tokens, first_greedy, **generation_params)
 
             if is_valid_output is not None:
                 for j, output in enumerate(batch_model_outputs):

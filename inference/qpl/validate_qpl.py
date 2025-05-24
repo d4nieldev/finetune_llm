@@ -9,6 +9,8 @@ import pandas as pd
 import pyodbc
 from tqdm import tqdm
 
+from inference.qpl.qpl_to_cte import flat_qpl_to_cte
+
 connection_string = (
     'Driver={ODBC Driver 18 for SQL Server};'
     'Server=tcp:spider-sql.database.windows.net,1433;'
@@ -201,8 +203,12 @@ def execute_sql(cursor, sql):
 def parse_args():
     parser = argparse.ArgumentParser(description="Validate QPL resultset against gold resultset")
     parser.add_argument("--input", type=Path, required=True, help="Path to the input QPL file")
-    parser.add_argument("--output", type=Path, required=True, help="Path to the output file where results will be saved")
+    parser.add_argument("--output", type=Path, required=False, help="Path to the output file where results will be saved. Defaults to input file.")
     args = parser.parse_args()
+
+    if args.output is None:
+        args.output = args.input
+    
     return args
 
 
@@ -222,8 +228,8 @@ if __name__ == "__main__":
     accuracy = 0
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
-        qpl = model_result["pred_qpl"].split(' ; ')
-        pred_cte = model_result["pred_cte"]
+        flat_qpl = model_result["pred_qpl"].split(' ; ')
+        pred_cte = flat_qpl_to_cte(flat_qpl, model_result['db_id'])
         gold_cte = model_result["gold_cte"]
         err = None
         try:
@@ -233,7 +239,7 @@ if __name__ == "__main__":
             same = False
         else:
             grs = execute_sql(cursor, gold_cte)
-            same = same_rs(grs, prs, qpl)
+            same = same_rs(grs, prs, flat_qpl)
             if same:
                 accuracy += 1
         results.append({**model_result, "is_correct": same, "error": err})

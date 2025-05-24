@@ -37,13 +37,6 @@ class CompleterExample(TypedDict):
     parent_question: Optional[str]
 
 
-class Result(TypedDict):
-    db_id: str
-    question: str
-    pred_qpl: str
-    pred_cte: str
-
-
 class Operator(Enum):
     SCAN = "Scan"
     AGGREGATE = "Aggregate"
@@ -115,19 +108,31 @@ class QPLTree:
     @property
     def is_valid(self) -> bool:
         return self.op and (all(child.is_valid for child in self.children) if self.children else True)
+    
+
+class DecomposerMode(Enum):
+    GREEDY = "greedy"
+    SAMPLING = "sampling"
+    FIRST_GREEDY = "first_greedy"
 
 
-def text_to_sql(
+class Result(TypedDict):
+    db_id: str
+    question: str
+    pred_qpl: str
+
+
+def text_to_qpl(
         examples: List[DecomposerExample], 
         decomposer_model_path: str, 
         completer_model_path: str,
-        decomposer_generation_params: Dict[str, Any] = {'do_sample': True, 'top_p': 0.95, 'top_k': 50, 'temperature': 0.7},
-        completer_generation_params: Dict[str, Any] = {'do_sample': False},
+        decomposer_mode: DecomposerMode,
+        decomposer_trees_path: Path,
+        completed_trees_path: Path,
         decomposer_bsz: int = 8,
         decomposer_max_new_tokens: int = 256,
         completer_bsz: int = 8,
         completer_max_new_tokens: int = 256,
-        trees_ckpt_file: Path = Path('output/qpl/trees.json'),
         is_load_decomposer_trees: bool = False,
     ) -> List[Result]:
     # Decompose input questions
@@ -136,11 +141,12 @@ def text_to_sql(
         decomposer_model = AutoPeftModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
         decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
         decomposer_model.eval()
+
         trees = decompose(
             examples=examples,
             processor=decomposer_processor,
             model=decomposer_model,
-            generation_params=decomposer_generation_params,
+            mode=decomposer_mode,
             tokenizer=decomposer_tokenizer,
             batch_size=decomposer_bsz,
             max_new_tokens=decomposer_max_new_tokens,
@@ -152,10 +158,13 @@ def text_to_sql(
             post_order_index_tree(tree)
 
         # Save checkpoint (natural language query decomposition)    
-        trees_ckpt_file.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
-        log.info(f"Saved natural language queries decomposition trees (no code) to '{trees_ckpt_file}'")
+        decomposer_trees_path.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
+        log.info(f"Saved natural language queries decomposition trees (no code) to '{decomposer_trees_path}'")
     else:
-        trees = load_decomposer_trees(trees_ckpt_file)
+        trees = load_decomposer_trees(decomposer_trees_path)
+
+    valid_trees = [tree for tree in trees if tree.is_valid]
+    log.info(f"Filtered out {len(trees) - len(valid_trees)} invalid trees from {len(trees)} trees")
 
     # complete QPL for trees
     torch.cuda.empty_cache()
@@ -164,33 +173,19 @@ def text_to_sql(
     completer_tokenizer = AutoTokenizer.from_pretrained(completer_model_path)
     completer_model.eval()
     complete(
-        trees=trees,
+        trees=valid_trees,
         processor=completer_processor,
         model=completer_model,
-        generation_params=completer_generation_params,
         tokenizer=completer_tokenizer,
         batch_size=completer_bsz,
         max_new_tokens=completer_max_new_tokens,
     )
 
     # Save checkpoint (QPL generation for each node)
-    trees_ckpt_file.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
-    log.info(f"Saved QPL generation trees to  '{trees_ckpt_file}'")
+    completed_trees_path.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
+    log.info(f"Saved QPL generation trees to  '{completed_trees_path}'")
 
-    # Convert QPL to SQL
-    flat_qpls = [tree.qpl.split(' ; ') for tree in trees]
-    db_ids = [tree.db_id for tree in trees]
-
-    ctes = []
-    for flat_qpl, db_id in zip(flat_qpls, db_ids):
-        try:
-            cte = flat_qpl_to_cte(flat_qpl, db_id)
-        except Exception as e:
-            cte = f"Error parsing QPL: {e}"
-            log.warning(f"Error parsing QPL: {flat_qpl} for database {db_id}. Error: {e}")
-        ctes.append(cte)
-
-    return [Result(db_id=tree.db_id, question=tree.question, pred_qpl=tree.qpl, pred_cte=cte) for tree, cte in zip(trees, ctes)]
+    return [Result(db_id=tree.db_id, question=tree.question, pred_qpl=tree.qpl) for tree in trees]
 
 
 def load_decomposer_trees(
@@ -203,6 +198,29 @@ def load_decomposer_trees(
     log.info(f"Loaded natural language queries decomposition trees (no code) from '{trees_ckpt_file}'")
 
     return trees
+
+
+def get_decomposer_generation_params(mode: DecomposerMode) -> Dict[str, Any]:
+    if mode == DecomposerMode.GREEDY:
+        return {
+            'do_sample': False,
+            'top_p': None,
+            'top_k': None,
+        }
+    elif mode == DecomposerMode.SAMPLING:
+        return {
+            'do_sample': True,
+            'top_p': 0.95,
+            'top_k': 50,
+        }
+    elif mode == DecomposerMode.FIRST_GREEDY:
+        return {
+            'do_sample': True,
+            'top_p': 0.95,
+            'top_k': 50,
+            'first_greedy': True,
+        }
+    raise ValueError(f"Unknown decomposer mode: {mode}")
     
 
 @torch.no_grad()
@@ -210,7 +228,7 @@ def decompose(
         examples: List[DecomposerExample],
         processor: QPLDecomposerProcessor,
         model: PreTrainedModel,
-        generation_params: Dict[str, Any],
+        mode: DecomposerMode,
         tokenizer: PreTrainedTokenizerBase,
         batch_size: int,
         max_new_tokens: int,
@@ -230,6 +248,7 @@ def decompose(
         # If llm is in sampling mode, retry the decomposition until a sub-question is different from its parent question
         chat_templates = list(map(processor.to_chat_template, examples))
         prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
+        
         outputs = generate_batch(
             model=model,
             tokenizer=tokenizer,
@@ -237,10 +256,9 @@ def decompose(
             batch_size=batch_size,
             max_new_tokens=max_new_tokens,
             progress_bar=progress_bar,
-            is_valid_output=(lambda i, output: examples[i]['question'] != output) if generation_params.get('do_sample') is True else None,
+            is_valid_output=(lambda i, output: examples[i]['question'] != output) if mode in [DecomposerMode.FIRST_GREEDY, DecomposerMode.SAMPLING] else None,
             max_retries=max_retries,
-            first_greedy=True,
-            **generation_params
+            **get_decomposer_generation_params(mode)
         )
         progress_bar.close()
 
@@ -253,7 +271,7 @@ def decompose(
                 continue
             lines = output.split("\n")
             sub_questions = [l.strip() for l in lines[1:]]
-            if example['question'] in sub_questions and generation_params.get('do_sample') is False:
+            if example['question'] in sub_questions and mode == DecomposerMode.GREEDY:
                 log.warning(f"Question '{example['question']}' is decomposed into itself. With greedy decoding, this can lead to an infinite loop - consider using sampling. Skipping this tree.")
                 children_examples.append([])
                 continue
@@ -277,13 +295,8 @@ def decompose(
                 tree.children = tuple(children)
         
         return trees
-
-    all_trees = rec(examples)
-    valid_trees = [tree for tree in all_trees if tree.is_valid]
-
-    log.info(f"Filtered out {len(all_trees) - len(valid_trees)} invalid trees")
     
-    return valid_trees
+    return rec(examples)
 
 
 def post_order_index_tree(tree: QPLTree, counter: int = 1) -> int:
@@ -298,7 +311,6 @@ def complete(
         trees: List[QPLTree],
         processor: QPLComposerProcessor,
         model: PreTrainedModel,
-        generation_params: Dict[str, Any],
         tokenizer: PreTrainedTokenizerBase,
         batch_size: int,
         max_new_tokens: int,
@@ -343,7 +355,7 @@ def complete(
             batch_size=batch_size,
             max_new_tokens=max_new_tokens,
             progress_bar=progress_bar,
-            **generation_params
+            do_sample=False,  # QPL generation should be deterministic
         )
 
         # Parse the outputs and assign the QPL lines to the trees
@@ -357,20 +369,28 @@ def complete(
 def parse_args():
     parser = argparse.ArgumentParser(description="Text to SQL")
 
+    # Mandatory
     parser.add_argument("--decomposer_model_path", type=str, required=False, help="Path to the decomposer model")
-    parser.add_argument("--decomposer_trees_path", type=Path, required=True, help="Where to save the trees generated by the decomposer")
     parser.add_argument("--load_decomposer_trees", action="store_true", help="Load the decomposer trees from the specified path")
     parser.add_argument("--completer_model_path", type=str, required=True, help="Path to the completer model")
+    parser.add_argument("--decomposer_trees_path", type=Path, required=True, help="Where to save the trees generated by the decomposer")
+    parser.add_argument("--output_file", type=str, required=True, help="Path to save the results")
+    
+    # Optional
+    parser.add_argument("--decomposer_mode", type=DecomposerMode, choices=list(DecomposerMode), default=DecomposerMode.FIRST_GREEDY, help="Decomposer model mode")
+    parser.add_argument("--completed_trees_path", type=Path, required=False, help="Where to save the completed trees (QPL generation). Defaults to decomposer_trees_path with 'completed_' prefix")
     parser.add_argument("--decomposer_bsz", type=int, default=8, help="Batch size for the decomposer model")
     parser.add_argument("--decomposer_max_new_tokens", type=int, default=256, help="Max new tokens for the decomposer model")
-    parser.add_argument("--completer_bsz", type=int, default=6, help="Batch size for the completer model")
-    parser.add_argument("--completer_max_new_tokens", type=int, default=128, help="Max new tokens for the completer model")
-    parser.add_argument("--output_file", type=str, default="output/qpl/results.json", help="Path to save the results")
+    parser.add_argument("--completer_bsz", type=int, default=4, help="Batch size for the completer model")
+    parser.add_argument("--completer_max_new_tokens", type=int, default=256, help="Max new tokens for the completer model")
 
     args = parser.parse_args()
 
-    if not (bool(args.decomposer_model_path) ^ bool(args.load_decomposer_trees)):
+    if not (bool(args.decomposer_model_path) ^ args.load_decomposer_trees):
         parser.error("Either --decomposer_model_path or --load_decomposer_trees must be provided, but not both.")
+
+    if not args.completed_trees_path:
+        args.completed_trees_path = args.decomposer_trees_path.with_name(f"completed_{args.decomposer_trees_path.name}")
     
     return args
 
@@ -380,20 +400,26 @@ if __name__ == "__main__":
     nl2sql_dataset = list(load_dataset("d4nieldev/nl2qpl-ds", split="validation"))
     examples = [DecomposerExample(question=ex['question'], db_id=ex['qpl'].split('|')[0].strip()) for ex in nl2sql_dataset]
 
-    results = text_to_sql(
+    results = text_to_qpl(
         examples=examples,
         decomposer_model_path=args.decomposer_model_path,
         completer_model_path=args.completer_model_path,
+        decomposer_mode=args.decomposer_mode,
+        decomposer_trees_path=args.decomposer_trees_path,
+        completed_trees_path=args.completed_trees_path,
         decomposer_bsz=args.decomposer_bsz,
         decomposer_max_new_tokens=args.decomposer_max_new_tokens,
         completer_bsz=args.completer_bsz,
         completer_max_new_tokens=args.completer_max_new_tokens,
-        trees_ckpt_file=args.decomposer_trees_path if args.decomposer_trees_path else Path("output/qpl/trees.json"),
         is_load_decomposer_trees=args.load_decomposer_trees,
     )
     
+    assert len(results) == len(nl2sql_dataset), f"Expected {len(nl2sql_dataset)} results, but got {len(results)}"
+
     enriched_results = [dict(result) for result in results]
     for result, example in zip(enriched_results, nl2sql_dataset):
+        db_id = example['qpl'].split('|')[0].strip()
+        assert db_id == result['db_id'], f"DB ID mismatch: {db_id} != {result['db_id']}"
         result['gold_qpl'] = example['qpl'].split('|')[1].strip()
         result['gold_cte'] = example['cte']
         result['gold_sql'] = example['query']
