@@ -30,7 +30,8 @@ class QPLDecomposerProcessor(QPLProcessor):
                         continue
                     if sub_question not in self.__sub_q_to_parents:
                         self.__sub_q_to_parents[sub_question] = []
-                    self.__sub_q_to_parents[sub_question].append(example)
+                    if example not in self.__sub_q_to_parents[sub_question]:
+                        self.__sub_q_to_parents[sub_question].append(example)
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']

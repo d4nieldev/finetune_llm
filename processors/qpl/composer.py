@@ -31,10 +31,14 @@ class QPLComposerProcessor(QPLProcessor):
         self.__sub_q_to_parents = defaultdict(list)
         for split in dataset:
             for example in dataset[split]:
-                parent_question = example.get('parent_question', None)
+                parent_question = example['parent_question']
+                question = example['question']
                 if parent_question is None:
                     continue
-                self.__sub_q_to_parents[example['question']].extend(question_to_examples[parent_question])
+                for ex in question_to_examples[parent_question]:
+                    if ex in self.__sub_q_to_parents[question]:
+                        continue
+                    self.__sub_q_to_parents[question].append(ex)
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
