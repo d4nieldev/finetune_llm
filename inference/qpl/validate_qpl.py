@@ -2,10 +2,24 @@ import argparse
 import json
 from collections import Counter
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import pandas as pd
 import requests
+import pyodbc
+
+
+connection_string = (
+    'Driver={ODBC Driver 18 for SQL Server};'
+    'Server=tcp:spider-sql.database.windows.net,1433;'
+    'Database=test;'
+    'Uid=iloveqpl;'
+    'Pwd=P4$$w0rd!;'
+    'Encrypt=yes;'
+    'TrustServerCertificate=no;'
+    'Connection Timeout=30;'
+)
 
 
 def eq_aggregated_cols(s1, s2):
@@ -173,40 +187,26 @@ def same_rs(grs, prs, qpl):
     return eq_resultset(grs, good_keys_prs, order_by)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", type=Path)
-    parser.add_argument("-o", "--output", type=Path)
+def exec_cte(cte: str) -> List:
+    conn = pyodbc.connect(connection_string, autocommit=True)
+    cursor = conn.cursor()
+    return cursor.execute(cte).fetchall()
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate QPL resultset against gold resultset")
+    parser.add_argument("--input", type=Path, required=True, help="Path to the input QPL file")
     args = parser.parse_args()
-
-    with open("./schemas.json") as f:
-        schemas = json.load(f)
-
-    for schema in schemas:
-        requests.post("http://localhost:8081/schema", json=schema)
-
-    # with open(args.input) as f:
-    #     qpls = json.load(f)
-    qpls = pd.read_pickle(args.input).to_dict(orient="records")
-
-    result = []
-    for ex in qpls:
-        is_valid = requests.post(
-            "http://localhost:8081/validate", json={"qpl": ex["qpl"]}
-        ).json()
-        if (
-            ex["crs"] is not None
-            and ex["grs"] is not None
-            and is_valid
-            and same_rs(ex["grs"], ex["crs"], ex["qpl"].split(" ; "))
-        ):
-            del ex["crs"]
-            del ex["grs"]
-            result.append(ex)
-
-    with open(args.output, "w") as f:
-        json.dump(result, f, indent=2)
+    return args
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    input_path = args.input
+
+    if not input_path.exists():
+        raise FileNotFoundError(f"Input file {input_path} does not exist.")
+
+    with open(input_path, "r") as f:
+        qpl = json.load(f)
+
+    
