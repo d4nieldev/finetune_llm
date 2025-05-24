@@ -69,8 +69,10 @@ class QPLComposerProcessor(QPLProcessor):
         if example['prefix_qpl'] != "":
             prefix_qpl_str += " ;\n"
 
-        # new_line_num = max([0] + [int(match) for match in re.findall(r"#(\d+)", prefix_qpl_str)]) + 1
-        line_num = example.get('line_num', example['qpl_line'].split('=')[0].strip()[1:])
+        line_num = example.get('line_num', None)
+        if line_num is None:
+            line_num = example['qpl_line'].split('=')[0].strip()[1:]
+        
         line_start = f"#{line_num} = {example['op']} "
 
         user = (
