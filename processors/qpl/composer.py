@@ -1,5 +1,6 @@
 import re
 import json
+from collections import defaultdict
 from typing import Dict, Any
 
 from custom_types import ChatTemplate, ChatMessage
@@ -23,13 +24,17 @@ class QPLComposerProcessor(QPLProcessor):
         
         self.__q_to_id = q_to_id
         dataset = load_dataset(self.dataset_id)
-        self.__q_to_examples = {}
+        question_to_examples = defaultdict(list)
         for split in dataset:
             for example in dataset[split]:
-                question = example['question']
-                if question not in self.__q_to_examples:
-                    self.__q_to_examples[question] = []
-                self.__q_to_examples[question].append(example)
+                question_to_examples[example['question']].append(example)
+        self.__sub_q_to_parents = defaultdict(list)
+        for split in dataset:
+            for example in dataset[split]:
+                parent_question = example.get('parent_question', None)
+                if parent_question is None:
+                    continue
+                self.__sub_q_to_parents[example['question']].extend(question_to_examples[parent_question])
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
@@ -118,12 +123,11 @@ class QPLComposerProcessor(QPLProcessor):
             id = self.__q_to_id.get(example['question'])
             if id is None:
                 # return id of parent
-                potential_parents = self.__q_to_examples.get(example['sub_question_1'], [])
-                potential_parents += self.__q_to_examples.get(example['sub_question_2'], [])
+                potential_parents = self.__sub_q_to_parents.get(example['question'], [])
                 ids = set()
-                for parent in set(potential_parents):
+                for parent in {frozenset(p.items()) for p in potential_parents}:
                     try:
-                        ids.add(self._example_to_id(parent))
+                        ids.add(self._example_to_id(dict(parent)))
                     except ValueError:
                         continue
                 if ids:

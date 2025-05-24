@@ -21,13 +21,16 @@ class QPLDecomposerProcessor(QPLProcessor):
         
         self.__q_to_id = q_to_id
         dataset = load_dataset(self.dataset_id)
-        self.__q_to_examples = {}
+        self.__sub_q_to_parents = {}
         for split in dataset:
             for example in dataset[split]:
-                question = example['question']
-                if question not in self.__q_to_examples:
-                    self.__q_to_examples[question] = []
-                self.__q_to_examples[question].append(example)
+                sub_questions = [example['sub_question_1'], example['sub_question_2']]
+                for sub_question in sub_questions:
+                    if not sub_question:
+                        continue
+                    if sub_question not in self.__sub_q_to_parents:
+                        self.__sub_q_to_parents[sub_question] = []
+                    self.__sub_q_to_parents[sub_question].append(example)
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
@@ -88,12 +91,12 @@ class QPLDecomposerProcessor(QPLProcessor):
             id = self.__q_to_id.get(example['question'])
             if id is None:
                 # return id of parent
-                potential_parents = self.__q_to_examples.get(example['sub_question_1'], [])
-                potential_parents += self.__q_to_examples.get(example['sub_question_2'], [])
+                potential_parents = self.__sub_q_to_parents.get(example['sub_question_1'], [])
+                potential_parents += self.__sub_q_to_parents.get(example['sub_question_2'], [])
                 ids = set()
-                for parent in set(potential_parents):
+                for parent in {frozenset(p.items()) for p in potential_parents}:
                     try:
-                        ids.add(self._example_to_id(parent))
+                        ids.add(self._example_to_id(dict(parent)))
                     except ValueError:
                         continue
                 if ids:
