@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from custom_types import ChatTemplate, ChatMessage
 from processors.qpl.base import QPLProcessor
@@ -21,17 +21,16 @@ class QPLDecomposerProcessor(QPLProcessor):
         
         self.__q_to_id = q_to_id
         dataset = load_dataset(self.dataset_id)
-        self.__sub_q_to_parents = {}
+        self.__q_to_parent = {}
         for split in dataset:
             for example in dataset[split]:
                 for sub_question in [example['sub_question_1'], example['sub_question_2']]:
                     if not sub_question:
                         continue
-                    if sub_question not in self.__sub_q_to_parents:
-                        self.__sub_q_to_parents[sub_question] = []
-                    if example not in self.__sub_q_to_parents[sub_question]:
-                        self.__sub_q_to_parents[sub_question].append(example)
-        pass
+                    if sub_question not in self.__q_to_parent:
+                        self.__q_to_parent[sub_question] = []
+                    if example not in self.__q_to_parent[sub_question]:
+                        self.__q_to_parent[sub_question].append(example)
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
@@ -57,14 +56,14 @@ class QPLDecomposerProcessor(QPLProcessor):
             f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.train)}\n```\n\n"
+            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.with_assistant)}\n```\n\n"
 
             + f"""Question: {example["question"].strip()}\n\n"""
 
             + "The first line of the output should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
-        if self.train:
+        if self.with_assistant:
             response = f"{example['op']}"
             if example['sub_question_1']:
                 response += f"\n{example['sub_question_1']}"
@@ -87,21 +86,22 @@ class QPLDecomposerProcessor(QPLProcessor):
             )
     
     def _example_to_id(self, example: Dict[str, Any]) -> str:
-        # get id
-        if self.train:
+        def rec(example: Dict[str, Any], prev: List[str] = []) -> str:
             id = self.__q_to_id.get(example['question'])
-            if id is None:
-                # return id of parent
-                parents = self.__sub_q_to_parents.get(example['question'], [])
-                ids = set()
-                for parent in {frozenset(p.items()) for p in parents}:
-                    try:
-                        ids.add(self._example_to_id(dict(parent)))
-                    except ValueError:
-                        continue
-                if ids:
-                    return ids.pop()
-                # parent not found
-                raise ValueError(f"Parent not found for question: {example['question']}")
-            return id
+            if id is not None:
+                return id
+            if example['question'] in prev:
+                raise ValueError(f"Circular reference detected for question: {example['question']}")
+            prev.append(example['question'])
+            parents = self.__q_to_parent.get(example['question'], [])
+            # recursively get id of the parent
+            for parent in parents:
+                try:
+                    return rec(dict(parent), prev)
+                except ValueError:
+                    continue
+            raise ValueError(f"No valid parent found for question: {example['question']}")
+
+        if self.with_assistant:
+            return rec(example)
         raise ValueError("Cannot get id in test mode")
