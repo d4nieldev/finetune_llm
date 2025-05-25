@@ -112,7 +112,7 @@ def train(
     
     # Step 3. Data preperation
     train_dataset: Dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
-    processor = ProcessorRegistry.get(args.dataset_id)(train=True)
+    processor = ProcessorRegistry.get(args.dataset_id)(with_assistant=True)
     train_dataset = train_dataset.map(lambda ex: processor.to_chat_template(ex, assistant_response=True), remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}

@@ -5,8 +5,8 @@ from custom_types import ChatTemplate
 
 
 class BaseProcessor(ABC):
-    def __init__(self, train: bool = False) -> None:
-        self.train = train
+    def __init__(self, with_assistant: bool = False) -> None:
+        self.with_assistant = with_assistant
 
     @abstractmethod
     def to_chat_template(self, example: Mapping[str, Any]) -> ChatTemplate:

@@ -143,7 +143,7 @@ def text_to_qpl(
     ) -> List[Result]:
     # Decompose input questions
     if not is_load_decomposer_trees:
-        decomposer_processor = QPLDecomposerProcessor(train=False)
+        decomposer_processor = QPLDecomposerProcessor(with_assistant=False)
         decomposer_model = AutoPeftModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
         decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
         decomposer_model.eval()

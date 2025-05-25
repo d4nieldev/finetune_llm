@@ -95,7 +95,7 @@ class QPLComposerProcessor(QPLProcessor):
             f"Database Name: {db_id}\n\n"
 
             + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.train)}```\n\n"
+            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.with_assistant)}```\n\n"
 
             + f"Question: {example['question'].strip()}\n\n"
 
@@ -104,7 +104,7 @@ class QPLComposerProcessor(QPLProcessor):
             + f"```QPL\n{prefix_qpl_str}{line_start}"
         )
 
-        if self.train:
+        if self.with_assistant:
             response = f"{example['qpl_line'].replace(line_start, '')}\n```"
             return ChatTemplate(
                 messages=[
@@ -123,7 +123,7 @@ class QPLComposerProcessor(QPLProcessor):
     
     def _example_to_id(self, example: Dict[str, Any]) -> str:
         # get id
-        if self.train:
+        if self.with_assistant:
             id = self.__q_to_id.get(example['question'])
             if id is None:
                 # return id of parent

@@ -13,7 +13,7 @@ class EmotionProcessor(BaseProcessor):
     def to_chat_template(self, example) -> ChatTemplate:
         prompt = f"Below is a piece of text. Classify it into one of: {', '.join(self.labels_list)}.\n\n\"{example['text']}\""
 
-        if self.train:
+        if self.with_assistant:
             response = f"The emotion in the above text is: {self.labels_list[example['label']]}"
             return ChatTemplate(
                 messages=[
