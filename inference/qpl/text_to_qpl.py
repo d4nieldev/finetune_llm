@@ -7,7 +7,6 @@ import logging as log
 from pathlib import Path
 import argparse
 
-from inference.qpl.qpl_to_cte import flat_qpl_to_cte
 from processors.qpl import QPLDecomposerProcessor, QPLComposerProcessor
 from utils.generation_utils import to_model_prompt, generate_batch
 from utils.lists import flatten, unflatten
