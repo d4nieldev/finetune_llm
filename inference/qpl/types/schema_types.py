@@ -1,5 +1,6 @@
+import json
 from dataclasses import dataclass
-from typing import Dict, List, Optional, ClassVar
+from typing import Dict, List, Optional
 
 from inference.qpl.types.types import Entity
 
@@ -75,7 +76,7 @@ class Table:
         return [col.name for col in self.columns]
     
     def __str__(self):
-        cols_str = "\n,".join(f"    {col}" for col in self.columns + self.pks + self.fks)
+        cols_str = ",\n".join(f"    {col}" for col in self.columns + self.pks + self.fks)
         return f"CREATE TABLE {self.name} (\n{cols_str}\n);"
 
 
@@ -93,18 +94,18 @@ class DBSchema:
         return [
             Entity(table.name)
             for table in self.tables.values()
-            if set(table.pks).difference([fk.from_col for fk in table.fks])
+            if set([pk.col_name for pk in table.pks]).difference([fk.from_col for fk in table.fks])
         ]
     
     def __getitem__(self, item: str) -> Table:
         return self.tables[item]
     
     @staticmethod
-    def from_db_schemas(db_schemas: Dict) -> List["DBSchema"]:
-        return [
-            DBSchema.from_db_schema(db_id, tables_data) 
+    def from_db_schemas(db_schemas: Dict) -> Dict[str, "DBSchema"]:
+        return {
+            db_id: DBSchema.from_db_schema(db_id, tables_data) 
             for db_id, tables_data in db_schemas.items()
-        ]
+        }
     
     @staticmethod
     def from_db_schema(db_id: str, db_schema: Dict) -> "DBSchema":
@@ -131,7 +132,7 @@ class DBSchema:
             src_table = tables[src_table_name]
             for dst_table_name, src_dst_fks in dst_tables_data.items():
                 dst_table = tables[dst_table_name]
-                for src_col, dst_col in src_dst_fks.items():
+                for src_col, dst_col in src_dst_fks:
                     fk = ForeignKey(from_col=src_col, to_table=dst_table, to_col=dst_col)
                     src_table.fks.append(fk)
 
@@ -140,3 +141,13 @@ class DBSchema:
     def __str__(self):
         tables_str = "\n\n".join(str(table) for table in self.tables.values())
         return f"```DDL\n{tables_str}\n```"
+
+
+if __name__ == "__main__":
+    with open("processors/qpl/db_schemas.json", "r") as f:
+        db_schemas_json = json.load(f)
+    db_schemas = DBSchema.from_db_schemas(db_schemas_json)
+    schema = db_schemas["concert_singer"]
+    print(schema)
+    print()
+    print(schema.entities)
