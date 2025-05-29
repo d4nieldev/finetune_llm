@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, TypeVar, override, Set, Iterable
+from typing import Generic, TypeVar, Set, Iterable
 from abc import ABC, abstractmethod
 
 
@@ -20,7 +20,6 @@ class QPLType(ABC):
 # Primitive types
 @dataclass(unsafe_hash=True)
 class Number(QPLType):
-    @override
     def __repr__(self):
         return f"Number"
 
@@ -29,20 +28,17 @@ class Number(QPLType):
 class Entity(QPLType):
     name: str
 
-    @override
     def __repr__(self):
         return self.name
 
 
 # Entity composition types
-E = TypeVar("E", bound="Entity")
-
+E = TypeVar("E", bound=Entity)
 
 @dataclass(unsafe_hash=True)
 class Partial(QPLType, Generic[E]):
     entity: E
 
-    @override
     def __repr__(self):
         return f"Partial[{self.entity}]"
 
@@ -50,7 +46,6 @@ class Partial(QPLType, Generic[E]):
 class Reduced(QPLType, Generic[E]):
     entity: E
 
-    @override
     def __repr__(self):
         return f"Reduced[{self.entity}]"
 
@@ -58,12 +53,10 @@ class Reduced(QPLType, Generic[E]):
 # Type composition types
 T = TypeVar("T", bound=QPLType)
 
-
 @dataclass(unsafe_hash=True)
 class TypeList(QPLType, Generic[T]):
     type: T
 
-    @override
     def __repr__(self):
         return f"List[{self.type}]"
 
@@ -81,13 +74,10 @@ class Union(QPLType, Generic[T]):
         
         self.types = set()
         for t in flattened:
-            if (
-                isinstance(t, Partial) and t.entity in flattened or  # Entity -> Partial[Entity]
-                TypeList(t) in flattened                             # Type -> List[Type]
-            ):
+            if isinstance(t, Partial) and t.entity in flattened:
+                # Entity -> Partial[Entity]
                 continue
             self.types.add(t)
 
-    @override
     def __repr__(self):
         return f"Union[{', '.join(map(str, self.types))}]"
