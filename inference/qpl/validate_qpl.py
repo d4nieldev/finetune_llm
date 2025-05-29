@@ -228,16 +228,16 @@ if __name__ == "__main__":
     accuracy = 0
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
-        flat_qpl = model_result["pred_qpl"].split(' ; ')
-        pred_cte = flat_qpl_to_cte(flat_qpl, model_result['db_id'])
-        gold_cte = model_result["gold_cte"]
-        err = None
         try:
+            flat_qpl = model_result["pred_qpl"].split(' ; ')
+            gold_cte = model_result["gold_cte"]
+            pred_cte = flat_qpl_to_cte(flat_qpl, model_result['db_id'])
             prs = execute_sql(cursor, pred_cte)
         except Exception as e:
             err = str(e)
             same = False
         else:
+            err = None
             grs = execute_sql(cursor, gold_cte)
             same = same_rs(grs, prs, flat_qpl)
             if same:
