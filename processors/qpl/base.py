@@ -34,13 +34,10 @@ class QPLProcessor(BaseProcessor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Load databases
-        parent_dir = os.path.dirname(os.path.realpath(__file__))
-
-        with open(os.path.join(parent_dir, "db_content.json")) as f:
+        with open(os.path.join("data", "qpl", "spider", "db_content.json")) as f:
             self._db_content = json.load(f)
         
-        with open(os.path.join(parent_dir, "db_schemas.json")) as f:
+        with open(os.path.join("data", "qpl", "spider", "db_schemas.json")) as f:
             self._db_schemas = json.load(f)
         
         self.__log_cache = set()

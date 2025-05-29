@@ -27,7 +27,7 @@ lm = dspy.LM('openai/gpt-4o-mini')
 dspy.configure(lm=lm)
 
 # Load database schema from JSON file
-with open("processors/qpl/db_schemas.json", "r") as f:
+with open("data/qpl/spider/db_schemas.json", "r") as f:
     db_schemas_json = json.load(f)
 db_schemas = DBSchema.from_db_schemas(db_schemas_json)
 
@@ -47,5 +47,3 @@ predicted_type = pred(
 
 # Show prompt
 print(lm.inspect_history(1))
-print()
-print(f"Predicted type: {predicted_type}")
