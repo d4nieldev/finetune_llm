@@ -1,8 +1,10 @@
+import os
 import json
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
 from inference.qpl.types.types import Entity
+import utils.qpl.paths as p
 
 
 @dataclass
@@ -102,7 +104,7 @@ class DBSchema:
         return self.tables[item]
     
     @staticmethod
-    def from_db_schemas_file(db_schemas_file: str) -> Dict[str, "DBSchema"]:
+    def from_db_schemas_file(db_schemas_file: os.PathLike) -> Dict[str, "DBSchema"]:
         with open(db_schemas_file, "r") as f:
             db_schemas = json.load(f)
         return DBSchema.from_db_schemas(db_schemas)
@@ -151,9 +153,7 @@ class DBSchema:
 
 
 if __name__ == "__main__":
-    with open("data/qpl/spider/db_schemas.json", "r") as f:
-        db_schemas_json = json.load(f)
-    db_schemas = DBSchema.from_db_schemas(db_schemas_json)
+    db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
     schema = db_schemas["concert_singer"]
     print(schema)
     print()

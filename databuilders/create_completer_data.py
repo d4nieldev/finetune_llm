@@ -1,23 +1,10 @@
-import re
-from enum import Enum
 from dataclasses import dataclass
 from typing import Tuple, Union, List, Optional, Dict
 
 from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
-from utils.qpl.tree import QPLTree, get_qpl_tree
 
-
-class Operator(Enum):
-    SCAN = "Scan"
-    AGGREGATE = "Aggregate"
-    FILTER = "Filter"
-    SORT = "Sort"
-    TOPSORT = "TopSort"
-    JOIN = "Join"
-    EXCEPT = "Except"
-    INTERSECT = "Intersect"
-    UNION = "Union"
+from utils.qpl.tree import QPLTree, Operator
 
 
 @dataclass
@@ -90,7 +77,7 @@ def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, str], QPLTree]:
         db_id, qpl_code = [item.strip() for item in qpl.split("|")]
         qpl_rows = [qpl_row.strip() for qpl_row in qpl_code.split(";")]
 
-        q_to_qpl_tree[(question, db_id)] = get_qpl_tree(qpl_rows)
+        q_to_qpl_tree[(question, db_id)] = QPLTree.from_qpl_lines(qpl_rows)
 
     return q_to_qpl_tree
 
@@ -129,7 +116,7 @@ def complete_trees_qpl(
             continue
 
 
-def create_composer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
+def create_completer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
     def get_tree_rows(root: QDTree) -> List[Dict]:
         rows_to_return = []
         if root.children:
@@ -185,7 +172,7 @@ if __name__ == "__main__":
         complete_trees_qpl(root_qd_trees, qpl_trees)
 
         # Create dataset rows
-        split_data = create_composer_dataset(root_qd_trees)
+        split_data = create_completer_dataset(root_qd_trees)
 
         dataset[split] = split_data
 
@@ -194,4 +181,4 @@ if __name__ == "__main__":
         split: Dataset.from_list(data)
         for split, data in dataset.items()
     })
-    ds.push_to_hub("d4nieldev/qpl-composer-ds")
+    ds.push_to_hub("d4nieldev/qpl-completer-ds")

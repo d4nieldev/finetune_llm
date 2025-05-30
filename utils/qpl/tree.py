@@ -1,8 +1,19 @@
 import re
+from enum import Enum
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Tuple
 
-from data.create_composer_data import Operator, Tuple
+
+class Operator(Enum):
+    SCAN = "Scan"
+    AGGREGATE = "Aggregate"
+    FILTER = "Filter"
+    SORT = "Sort"
+    TOPSORT = "TopSort"
+    JOIN = "Join"
+    EXCEPT = "Except"
+    INTERSECT = "Intersect"
+    UNION = "Union"
 
 
 @dataclass
@@ -19,14 +30,16 @@ class QPLTree:
         if self.children is None:
             return ""
         return "\n".join([(child.children_qpl + "\n" + child.qpl_row).strip() for child in self.children]).replace("\n", " ; ")
-
-
-def get_qpl_tree(qpl_lines: List[str]) -> QPLTree:
-    row_nodes = [QPLTree() for _ in qpl_lines]
-    for qpl_row in qpl_lines:
-        line_numbers = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
-        row_id = line_numbers[0] - 1
-        children = [row_nodes[line_num - 1] for line_num in set(line_numbers[1:])]
-        row_nodes[row_id].qpl_row = qpl_row
-        row_nodes[row_id].children = tuple(children) if children else None  # type: ignore
-    return row_nodes[-1]
+    
+    @staticmethod
+    def from_qpl_lines(qpl_lines: List[str]) -> "QPLTree":
+        """Construct a QPLTree from a list of QPL lines."""
+        row_nodes = [QPLTree() for _ in qpl_lines]
+        for qpl_row in qpl_lines:
+            line_numbers = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
+            row_id = line_numbers[0] - 1
+            children = [row_nodes[line_num - 1] for line_num in set(line_numbers[1:])]
+            row_nodes[row_id].qpl_row = qpl_row
+            row_nodes[row_id].children = tuple(children) if children else None  # type: ignore
+        return row_nodes[-1]
+    

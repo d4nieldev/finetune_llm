@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse
 
 from processors.qpl import QPLDecomposerProcessor, QPLComposerProcessor
-from utils.generation_utils import to_model_prompt, generate_batch
+from utils.generation import to_model_prompt, generate_batch
 from utils.lists import flatten, unflatten
 
 import torch

@@ -4,6 +4,7 @@ import random
 from typing import List, Dict, Tuple
 
 from inference.qpl.types.schema_types import DBSchema
+import utils.qpl.paths as p
 
 import dspy
 
@@ -65,10 +66,10 @@ lm = dspy.LM(LM_ID)
 dspy.configure(lm=lm)
 
 # Load database schema from JSON file
-db_schemas = DBSchema.from_db_schemas_file("data/qpl/spider/db_schemas.json")
+db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
 
 # Load and prepare the dataset
-with open("data/qpl/types/question_types_concert_singer.json", "r") as f:
+with open(p.TYPES_CONCERT_SINGER_PATH, "r") as f:
     dataset = json.load(f)
     if SAMPLE_SIZE > 0:
         dataset = random.sample(dataset, k=SAMPLE_SIZE)
@@ -86,12 +87,12 @@ compiled_fewshot = fewshot.compile(
 predicted_types = compiled_fewshot.batch(test)
 
 # Save logs
-sys.stdout = open(f"data/qpl/types/{FILENAME}.txt", "w")
+sys.stdout = open(p.TYPES_OUTPUT_DIR / f"{FILENAME}.txt", "w")
 lm.inspect_history(len(predicted_types))
 sys.stdout.close()
 
 # Save results
-with open(f"data/qpl/types/{FILENAME}.json", "w") as f:
+with open(p.TYPES_OUTPUT_DIR / f"{FILENAME}.json", "w") as f:
     json.dump(
         [
             {

@@ -3,7 +3,7 @@ from typing import List, Dict, Optional, Tuple
 from enum import Enum
 
 from inference.qpl.types.types import *
-from utils.qpl.tree import QPLTree, get_qpl_tree
+from utils.qpl.tree import QPLTree
 from inference.qpl.types.schema_types import DBSchema
 
 
@@ -80,7 +80,7 @@ def union_type(union_node: QPLTree, schema: DBSchema) -> Optional[QPLType]:
 
 
 def qpl_to_type(qpl_lines: List[str], schema: DBSchema) -> QPLType:
-    root = get_qpl_tree(qpl_lines)
+    root = QPLTree.from_qpl_lines(qpl_lines)
 
     def rec(node: QPLTree) -> QPLType:
         if t := scan_type(node, schema):

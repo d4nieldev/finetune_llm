@@ -1,7 +1,6 @@
 import argparse
 import json
 import sqlite3
-import subprocess
 import re
 from pathlib import Path
 from typing import List
@@ -14,6 +13,8 @@ import urllib
 import sqlalchemy
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
+
+import utils.qpl.paths as p
 
 
 connection_string = (
@@ -36,7 +37,7 @@ def create_database(dbs: List[Path]):
             SELECT * FROM sys.schemas WHERE name = '{db.stem}'
         )
         EXEC('CREATE SCHEMA [{db.stem}]');""")
-    ddls = Path("./schemas").glob("**/*.sql")
+    ddls = p.DB_CREATION_SCHEMAS_DDL_DIR.glob("**/*.sql")
     for ddl in ddls:
         sql_text = ddl.read_text().replace("USE spider;", "")
         # Split on GO (SQL Server batch separator)
@@ -135,7 +136,7 @@ def fill_databases():
     conn = pyodbc.connect(connection_string, autocommit=True)
     cursor = conn.cursor()
     # No USE needed: connection_string already targets 'test'
-    df = pd.read_pickle("./data_to_insert_no_alters.pkl")
+    df = pd.read_pickle(p.DB_CREATION_PICKLE_DATA_PATH)
     for _, row in tqdm(df.iterrows(), total=len(df)):
         try:
             cursor.execute(row["sql"], row["parameters"])
@@ -161,7 +162,7 @@ def main():
     engine = create_engine(
         url
     )
-    sorted_tables_by_schema = json.load(open("./tables-sorted.json"))
+    sorted_tables_by_schema = json.load(open(p.DB_CREATION_TABLES_SORTED_PATH, "r"))
     for schema, table_data in (bar := tqdm(data.items())):
         bar.set_description(schema)
         for table_name in sorted_tables_by_schema[schema]:
