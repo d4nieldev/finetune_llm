@@ -10,7 +10,7 @@ class PrimaryKey:
     col_name: str
 
     def __str__(self):
-        return f"PRIMARY KEY ({self.col_name})"
+        return f"{self.col_name}"
     
 
 @dataclass
@@ -76,7 +76,8 @@ class Table:
         return [col.name for col in self.columns]
     
     def __str__(self):
-        cols_str = ",\n".join(f"    {col}" for col in self.columns + self.pks + self.fks)
+        pk_str = ["PRIMARY KEY (" + ", ".join(pk.col_name for pk in self.pks) + ")"]
+        cols_str = ",\n".join(f"    {col}" for col in self.columns + pk_str + self.fks)
         return f"CREATE TABLE {self.name} (\n{cols_str}\n);"
 
 
@@ -99,6 +100,12 @@ class DBSchema:
     
     def __getitem__(self, item: str) -> Table:
         return self.tables[item]
+    
+    @staticmethod
+    def from_db_schemas_file(db_schemas_file: str) -> Dict[str, "DBSchema"]:
+        with open(db_schemas_file, "r") as f:
+            db_schemas = json.load(f)
+        return DBSchema.from_db_schemas(db_schemas)
     
     @staticmethod
     def from_db_schemas(db_schemas: Dict) -> Dict[str, "DBSchema"]:
@@ -144,7 +151,7 @@ class DBSchema:
 
 
 if __name__ == "__main__":
-    with open("processors/qpl/db_schemas.json", "r") as f:
+    with open("data/qpl/spider/db_schemas.json", "r") as f:
         db_schemas_json = json.load(f)
     db_schemas = DBSchema.from_db_schemas(db_schemas_json)
     schema = db_schemas["concert_singer"]
