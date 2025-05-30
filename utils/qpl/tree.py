@@ -19,6 +19,7 @@ class Operator(Enum):
 
 @dataclass
 class QPLTree:
+    """A tree structure representing a QPL query."""
     qpl_row: str = None  # type: ignore
     children: Tuple["QPLTree", ...] = ()
 
@@ -53,6 +54,7 @@ class QPLTree:
 
 @dataclass
 class QPLQDTree:
+    """A tree structure representing a QPL query with full decomposition - used in inference."""
     question: str
     db_id: str
     op: Operator = None   # type: ignore
@@ -118,6 +120,7 @@ class QPLQDTree:
 
 @dataclass
 class PartialQDTree:
+    """A tree structure representing a qpl query with its partual decomposition - used for creating the supervised dataset."""
     question: str
     db_id: str
 
