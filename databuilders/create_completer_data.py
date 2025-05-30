@@ -1,46 +1,23 @@
-from dataclasses import dataclass
-from typing import Tuple, Union, List, Optional, Dict
+from typing import Tuple, List, Optional, Dict
 
 from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
 
-from utils.qpl.tree import QPLTree, Operator
+from utils.qpl.tree import QPLTree, QPLQDTree, Operator
 
 
-@dataclass
-class QDTree:
-    question: str
-    db_id: str
+def get_decomposer_roots(decomposer_data: Dataset) -> List[QPLQDTree]:
+    q_to_tree: dict[Tuple[str, str], QPLQDTree] = {}
 
-    parent: Optional["QDTree"] = None
-    op: Optional[Operator] = None
-    children: Optional[Union[Tuple[()], Tuple["QDTree"], Tuple["QDTree", "QDTree"]]] = None
-
-    prefix_qpl: Optional[str] = None
-    qpl_line: Optional[str] = None
-
-    def to_dict(self) -> dict:
-        return {
-            "question": self.question,
-            "op": self.op.value if self.op else None,
-            "children": [child.to_dict() for child in self.children] if self.children else None,
-            "prefix_qpl": self.prefix_qpl,
-            "qpl_line": self.qpl_line
-        }
-
-
-def get_decomposer_roots(decomposer_data: Dataset) -> List[QDTree]:
-    q_to_tree: dict[Tuple[str, str], QDTree] = {}
-
-    def get_q_tree(question: Optional[str], db_id: str) -> Optional[QDTree]:
+    def get_q_tree(question: Optional[str], db_id: str) -> Optional[QPLQDTree]:
         """Returns the question tree for the given question, creating a leaf node if it doesn't exist."""
         if question is None:
             return None
         if (question, db_id) not in q_to_tree:
-            q_to_tree[(question, db_id)] = QDTree(question=question, db_id=db_id)
+            q_to_tree[(question, db_id)] = QPLQDTree(question=question, db_id=db_id)
         return q_to_tree[(question, db_id)]
 
-    def construct_tree(row) -> QDTree:
+    def construct_tree(row) -> QPLQDTree:
         question = row["question"]
         db_id = row["db_id"]
         tree = get_q_tree(question, db_id)
@@ -72,8 +49,8 @@ def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, str], QPLTree]:
 
     # create QPL trees
     for row in tqdm(nl2qpl_data, desc="Creating QPL trees from NL2QPL data"):
-        question = row["question"]
-        qpl = row["qpl"]
+        question = row["question"]  # type: ignore
+        qpl = row["qpl"]  # type: ignore
         db_id, qpl_code = [item.strip() for item in qpl.split("|")]
         qpl_rows = [qpl_row.strip() for qpl_row in qpl_code.split(";")]
 
@@ -83,22 +60,21 @@ def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, str], QPLTree]:
 
 
 def complete_trees_qpl(
-    decomposer_roots: List[QDTree],
+    decomposer_roots: List[QPLQDTree],
     q_to_qpl_tree: Dict[Tuple[str, str], QPLTree]
 ) -> None:
 
-    def complete_tree(root: QDTree, qpl_tree: QPLTree) -> None:
-        assert len(root.children) <= len(qpl_tree.children), f"Number of children in QD tree ({len(root.children)}) should be less then or equal to number of children in QPL tree ({len(qpl_tree.children)})"
-        assert root.op == qpl_tree.op, f"Operator in QD tree ({root.op.value}) does not match QPL tree ({qpl_tree.op.value})"
+    def complete_tree(qpl_qd_tree: QPLQDTree, qpl_tree: QPLTree) -> None:
+        assert len(qpl_qd_tree.children) <= len(qpl_tree.children), f"Number of children in QD tree ({len(qpl_qd_tree.children)}) should be less then or equal to number of children in QPL tree ({len(qpl_tree.children)})"
+        assert qpl_qd_tree.op == qpl_tree.op, f"Operator in QD tree ({qpl_qd_tree.op.value}) does not match QPL tree ({qpl_tree.op.value})"
 
-        root.qpl_line = qpl_tree.qpl_row
-        root.prefix_qpl = qpl_tree.children_qpl
+        qpl_qd_tree.qpl_line = qpl_tree.qpl_row
 
-        # change order when necessary
-        if len(root.children) == 2 and root.children[0].op != qpl_tree.children[0].op:
+        # change order if necessary
+        if len(qpl_qd_tree.children) == 2 and qpl_qd_tree.children[0].op != qpl_tree.children[0].op:
             qpl_tree.children = qpl_tree.children[1], qpl_tree.children[0]
 
-        for root_child, qpl_child in zip(root.children, qpl_tree.children):
+        for root_child, qpl_child in zip(qpl_qd_tree.children, qpl_tree.children):
             complete_tree(root_child, qpl_child)
 
     for root in tqdm(decomposer_roots, desc="Completing trees with QPL"):
@@ -116,19 +92,13 @@ def complete_trees_qpl(
             continue
 
 
-def create_completer_dataset(decomposer_roots: List[QDTree]) -> List[Dict]:
-    def get_tree_rows(root: QDTree) -> List[Dict]:
+def create_completer_dataset(decomposer_roots: List[QPLQDTree]) -> List[Dict]:
+    def get_tree_rows(root: QPLQDTree) -> List[Dict]:
         rows_to_return = []
         if root.children:
             rows_to_return += [child_row for child in root.children for child_row in get_tree_rows(child)]
 
         if root.prefix_qpl is not None and root.qpl_line is not None:
-            if root.parent is not None and root.parent.prefix_qpl is not None:
-                # enrich parent prefix QPL with child question
-                root.parent.prefix_qpl = root.parent.prefix_qpl.replace(
-                    root.qpl_line,
-                    f"{root.qpl_line}\t-- {root.question}"
-                )
             rows_to_return.append(
                 {
                     "db_id": root.db_id,
@@ -160,12 +130,12 @@ if __name__ == "__main__":
     for split in ["train", "validation"]:
         # Load the NL2QPL data and create QPL tree for each question
         nl2qpl_data = load_dataset(nl2qpl_dataset_id, split=split)
-        qpl_trees = get_qpl_trees(nl2qpl_data)
+        qpl_trees = get_qpl_trees(nl2qpl_data)  # type: ignore
         print(f"Number of QPL trees: {len(qpl_trees)}")
 
         # Load the decomposer data and create partial QD trees
         decomposer_data = load_dataset(decomposer_dataset_id, split=split)
-        root_qd_trees = get_decomposer_roots(decomposer_data)
+        root_qd_trees = get_decomposer_roots(decomposer_data)  # type: ignore
         print(f"Number of partial QD trees: {len(root_qd_trees)}")
 
         # Complete the QD trees with QPL data

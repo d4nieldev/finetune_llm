@@ -1,7 +1,6 @@
 import json
-from typing import Tuple, Union, Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any
 from typing_extensions import TypedDict
-from dataclasses import dataclass
 from enum import Enum
 import logging as log
 from pathlib import Path
@@ -19,6 +18,9 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from datasets import load_dataset
 from tqdm import tqdm
 
+from utils.qpl.tree import QPLQDTree, Operator
+
+
 log.basicConfig(level=log.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
@@ -35,85 +37,6 @@ class CompleterExample(TypedDict):
     op: str
     parent_question: Optional[str]
 
-
-class Operator(Enum):
-    SCAN = "Scan"
-    AGGREGATE = "Aggregate"
-    FILTER = "Filter"
-    SORT = "Sort"
-    TOPSORT = "TopSort"
-    JOIN = "Join"
-    EXCEPT = "Except"
-    INTERSECT = "Intersect"
-    UNION = "Union"
-
-
-@dataclass
-class QPLTree:
-    question: str
-    db_id: str
-    op: Operator = None   # type: ignore
-    line_num: int = None  # type: ignore
-    qpl_line: str = None  # type: ignore
-    parent: Optional["QPLTree"] = None
-    children: Optional[Union[Tuple["QPLTree"], Tuple["QPLTree", "QPLTree"]]] = None
-
-    def to_dict(self) -> Dict[str, Any]:        
-        output = {
-            "db_id": self.db_id,
-            "question": self.question,
-            "is_valid": self.is_valid,
-            "line_num": self.line_num,
-        }
-
-        if self.is_valid:
-            output = {
-                **output,
-                "op": self.op.value,
-                "qpl": self.qpl,
-                "prefix_qpl": self.prefix_qpl,
-                "qpl_line": self.qpl_line,
-                "children": [child.to_dict() for child in self.children] if self.children else None,
-            }
-
-        return output
-    
-
-    @staticmethod
-    def from_dict(tree_dict: Dict[str, Any]) -> "QPLTree":
-        tree = QPLTree(
-            question=tree_dict["question"],
-            db_id=tree_dict["db_id"],
-            op=Operator(tree_dict["op"]) if tree_dict['is_valid'] else None,
-            line_num=tree_dict["line_num"],
-            qpl_line=tree_dict.get("qpl_line"),
-        )
-        if tree_dict.get("children"):
-            tree.children = tuple(QPLTree.from_dict(child) for child in tree_dict["children"])
-            for child in tree.children:
-                child.parent = tree
-        return tree
-
-    @property
-    def prefix_qpl(self) -> Optional[str]:
-        try:
-            if self.children is None:
-                return ""
-            return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line).strip() for child in self.children]).replace("\n", " ; ")
-        except Exception as e:
-            return None
-    
-    @property
-    def qpl(self) -> Optional[str]:
-        try:
-            return f"{self.prefix_qpl} ; {self.qpl_line}" if self.prefix_qpl else self.qpl_line
-        except Exception as e:
-            return None
-    
-    @property
-    def is_valid(self) -> bool:
-        return self.op and (all(child.is_valid for child in self.children) if self.children else True)
-    
 
 class DecomposerMode(Enum):
     GREEDY = "greedy"
@@ -195,11 +118,11 @@ def text_to_qpl(
 
 def load_decomposer_trees(
         trees_ckpt_file: Path,
-    ) -> List[QPLTree]:
+    ) -> List[QPLQDTree]:
     with open(trees_ckpt_file, "r") as f:
         trees = json.load(f)
     
-    trees = [QPLTree.from_dict(tree) for tree in trees]
+    trees = [QPLQDTree.from_dict(tree) for tree in trees]
     log.info(f"Loaded natural language queries decomposition trees (no code) from '{trees_ckpt_file}'")
 
     return trees
@@ -238,16 +161,16 @@ def decompose(
         batch_size: int,
         max_new_tokens: int,
         max_retries: int = 3,
-    ) -> List[QPLTree]:
+    ) -> List[QPLQDTree]:
 
-    def rec(examples: List[DecomposerExample], lvl: int = 1) -> List[QPLTree]:
+    def rec(examples: List[DecomposerExample], lvl: int = 1) -> List[QPLQDTree]:
         if len(examples) == 0:
             return []
         
         progress_bar = tqdm(total=len(examples), desc=f"Decomposing (level {lvl})", unit="question")
 
         # Create a QPL tree for each example
-        trees = [QPLTree(question=ex['question'], db_id=ex['db_id']) for ex in examples]
+        trees = [QPLQDTree(question=ex['question'], db_id=ex['db_id']) for ex in examples]
 
         # Use the decomposer model to generate the questions for the next layer of each QPL tree
         # If llm is in sampling mode, retry the decomposition until a sub-question is different from its parent question
@@ -293,7 +216,7 @@ def decompose(
             for child in children:
                 child.parent = tree
             if len(children) == 0:
-                tree.children = None
+                tree.children = ()
             elif len(children) == 1:
                 tree.children = (children[0],)
             else:
@@ -304,16 +227,15 @@ def decompose(
     return rec(examples)
 
 
-def post_order_index_tree(tree: QPLTree, counter: int = 1) -> int:
-    if tree.children:
-        for child in tree.children:
-            counter = post_order_index_tree(child, counter)
+def post_order_index_tree(tree: QPLQDTree, counter: int = 1) -> int:
+    for child in tree.children:
+        counter = post_order_index_tree(child, counter)
     tree.line_num = counter
     return counter + 1
 
 @torch.no_grad()
 def complete(
-        trees: List[QPLTree],
+        trees: List[QPLQDTree],
         processor: QPLComposerProcessor,
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizerBase,
@@ -324,15 +246,13 @@ def complete(
     num_nodes = sum([tree.line_num for tree in trees])
     progress_bar = tqdm(total=num_nodes, desc="Completing QPL", unit="node")
 
-    def rec(trees: List[QPLTree]) -> None:
+    def rec(trees: List[QPLQDTree]) -> None:
         if len(trees) == 0:
             return
         
         # Complete the children before completing the parent
         trees_to_complete = []
         for tree in trees:
-            if tree.children is None:
-                continue
             for child in tree.children:
                 if child.qpl_line is None:
                     trees_to_complete.append(child)
@@ -365,6 +285,9 @@ def complete(
 
         # Parse the outputs and assign the QPL lines to the trees
         for tree, output in zip(trees, outputs):
+            if output is None:
+                log.warning(f"Tree for question '{tree.question}' could not be completed. Skipping this tree.")
+                continue
             completion = output.split('\n')[0].strip()
             tree.qpl_line = f"#{tree.line_num} = {tree.op.value} {completion}"
 

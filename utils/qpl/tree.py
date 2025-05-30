@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from dataclasses import dataclass
-from typing import List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class Operator(Enum):
@@ -19,7 +19,7 @@ class Operator(Enum):
 @dataclass
 class QPLTree:
     qpl_row: str = None  # type: ignore
-    children: Optional[Union[Tuple["QPLTree"], Tuple["QPLTree", "QPLTree"]]] = None
+    children: Tuple["QPLTree", ...] = ()
 
     @property
     def op(self) -> Operator:
@@ -27,8 +27,6 @@ class QPLTree:
 
     @property
     def children_qpl(self) -> str:
-        if self.children is None:
-            return ""
         return "\n".join([(child.children_qpl + "\n" + child.qpl_row).strip() for child in self.children]).replace("\n", " ; ")
     
     @staticmethod
@@ -42,4 +40,69 @@ class QPLTree:
             row_nodes[row_id].qpl_row = qpl_row
             row_nodes[row_id].children = tuple(children) if children else None  # type: ignore
         return row_nodes[-1]
+
+
+@dataclass
+class QPLQDTree:
+    question: str
+    db_id: str
+    op: Operator = None   # type: ignore
+    line_num: int = None  # type: ignore
+    qpl_line: str = None  # type: ignore
+    parent: Optional["QPLQDTree"] = None
+    children: Tuple["QPLQDTree", ...] = ()
+
+    def to_dict(self) -> Dict[str, Any]:
+        output = {
+            "db_id": self.db_id,
+            "question": self.question,
+            "is_valid": self.is_valid,
+            "line_num": self.line_num,
+        }
+
+        if self.is_valid:
+            output = {
+                **output,
+                "op": self.op.value,
+                "qpl": self.qpl,
+                "prefix_qpl": self.prefix_qpl,
+                "qpl_line": self.qpl_line,
+                "children": [child.to_dict() for child in self.children],
+            }
+
+        return output
+
+
+    @staticmethod
+    def from_dict(tree_dict: Dict[str, Any]) -> "QPLQDTree":
+        tree = QPLQDTree(
+            question=tree_dict["question"],
+            db_id=tree_dict["db_id"],
+            op=Operator(tree_dict["op"]) if tree_dict['is_valid'] else None,  # type: ignore
+            line_num=tree_dict["line_num"],
+            qpl_line=tree_dict.get("qpl_line"),  # type: ignore
+        )
+        if tree_dict.get("children"):
+            tree.children = tuple(QPLQDTree.from_dict(child) for child in tree_dict["children"])
+            for child in tree.children:
+                child.parent = tree
+        return tree
+
+    @property
+    def prefix_qpl(self) -> str:
+        if not self.children:
+            return ""
+        return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line + f" ;  -- {child.question}").strip() for child in self.children])
+
+    @property
+    def qpl(self) -> str:
+        output = ""
+        if self.prefix_qpl:
+            output += self.prefix_qpl + "\n"
+        output += self.qpl_line + " ; -- " + self.question
+        return output
+
+    @property
+    def is_valid(self) -> bool:
+        return self.op and all(child.is_valid for child in self.children)
     
