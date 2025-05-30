@@ -21,7 +21,11 @@ from tqdm import tqdm
 from utils.qpl.tree import QPLQDTree, Operator
 
 
-log.basicConfig(level=log.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+log.basicConfig(
+    level=log.INFO,
+    format='[%(asctime)s] %(levelname)s - %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 
 class DecomposerExample(TypedDict):

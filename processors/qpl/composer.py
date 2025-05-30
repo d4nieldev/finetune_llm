@@ -62,6 +62,7 @@ class QPLComposerProcessor(QPLProcessor):
             + "<aggregate> ::= Aggregate [ <input> ] <group-by>? <output-non-qualif>\n"
             + "<filter> ::= Filter [ <input> ] <pred> <distinct>? <output-non-qualif>\n"
             + "<sort> ::= Sort [ <input> ] <order-by> <withTie>? <output-non-qualif>\n"
+            + "<top> ::= Top [ <input> ] Rows [ <number> ] <output-non-qualif>\n"
             + "<topsort> ::= TopSort [ <input> ] Rows [ <number> ] <order-by> <withTies>? <output-non-qualif>\n\n"
             
             + "-- Binary operators\n"

@@ -45,6 +45,7 @@ class QPLDecomposerProcessor(QPLProcessor):
             + "**Aggregate** - Aggregate a stream of tuples using a grouping criterion into a stream of groups (1 sub-question)\n"
             + "**Filter** - Remove tuples from a stream that do not match a predicate (1 sub-question)\n"
             + "**Sort** - Sort a stream according to a sorting expression (1 sub-question)\n"
+            + "**Top** - Select the top-K tuples from a stream (1 sub-question)\n"
             + "**TopSort** - Select the top-K tuples from a stream according to a sorting expression (1 sub-question)\n"
             + "**Join** - Perform a logical join operation between two streams based on a join condition (2 sub-questions)\n"
             + "**Except** - Compute the set difference between two streams of tuples (2 sub-questions)\n"

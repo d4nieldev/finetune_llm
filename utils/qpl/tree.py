@@ -9,6 +9,7 @@ class Operator(Enum):
     AGGREGATE = "Aggregate"
     FILTER = "Filter"
     SORT = "Sort"
+    TOP = "Top"
     TOPSORT = "TopSort"
     JOIN = "Join"
     EXCEPT = "Except"
@@ -29,6 +30,14 @@ class QPLTree:
     def children_qpl(self) -> str:
         return "\n".join([(child.children_qpl + "\n" + child.qpl_row).strip() for child in self.children]).replace("\n", " ; ")
     
+    @property
+    def line_num(self) -> int:
+        """Extracts the line number from the QPL row."""
+        match = re.search(r"#(\d+)", self.qpl_row)
+        if match:
+            return int(match.group(1))
+        raise ValueError(f"Line number not found in QPL row: {self.qpl_row}")
+    
     @staticmethod
     def from_qpl_lines(qpl_lines: List[str]) -> "QPLTree":
         """Construct a QPLTree from a list of QPL lines."""
@@ -36,9 +45,9 @@ class QPLTree:
         for qpl_row in qpl_lines:
             line_numbers = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
             row_id = line_numbers[0] - 1
-            children = [row_nodes[line_num - 1] for line_num in set(line_numbers[1:])]
+            children = [row_nodes[line_num - 1] for line_num in list(dict.fromkeys(line_numbers[1:]))]  # preserve children order!
             row_nodes[row_id].qpl_row = qpl_row
-            row_nodes[row_id].children = tuple(children) if children else None  # type: ignore
+            row_nodes[row_id].children = tuple(children)
         return row_nodes[-1]
 
 
@@ -92,7 +101,7 @@ class QPLQDTree:
     def prefix_qpl(self) -> str:
         if not self.children:
             return ""
-        return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line + f" ;  -- {child.question}").strip() for child in self.children])
+        return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line + f" ;  -- {child.question}").strip() for child in sorted(self.children, key=lambda x: x.line_num)])
 
     @property
     def qpl(self) -> str:
@@ -105,4 +114,26 @@ class QPLQDTree:
     @property
     def is_valid(self) -> bool:
         return self.op and all(child.is_valid for child in self.children)
+
+
+@dataclass
+class PartialQDTree:
+    question: str
+    db_id: str
+
+    parent: Optional["PartialQDTree"] = None
+    op: Optional[Operator] = None
+    children: Tuple["PartialQDTree", ...] = ()
+
+    prefix_qpl: Optional[str] = None
+    qpl_line: Optional[str] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "question": self.question,
+            "op": self.op.value if self.op else None,
+            "children": [child.to_dict() for child in self.children],
+            "prefix_qpl": self.prefix_qpl,
+            "qpl_line": self.qpl_line
+        }
     

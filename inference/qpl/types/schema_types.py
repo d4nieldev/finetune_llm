@@ -154,7 +154,7 @@ class DBSchema:
 
 if __name__ == "__main__":
     db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
-    schema = db_schemas["concert_singer"]
+    schema = db_schemas["student_assessment"]
     print(schema)
     print()
     print(schema.entities)
