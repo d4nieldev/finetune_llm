@@ -22,6 +22,7 @@ dependencies = [
 qpl = [
     "pydash==8.0.5",
     "pyodbc==5.2.0",
+    "sqlalchemy>=2.0.41",
     "sentence-transformers>=4.1.0",
     "dspy>=2.6.24",
 ]

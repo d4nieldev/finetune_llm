@@ -439,6 +439,7 @@ qpl = [
     { name = "pydash" },
     { name = "pyodbc" },
     { name = "sentence-transformers" },
+    { name = "sqlalchemy" },
 ]
 
 [package.metadata]
@@ -453,6 +454,7 @@ requires-dist = [
     { name = "pydash", marker = "extra == 'qpl'", specifier = "==8.0.5" },
     { name = "pyodbc", marker = "extra == 'qpl'", specifier = "==5.2.0" },
     { name = "sentence-transformers", marker = "extra == 'qpl'", specifier = ">=4.1.0" },
+    { name = "sqlalchemy", marker = "extra == 'qpl'", specifier = ">=2.0.41" },
     { name = "torch", specifier = "==2.6.0" },
     { name = "tqdm", specifier = "==4.67.1" },
     { name = "transformers", specifier = "==4.51.3" },
