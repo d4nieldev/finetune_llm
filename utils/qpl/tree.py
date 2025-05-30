@@ -28,7 +28,7 @@ class QPLTree:
 
     @property
     def children_qpl(self) -> str:
-        return "\n".join([(child.children_qpl + "\n" + child.qpl_row).strip() for child in self.children]).replace("\n", " ; ")
+        return "\n".join([(child.children_qpl + "\n" + child.qpl_row + " ; ").strip() for child in sorted(self.children, key=lambda x: x.line_num)])
     
     @property
     def line_num(self) -> int:
