@@ -2,6 +2,7 @@ import sys
 import json
 import random
 from typing import List, Dict, Tuple
+import logging as log
 
 from inference.qpl.types.schema_types import DBSchema
 import utils.qpl.paths as p
@@ -11,11 +12,12 @@ from sentence_transformers import SentenceTransformer
 
 
 SEED = 42
-LM_ID = "openai/gpt-4o"
-SAMPLE_SIZE = 20
-FEWSHOT_TRAIN_RATIO = 0.5
-FEWSHOT_EXAMPLES = 2
-FILENAME = f"predicted_types_concert_singer__{LM_ID.replace('/', '-')}_seed{SEED}_sample{SAMPLE_SIZE}_train_ratio{FEWSHOT_TRAIN_RATIO}_fewshot{FEWSHOT_EXAMPLES}"
+LM_ID = "openai/gpt-4.1-mini"
+SAMPLE_SIZE = -1
+FEWSHOT_TRAIN_RATIO = 0.15
+FEWSHOT_EXAMPLES = 3
+COT = True
+FILENAME = f"new_concert_singer__{LM_ID.replace('/', '-')}_seed{SEED}_sample{SAMPLE_SIZE}_train_ratio{FEWSHOT_TRAIN_RATIO}_fewshot{FEWSHOT_EXAMPLES}{'_cot' if COT else ''}"
 
 
 random.seed(SEED)
@@ -43,12 +45,12 @@ class TypeClassificationSignature(dspy.Signature):
     """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
 
 The possible types are:
-    - {entity} - The result is 1 row that contains {entity}'s primary key (optionally with other columns of {entity}). {entity} should be replaced with one of the entities in the schema.
-    - Partial[{entity}] - The result is 1 row that contains multiple columns of {entity} but DOES NOT INCLUDE {entity}'s primary key. {entity} should be replaced with one of the entities in the schema.
-    - Reduced[{entity}] - The result is 1 row which is the outcome of a computation on a List[{entity}] or List[Partial[{entity}]]. {entity} should be replaced with one of the entities in the schema.
-    - Number - The result is 1 row that contains only a number that is completely unrelated to any entity.
+    - PK[{entity}] - The result is 1 row that contains column(s) only from {entity} - INCLUDING its primary key. {entity} should be replaced with one of the entities in the schema.
+    - NoPK[{entity}] - The result is 1 row that contains column(s) of {entity} - NOT INCLUDING its primary key. {entity} should be replaced with one of the entities in the schema.
+    - Aggregated[{entity}] - The result is 1 row which is the outcome of a computation derived from a stream of {entity}s. {entity} should be replaced with one of the entities in the schema.
+    - Number - The result is 1 row that contains only a number that is not derived from any entity.
     - Union[{type_1}, {type_2}, ...] - The result is 1 row that is a combination of a subset of the possible types defined above.
-    - List[{type}] - if the result returns **multiple** rows, where each row is of type {type}. {type} should be replaced with one of the possible types defined above.
+    - List[{type}] - The result is a stream of rows, where each row is of type {type}. {type} should be replaced with one of the possible types defined above.
 """
     database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
     entities: List[str] = dspy.InputField(desc="Entities in the schema.")
@@ -59,11 +61,14 @@ The possible types are:
 class TypeClassification(dspy.Module):
     def __init__(self):
         super().__init__()
-        self.generator = dspy.ChainOfThought(
-            TypeClassificationSignature,
-            rationale_field=dspy.OutputField(desc="Step by step reasoning on the question using the schema and entities to predict the type.")
-        )
-    
+        if COT:
+            self.generator = dspy.ChainOfThought(
+                TypeClassificationSignature,
+                rationale_field=dspy.OutputField(desc="Step by step reasoning on the question using the schema and entities to predict the type.")
+            )
+        else:
+            self.generator = dspy.Predict(TypeClassificationSignature)
+        
     def forward(self, database_schema: str, entities: List[str], question: str) -> TypeClassificationSignature:
         """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question."""
         return self.generator(database_schema=database_schema, entities=entities, question=question)
@@ -104,26 +109,30 @@ def question_only_embed(texts: list[str]):
             questions.append(txt)
     return st_model.encode(questions)
 
-fewshot = dspy.KNNFewShot(
-    k=FEWSHOT_EXAMPLES,
-    trainset=train_examples,
-    vectorizer=question_only_embed,  # type: ignore
-    
-    # few_shot_bootstrap_args
-    metric=type_match,
-    max_labeled_demos=FEWSHOT_EXAMPLES,
-)
-compiled_fewshot = fewshot.compile(TypeClassification())
+if FEWSHOT_EXAMPLES > 0:
+    fewshot = dspy.KNNFewShot(
+        k=FEWSHOT_EXAMPLES,
+        trainset=train_examples,
+        vectorizer=question_only_embed,  # type: ignore
+        
+        # few_shot_bootstrap_args
+        metric=type_match,
+        max_labeled_demos=FEWSHOT_EXAMPLES,
+    )
+    program = fewshot.compile(TypeClassification())
+else:
+    program = TypeClassification()
 
 # Predict types
 baseline = len(lm.history)
-predicted_types = compiled_fewshot.batch(test_examples)
+predicted_types = program.batch(test_examples)
 new_calls = len(lm.history) - baseline
 
 # Save logs
 sys.stdout = open(p.TYPES_OUTPUT_DIR / f"{FILENAME}.ans", "w")
 lm.inspect_history(n=new_calls)
 sys.stdout.close()
+log.info(f"Saved LLM calls to {p.TYPES_OUTPUT_DIR / f'{FILENAME}.ans'}")
 
 # Save results
 with open(p.TYPES_OUTPUT_DIR / f"{FILENAME}.json", "w") as f:
@@ -141,3 +150,4 @@ with open(p.TYPES_OUTPUT_DIR / f"{FILENAME}.json", "w") as f:
         f, 
         indent=2
     )
+log.info(f"Saved predictions to {p.TYPES_OUTPUT_DIR / f'{FILENAME}.json'}")
