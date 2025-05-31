@@ -337,7 +337,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show the stadium ids of all concerts.",
-    "type": "List[NoPK[concert]]"
+    "type": "List[PK[stadium]]"
   },
   {
     "db_id": "concert_singer",
@@ -347,7 +347,7 @@
   {
     "db_id": "concert_singer",
     "question": "What are the stadium ids of all concerts?",
-    "type": "List[NoPK[concert]]"
+    "type": "List[PK[stadium]]"
   },
   {
     "db_id": "concert_singer",
@@ -387,7 +387,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show stadium ids of concerts in year 2014.",
-    "type": "List[NoPK[concert]]"
+    "type": "List[PK[stadium]]"
   },
   {
     "db_id": "concert_singer",
