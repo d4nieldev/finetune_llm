@@ -26,3 +26,6 @@ qpl = [
     "sentence-transformers>=4.1.0",
     "dspy>=2.6.24",
 ]
+notebook = [
+    "ipykernel>=6.29.5",
+]
