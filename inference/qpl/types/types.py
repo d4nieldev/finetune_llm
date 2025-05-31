@@ -35,19 +35,27 @@ class Entity(QPLType):
 # Entity composition types
 E = TypeVar("E", bound=Entity)
 
+
 @dataclass(unsafe_hash=True)
-class Partial(QPLType, Generic[E]):
+class PK(QPLType, Generic[E]):
     entity: E
 
     def __repr__(self):
-        return f"Partial[{self.entity}]"
+        return f"PK[{self.entity}]"
 
 @dataclass(unsafe_hash=True)
-class Reduced(QPLType, Generic[E]):
+class NoPK(QPLType, Generic[E]):
     entity: E
 
     def __repr__(self):
-        return f"Reduced[{self.entity}]"
+        return f"NoPK[{self.entity}]"
+
+@dataclass(unsafe_hash=True)
+class Aggregated(QPLType, Generic[E]):
+    entity: E
+
+    def __repr__(self):
+        return f"Aggregated[{self.entity}]"
 
 
 # Type composition types
@@ -64,7 +72,7 @@ class TypeList(QPLType, Generic[T]):
 class Union(QPLType, Generic[T]):
     types: Set[T]
 
-    def __init__(self, types: Iterable[T]):
+    def __init__(self, *types: T):
         flattened: Set[T] = set()
         for t in types:
             if isinstance(t, Union):
@@ -74,7 +82,7 @@ class Union(QPLType, Generic[T]):
         
         self.types = set()
         for t in flattened:
-            if isinstance(t, Partial) and t.entity in flattened:
+            if isinstance(t, NoPK) and t.entity in flattened:
                 # Entity -> Partial[Entity]
                 continue
             self.types.add(t)
