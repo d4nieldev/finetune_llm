@@ -37,7 +37,7 @@
   {
     "db_id": "concert_singer",
     "question": "What is the average, minimum, and maximum age of all singers from France?",
-    "type": "Union[Reduced[singer], Reduced[singer], Reduced[singer]]"
+    "type": "Reduced[singer]"
   },
   {
     "db_id": "concert_singer",
@@ -47,7 +47,7 @@
   {
     "db_id": "concert_singer",
     "question": "What is the average, minimum, and maximum age for all French singers?",
-    "type": "Union[Reduced[singer], Reduced[singer], Reduced[singer]]"
+    "type": "Reduced[singer]"
   },
   {
     "db_id": "concert_singer",
