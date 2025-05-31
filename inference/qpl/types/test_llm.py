@@ -45,11 +45,11 @@ class TypeClassificationSignature(dspy.Signature):
     """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
 
 The possible types are:
-    - PK[{entity}] - The result is 1 row that contains column(s) only from {entity} - INCLUDING its primary key. {entity} should be replaced with one of the entities in the schema.
+    - PK[{entity}] - The result is 1 row that contains the primary key of {entity} optionally with additional column(s) of {entity}. {entity} should be replaced with one of the entities in the schema.
     - NoPK[{entity}] - The result is 1 row that contains column(s) of {entity} - NOT INCLUDING its primary key. {entity} should be replaced with one of the entities in the schema.
     - Aggregated[{entity}] - The result is 1 row which is the outcome of a computation derived from a stream of {entity}s. {entity} should be replaced with one of the entities in the schema.
-    - Number - The result is 1 row that contains only a number that is not derived from any entity.
-    - Union[{type_1}, {type_2}, ...] - The result is 1 row that is a combination of a subset of the possible types defined above.
+    - Number - The result is 1 row that contains a single number that is not derived from any entity.
+    - Union[{type_1}, {type_2}, ...] - The result is 1 row that is defined by {type_1}, {type_2}, ... which are a subset of the possible types defined above.
     - List[{type}] - The result is a stream of rows, where each row is of type {type}. {type} should be replaced with one of the possible types defined above.
 """
     database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
