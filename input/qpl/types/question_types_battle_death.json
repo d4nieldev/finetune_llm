@@ -87,7 +87,7 @@
   {
     "db_id": "battle_death",
     "question": "For each battle, what is the id and name and the total number of people killed?",
-    "type": "List[Union[PK[battle], Aggregated[death]]"
+    "type": "List[Union[PK[battle], Aggregated[death]]]"
   },
   {
     "db_id": "battle_death",

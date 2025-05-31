@@ -87,7 +87,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show all countries and the number of singers in each country.",
-    "type": "List[Union[NoPK[singer], Aggregated[singer]]]"
+    "type": "List[Aggregated[singer]]"
   },
   {
     "db_id": "concert_singer",
@@ -97,7 +97,7 @@
   {
     "db_id": "concert_singer",
     "question": "How many singers are from each country?",
-    "type": "List[Union[NoPK[singer], Aggregated[singer]]]"
+    "type": "List[Aggregated[singer]]"
   },
   {
     "db_id": "concert_singer",
@@ -322,7 +322,7 @@
   {
     "db_id": "concert_singer",
     "question": "What is the number of concerts in each year?",
-    "type": "List[Union[NoPK[concert], Aggregated[concert]]]"
+    "type": "List[Aggregated[concert]]"
   },
   {
     "db_id": "concert_singer",
