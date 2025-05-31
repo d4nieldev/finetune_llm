@@ -42,11 +42,11 @@ def scan_type(scan_node: QPLTree, schema: DBSchema) -> Optional[QPLType]:
                 out_types.add(Number())
             elif (
                 col in schema[table_name].columns and
-                col not in [fk_col for fk in schema[table_name].fks for fk_col in fk.columns] and
-                col not in schema[table_name].pks
+                col not in [fk.from_col for fk in schema[table_name].fks] and
+                col not in [pk.col_name for pk in schema[table_name].pks]
             ):
                 # col is a non-key column
-                out_types.add(Partial(Entity(table_name)))
+                out_types.add(NoPK(Entity(table_name)))
             elif col not in schema[table_name].columns:
                 raise ValueError(f"Column {col} not found in table {table_name}")
         
