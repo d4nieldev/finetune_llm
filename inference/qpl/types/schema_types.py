@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-from inference.qpl.types.types import Entity
+from inference.qpl.types.qpl_types import Entity
 import utils.qpl.paths as p
 
 
@@ -154,7 +154,7 @@ class DBSchema:
 
 if __name__ == "__main__":
     db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
-    schema = db_schemas["student_assessment"]
+    schema = db_schemas["battle_death"]
     print(schema)
     print()
     print(schema.entities)

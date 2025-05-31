@@ -2,7 +2,7 @@ import re
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
 
-from inference.qpl.types.types import *
+from inference.qpl.types.qpl_types import *
 from utils.qpl.tree import QPLTree
 from inference.qpl.types.schema_types import DBSchema
 
