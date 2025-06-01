@@ -11,6 +11,8 @@ dependencies = [
     "numpy==2.2.4",
     "pandas==2.2.3",
     "peft==0.15.2",
+    "rich-argparse>=1.7.1",
+    "simple-parsing>=0.1.7",
     "torch==2.6.0",
     "tqdm==4.67.1",
     "transformers==4.51.3",

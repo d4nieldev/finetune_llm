@@ -46,3 +46,16 @@ def collect_kwargs(unknown: list[str], prefix="") -> dict:
             key, value = arg.lstrip('-').split('=', 1)
             kwargs[key] = smart_cast(value)
     return kwargs
+
+
+def from_dataclass(cls):
+    from simple_parsing import parse
+    from rich_argparse import ArgumentDefaultsRichHelpFormatter, MetavarTypeRichHelpFormatter
+    
+    class CustomRichHelpFormatter(ArgumentDefaultsRichHelpFormatter, MetavarTypeRichHelpFormatter):
+        pass
+
+    return parse(
+        cls, 
+        formatter_class=CustomRichHelpFormatter
+    )
