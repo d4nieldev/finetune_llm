@@ -19,14 +19,23 @@ from sentence_transformers import SentenceTransformer
 class TaggedDB(Enum):
     CONCERT_SINGER = "concert_singer"
     BATTLE_DEATH = "battle_death"
+    
+class TypeSystem(Enum):
+    VERBOSE = "verbose"
+    SIMPLE = "simple"
 
     @property
-    def path(self) -> Path:
-        """Return the path to the dataset file."""
+    def signature(self):
+        """Return the signature of the type system."""
         return {
-            TaggedDB.CONCERT_SINGER: p.TYPES_CONCERT_SINGER_PATH,
-            TaggedDB.BATTLE_DEATH: p.TYPES_BATTLE_DEATH_PATH,
+            TypeSystem.VERBOSE: VerboseTypeSystem,
+            TypeSystem.SIMPLE: SimpleTypeSystem,
         }[self]
+    
+
+def data_path(type_system: TypeSystem, db_id: TaggedDB) -> Path:
+    """Return the path to the dataset file based on the database ID and type system."""
+    return p.TYPES_INPUT_DIR / f"{type_system.value}_{db_id.value}.json"
 
 
 @dataclass
@@ -35,6 +44,9 @@ class Config:
 
     llm_id: str = "openai/gpt-4.1-mini"
     """ID of the LLM to use."""
+
+    type_system: TypeSystem = TypeSystem.VERBOSE
+    """Type system to use for type prediction."""
 
     train_db_id: TaggedDB = TaggedDB.BATTLE_DEATH
     """ID of the training dataset (examples for fewshot) name."""
@@ -71,7 +83,7 @@ class Config:
                 f"dataset={self.train_db_id.value}_split_train_ratio={self.split_train_ratio}"
             sample_str = f"_train_sample_size={self.train_sample_size}" if self.train_sample_size > 0 else ""
             sample_str += f"_test_sample_size={self.test_sample_size}" if self.test_sample_size > 0 else ""
-            self.filename = Path(f"pred_{self.llm_id.replace('/', '-')}_{data_str}{sample_str}_fewshot={self.fewshot_examples}{'_cot' if self.cot else ''}_seed={self.seed}")
+            self.filename = Path(f"pred__model={self.llm_id.replace('/', '-')}_system={self.type_system}_{data_str}{sample_str}_fewshot={self.fewshot_examples}{'_cot' if self.cot else ''}_seed={self.seed}")
         
         if self.fewshot_examples < 0:
             raise ValueError("fewshot_examples must be a non-negative integer.")
@@ -97,18 +109,31 @@ The possible types are:
     predicted_type: str = dspy.OutputField(desc="Predicted type.")
 
 
+class SimpleTypeSystem(dspy.Signature):
+    """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
+
+The possible types are:
+    - {entity} - The result columns are all from {entity}. {entity} should be replaced with one of the entities in the schema.
+    - Aggregated[{entity}] - The result is the outcome of a computation derived from a stream of {entity}s. {entity} should be replaced with one of the entities in the schema.
+    - {type_1}, {type_2}, ..., {type_n} - The result is a combination of {entity} and Aggregated[{entity}] (not necessarily the same {entity}).
+"""
+    database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
+    entities: List[str] = dspy.InputField(desc="Entities in the schema.")
+    question: str = dspy.InputField(desc="Question to be answered by the SQL query.")
+    predicted_type: str = dspy.OutputField(desc="Predicted type.")
+
 class TypeClassifier(dspy.Module):
-    def __init__(self, cot: bool):
+    def __init__(self, cot: bool, type_system_signature: type[dspy.Signature]):
         super().__init__()
         if cot:
             self.generator = dspy.ChainOfThought(
-                VerboseTypeSystem,
+                type_system_signature,
                 rationale_field=dspy.OutputField(desc="Step by step reasoning on the question using the schema and entities to predict the type.")
             )
         else:
-            self.generator = dspy.Predict(VerboseTypeSystem)
+            self.generator = dspy.Predict(type_system_signature)
         
-    def forward(self, database_schema: str, entities: List[str], question: str) -> VerboseTypeSystem:
+    def forward(self, database_schema: str, entities: List[str], question: str):
         """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question."""
         return self.generator(database_schema=database_schema, entities=entities, question=question)
     
@@ -126,6 +151,7 @@ def to_examples(dataset: List[Dict], db_schemas: Dict[str, DBSchema]) -> List[ds
     
 
 def load_dataset(
+        type_system: TypeSystem,
         train_db: TaggedDB,
         test_db: TaggedDB,
         train_sample_size: int,
@@ -137,22 +163,27 @@ def load_dataset(
         if not split_train_ratio:
             raise ValueError("If train and test datasets are the same, split_train_ratio must be provided.")
         
-        dataset = json.loads(train_db.path.read_text())
+        dataset = json.loads(data_path(type_system, train_db).read_text())
         if test_sample_size > 0:
             dataset = random.sample(dataset, k=test_sample_size)
         train, test = split_train_test(dataset, train_ratio=split_train_ratio)
     else:
-        train = json.loads(train_db.path.read_text())
+        train = json.loads(data_path(type_system, train_db).read_text())
         if train_sample_size > 0:
             train = random.sample(train, k=train_sample_size)
-        test = json.loads(test_db.path.read_text())
+        test = json.loads(data_path(type_system, test_db).read_text())
         if test_sample_size > 0:
             test = random.sample(test, k=test_sample_size)
     
     return train, test
 
 
-def compile_knn_fewshot(train_examples: List[dspy.Example], num_fewshot_examples: int, cot: bool) -> dspy.Module:
+def compile_knn_fewshot(
+        train_examples: List[dspy.Example],
+        num_fewshot_examples: int,
+        cot: bool,
+        type_system_signature: type[dspy.Signature]
+    ) -> dspy.Module:
     st_model = SentenceTransformer("all-MiniLM-L6-v2")
 
     def question_only_embed(texts: list[str]):
@@ -176,7 +207,7 @@ def compile_knn_fewshot(train_examples: List[dspy.Example], num_fewshot_examples
         metric=type_match,
     )
 
-    program = fewshot.compile(TypeClassifier(cot=cot))
+    program = fewshot.compile(TypeClassifier(cot=cot, type_system_signature=type_system_signature))
 
     return program
 
@@ -193,6 +224,7 @@ def main(args: Config):
 
     # Load data
     train, test = load_dataset(
+        type_system=args.type_system,
         train_db=args.train_db_id,
         test_db=args.test_db_id,
         train_sample_size=args.train_sample_size,
@@ -204,9 +236,14 @@ def main(args: Config):
 
     # Compile program
     if args.fewshot_examples > 0 and len(train_examples) > 0:
-        program = compile_knn_fewshot(train_examples=train_examples, num_fewshot_examples=args.fewshot_examples, cot=args.cot)
+        program = compile_knn_fewshot(
+            train_examples=train_examples,
+            num_fewshot_examples=args.fewshot_examples,
+            cot=args.cot,
+            type_system_signature=args.type_system.signature
+        )
     else:
-        program = TypeClassifier(cot=args.cot)
+        program = TypeClassifier(cot=args.cot, type_system_signature=args.type_system.signature)
 
     # Predict types
     baseline = len(lm.history)

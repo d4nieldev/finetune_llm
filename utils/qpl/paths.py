@@ -11,7 +11,5 @@ DB_CREATION_SCHEMAS_DDL_DIR = SPIDER_DB_CREATION_DIR / "schemas"
 DB_CREATION_TABLES_SORTED_PATH = SPIDER_DB_CREATION_DIR / "tables-sorted.json"
 
 TYPES_INPUT_DIR = Path("input/qpl/types")
-TYPES_CONCERT_SINGER_PATH = TYPES_INPUT_DIR / "question_types_concert_singer.json"
-TYPES_BATTLE_DEATH_PATH = TYPES_INPUT_DIR / "question_types_battle_death.json"
 
 TYPES_OUTPUT_DIR = Path("output/qpl/types")
