@@ -6,6 +6,7 @@ from enum import Enum
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Tuple, Optional
+from abc import ABC
 
 from inference.qpl.types.schema_types import DBSchema
 from utils.lists import split_train_test
@@ -41,6 +42,8 @@ class TypeSystem(Enum):
             TypeSystem.SIMPLE: SimpleTypeSystem,
         }[self]
     
+REASONING_MODELS = ['qwen3']
+    
 
 def data_path(type_system: TypeSystem, db_id: TaggedDB) -> Path:
     """Return the path to the dataset file based on the database ID and type system."""
@@ -51,25 +54,25 @@ def data_path(type_system: TypeSystem, db_id: TaggedDB) -> Path:
 class Config:
     """Configuration for the type prediction task."""
 
-    llm_id: str = "ollama_chat/qwen3:4b"
+    llm_id: str = "openai/gpt-4.1-mini"
     """ID of the LLM to use."""
 
     type_system: TypeSystem = TypeSystem.SIMPLE
     """Type system to use for type prediction."""
 
-    train_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
+    train_db_id: TaggedDB = TaggedDB.BATTLE_DEATH
     """ID of the training dataset (examples for fewshot) name."""
 
     test_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
     """ID of the testing dataset name."""
 
-    split_train_ratio: float = 0.1
+    split_train_ratio: float = 0
     """Ratio of training data to use - in case train and test datasets are the same."""
 
     fewshot_examples: int = 3
     """Number of few-shot examples to use."""
 
-    cot: bool = False
+    cot: bool = True
     """Whether to use Chain of Thought reasoning."""
 
     test_sample_size: int = -1
@@ -116,9 +119,15 @@ class Config:
     def to_dict(self) -> Dict[str, str]:
         """Convert the configuration to a dictionary."""
         return {k: str(v) if not isinstance(v, Enum) else v.value for k,v in asdict(self).items()}
+    
 
+class TypeSystemFields(dspy.Signature, ABC):
+    database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
+    entities: List[str] = dspy.InputField(desc="Entities in the schema. These are the only allowed entities that can fill the {entity} placeholder in the predicted type.")
+    question: str = dspy.InputField(desc="Question to be answered by the SQL query.")
+    predicted_type: str = dspy.OutputField(desc="Predicted type.")
 
-class VerboseTypeSystem(dspy.Signature):
+class VerboseTypeSystem(TypeSystemFields):
     """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
 
 The possible types are:
@@ -129,24 +138,17 @@ The possible types are:
     - Union[{type_1}, {type_2}, ...] - The result is 1 row that is defined by {type_1}, {type_2}, ... which are a subset of the possible types defined above.
     - List[{type}] - The result is a stream of rows, where each row is of type {type}. {type} should be replaced with one of the possible types defined above.
 """
-    database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
-    entities: List[str] = dspy.InputField(desc="Entities in the schema.")
-    question: str = dspy.InputField(desc="Question to be answered by the SQL query.")
-    predicted_type: str = dspy.OutputField(desc="Predicted type.")
 
 
-class SimpleTypeSystem(dspy.Signature):
+class SimpleTypeSystem(TypeSystemFields):
     """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
 
 The possible types are:
-    - {entity} - The result columns are all from {entity}. In case a foreign key is returned, the **referring** entity is what counts. {entity} should be replaced with one of the entities in the schema.
+    - {entity} - The result columns are all from {entity}. In case a only a foreign key is returned from a table, the **referred** entity is what counts. {entity} should be replaced with one of the entities in the schema.
     - Aggregated[{entity}] - The result is the outcome of a computation derived from a stream of {entity}s without additional columns. {entity} should be replaced with one of the entities in the schema.
     - {type_1}, {type_2}, ..., {type_n} - The result is a combination of {entity}s and Aggregated[{entity}]s (not necessarily the same {entity}).
 """
-    database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
-    entities: List[str] = dspy.InputField(desc="Entities in the schema.")
-    question: str = dspy.InputField(desc="Question to be answered by the SQL query.")
-    predicted_type: str = dspy.OutputField(desc="Predicted type.")
+
 
 class TypeClassifier(dspy.Module):
     def __init__(self, cot: bool, type_system_signature: type[dspy.Signature]):
@@ -237,6 +239,8 @@ def compile_knn_fewshot(
 
 def parse_args() -> Config:
     args = from_dataclass(Config)
+    if args.cot and any([model_id in args.llm_id for model_id in REASONING_MODELS]):
+        log.warning(f"Model {args.llm_id!r} has built-in reasoning, I recommend setting `cot=False` to prevent overthinking.")
     log.info(f"Using Config:\n{json.dumps(args.to_dict(), indent=2)}")
     return args
 
@@ -244,9 +248,14 @@ def parse_args() -> Config:
 def main(args: Config):
     # Configure LLM
     if args.llm_id.startswith("ollama_chat/"):
-        lm = dspy.LM(args.llm_id, api_base="http://localhost:11434", api_key="")
+        lm = dspy.LM(
+            args.llm_id,
+            api_base="http://localhost:11434",
+            api_key=""
+        )
     else:
         lm = dspy.LM(args.llm_id)
+    
     dspy.configure(lm=lm)
     random.seed(args.seed)
 
