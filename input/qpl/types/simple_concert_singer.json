@@ -1,0 +1,662 @@
+[
+  {
+    "db_id": "concert_singer",
+    "question": "How many singers do we have?",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each singer.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the total number of singers?",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show name, country, age for all singers ordered by age from the oldest to the youngest.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show name, country, age for all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names, countries, and ages for every singer in descending order of age?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names, countries, and ages for every singer?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average, minimum, and maximum age of all singers from France?",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the age of singers from France?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average, minimum, and maximum age for all French singers?",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the age for all France singers?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the name and the release year of the song by the youngest singer.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the age, name of the song and the release year of the song of all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and release years for all the songs of the youngest singer?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of songs, release years of songs and ages of all singers?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are all distinct countries where singers above age 20 are from?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are  the different countries with singers above age 20?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show all countries and the number of singers in each country.",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the countries of all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many singers are from each country?",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the country of all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all song names by singers above the average age.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the song names and ages of all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the average age of all singers.",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the ages of all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are all the song names by singers who are older than average?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the song names and ages of all singers?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average age of all singers?",
+    "type": "Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ages of all singers?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show location and name for all stadiums with a capacity between 5000 and 10000.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the locations and names of all stations with capacity between 5000 and 10000?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the maximum capacity and the average of all stadiums ?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the capacity and the average of all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average and maximum capacities for all stadiums ?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the capacity for all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity for the stadium with highest average attendance?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity and average attendance of all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity for the stadium with the highest average attendance?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many concerts are there in year 2014 or 2015?",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert in year 2014 or 2015.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many concerts occurred in 2014 or 2015?",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert that occurred in 2014 or 2015.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium name and the number of concerts in each stadium.",
+    "type": "stadium, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium name of all concerts.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id and name of all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium id of all concerts.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "For each stadium, how many concerts play there?",
+    "type": "stadium, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the stadium name of all concerts.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the id and name of all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the stadium id of all concerts.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium name and capacity with most number of concerts in year 2014 or after.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "For each stadium, show the stadium name and capacity and number of concerts in year 2014 or after.",
+    "type": "stadium, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium id, stadium name and stadium capacity of concerts in year 2014 or after.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id, name and capacity of all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium id of concerts in year 2014 or after.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity of the stadium with the most concerts after 2013 ?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "For each stadium, what is the name and capacity and number of concerts after 2013.",
+    "type": "stadium, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id, name and capacity of stadiums with concerts after 2013?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id, name and capacity of all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id of stadiums with concerts after 2013?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Which year has most number of concerts?",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the number of concerts in each year.",
+    "type": "concert, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the year of all concerts.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the year that had the most concerts?",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the number of concerts in each year?",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the year of all concerts?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium names without any concert.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium ids of all concerts.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of the stadiums without any concerts?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the stadium ids of all concerts?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and names of all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show countries where a singer above age 40 and a singer below 30 are from.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show countries where a singer below age 30 are from.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show countries where a singer above age 40 are from.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show names for all stadiums except for stadiums having a concert in year 2014.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show ids and names of stadiums that having a concert in year 2014.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show ids and names of all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show stadium ids of concerts in year 2014.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show distinct names for all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of all stadiums that did not have a concert in 2014?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of stadiums that have a concert in 2014?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of concerts in 2014?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the distinct names of all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the name and theme for all concerts and the number of singers in each concert.",
+    "type": "concert, Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id, name and theme of all concerts.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id for all concerts and the number of singers in each concert.",
+    "type": "concert, Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the concert id of all records of singer in concert.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names , themes , and number of singers for every concert ?",
+    "type": "concert, Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids, names, themes of all concerts?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and number of singers for every concert?",
+    "type": "concert, Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the concert ids of all records of singer in concert?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List singer names and number of concerts for each singer.",
+    "type": "singer, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the ids and names of all singers.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List singer ids and number of concerts for each singer.",
+    "type": "singer, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List singer ids of all records of singer in concert.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of the singers and number of concerts for each person?",
+    "type": "singer, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and names of all singers?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the singers and number of concerts for each person?",
+    "type": "singer, Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the singers of all records of singer in concert?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all singer names in concerts in year 2014.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all singer ids in concerts in year 2014.",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all concert ids and the singer ids in the concerts.",
+    "type": "concert, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all ids of concerts in year 2014.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of the singers who performed in a concert in 2014?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What the ids and names og all singers?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the singers who performed in a concert in 2014?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the concerts and the ids of singers who performed in the concerts?",
+    "type": "concert, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of concerts in year 2014?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "what is the name and nation of the singer who have a song having 'Hey' in its name?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and country of origin of every singer who has a song with the word 'Hey' in its title?",
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the name and location of the stadiums which some concerts happened in the years of both 2014 and 2015.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the ame and location of the stadiums which some concerts happened in the years of 2015.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id, name and location of all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadiums which some concerts happened in the years of 2015.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the name and location of the stadiums which some concerts happened in the years of 2014.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadiums which some concerts happened in the years of 2014.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and locations of the stadiums that had concerts that occurred in both 2014 and 2015?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and locations of the stadiums that had concerts that occurred in 2015?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids, names and locations of all stadiums?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the stadiums that had concerts that occurred in 2015?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and locations of the stadiums that had concerts that occurred in 2014?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the stadiums that had concerts that occurred in 2014?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the number of concerts happened in the stadium with the highest capacity .",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert that happened in the stadium with the highest capacity.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadium of all concerts.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadium with the highest capacity.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id and capacity of all stadiums.",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the number of concerts that occurred in the stadium with the largest capacity ?",
+    "type": "Aggregated[concert]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert that occurred in the stadium with the largest capacity.",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the stadium id of all concerts?",
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id of that stadium with the largest capacity?",
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the id and capacity of all stadiums?",
+    "type": "stadium"
+  }
+]
