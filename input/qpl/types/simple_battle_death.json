@@ -52,7 +52,7 @@
   {
     "db_id": "battle_death",
     "question": "What are the death and injury situations of all death events and the id of the ship that caused the death?",
-    "type": "death"
+    "type": "death, ship"
   },
   {
     "db_id": "battle_death",
@@ -112,7 +112,7 @@
   {
     "db_id": "battle_death",
     "question": "What are the ids of all ships and the id of the battle in which they were lost?",
-    "type": "ship"
+    "type": "ship, battle"
   },
   {
     "db_id": "battle_death",
@@ -137,7 +137,7 @@
   {
     "db_id": "battle_death",
     "question": "What is the ship id of all injuries events?",
-    "type": "death"
+    "type": "ship"
   },
   {
     "db_id": "battle_death",
