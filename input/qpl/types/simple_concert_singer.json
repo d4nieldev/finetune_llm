@@ -157,7 +157,7 @@
   {
     "db_id": "concert_singer",
     "question": "What is the maximum capacity and the average of all stadiums ?",
-    "type": "stadium"
+    "type": "Aggregated[stadium]"
   },
   {
     "db_id": "concert_singer",
@@ -167,7 +167,7 @@
   {
     "db_id": "concert_singer",
     "question": "What is the average and maximum capacities for all stadiums ?",
-    "type": "stadium"
+    "type": "Aggregated[stadium]"
   },
   {
     "db_id": "concert_singer",
@@ -302,12 +302,12 @@
   {
     "db_id": "concert_singer",
     "question": "Which year has most number of concerts?",
-    "type": "Aggregated[concert]"
+    "type": "concert"
   },
   {
     "db_id": "concert_singer",
     "question": "Find the number of concerts in each year.",
-    "type": "concert, Aggregated[concert]"
+    "type": "Aggregated[concert]"
   },
   {
     "db_id": "concert_singer",
@@ -622,7 +622,7 @@
   {
     "db_id": "concert_singer",
     "question": "Find the id of the stadium of all concerts.",
-    "type": "stadium"
+    "type": "concert"
   },
   {
     "db_id": "concert_singer",
