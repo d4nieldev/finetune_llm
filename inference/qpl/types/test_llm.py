@@ -1,10 +1,10 @@
 import sys
 import json
 import random
-import logging as log
+import logging
 from enum import Enum
 from pathlib import Path
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import List, Dict, Tuple, Optional
 
 from inference.qpl.types.schema_types import DBSchema
@@ -14,6 +14,15 @@ from utils.argparse import from_dataclass
 
 import dspy
 from sentence_transformers import SentenceTransformer
+
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(pathname)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+log.addHandler(console_handler)
 
 
 class TaggedDB(Enum):
@@ -42,25 +51,25 @@ def data_path(type_system: TypeSystem, db_id: TaggedDB) -> Path:
 class Config:
     """Configuration for the type prediction task."""
 
-    llm_id: str = "openai/gpt-4.1-mini"
+    llm_id: str = "ollama_chat/qwen3:4b"
     """ID of the LLM to use."""
 
-    type_system: TypeSystem = TypeSystem.VERBOSE
+    type_system: TypeSystem = TypeSystem.SIMPLE
     """Type system to use for type prediction."""
 
-    train_db_id: TaggedDB = TaggedDB.BATTLE_DEATH
+    train_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
     """ID of the training dataset (examples for fewshot) name."""
 
     test_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
     """ID of the testing dataset name."""
 
-    split_train_ratio: Optional[float] = None
+    split_train_ratio: float = 0.1
     """Ratio of training data to use - in case train and test datasets are the same."""
 
     fewshot_examples: int = 3
     """Number of few-shot examples to use."""
 
-    cot: bool = True
+    cot: bool = False
     """Whether to use Chain of Thought reasoning."""
 
     test_sample_size: int = -1
@@ -80,16 +89,33 @@ class Config:
             if self.train_db_id != self.test_db_id:
                 data_str = f"train={self.train_db_id.value}_test={self.test_db_id.value}"
             else:
-                f"dataset={self.train_db_id.value}_split_train_ratio={self.split_train_ratio}"
+                data_str = f"dataset={self.train_db_id.value}_split_train_ratio={self.split_train_ratio}"
             sample_str = f"_train_sample_size={self.train_sample_size}" if self.train_sample_size > 0 else ""
             sample_str += f"_test_sample_size={self.test_sample_size}" if self.test_sample_size > 0 else ""
-            self.filename = Path(f"pred__model={self.llm_id.replace('/', '-')}_system={self.type_system}_{data_str}{sample_str}_fewshot={self.fewshot_examples}{'_cot' if self.cot else ''}_seed={self.seed}")
+            self.filename = Path(f"pred__model={self.llm_id.replace('/', '-')}_system={self.type_system.value}_{data_str}{sample_str}_fewshot={self.fewshot_examples}{'_cot' if self.cot else ''}_seed={self.seed}")
         
+        if self.train_db_id != self.test_db_id and self.split_train_ratio > 0:
+            self.split_train_ratio = 0
+            log.info("Using different train and test datasets, setting split_train_ratio to 0.")
+        
+        if self.fewshot_examples == 0:
+            if self.train_db_id != self.test_db_id or self.split_train_ratio > 0:
+                log.info("Using no few-shot examples, but train and test datasets are different or split_train_ratio is greater than 0. This may lead to unexpected results.")
+            self.train_db_id = self.test_db_id
+            self.split_train_ratio = 0
+
         if self.fewshot_examples < 0:
             raise ValueError("fewshot_examples must be a non-negative integer.")
 
-        if self.train_db_id == self.test_db_id and self.train_sample_size != self.test_sample_size:
-            raise ValueError("If train and test datasets are the same, train_sample_size and test_sample_size must be equal.")
+        if self.train_db_id == self.test_db_id:
+            if self.train_sample_size != self.test_sample_size:
+                raise ValueError("If train and test datasets are the same, train_sample_size and test_sample_size must be equal.")
+            if self.fewshot_examples > 0 and self.split_train_ratio == 0:
+                raise ValueError("If fewshot_examples > 0, split_train_ratio must be greater than 0.")
+            
+    def to_dict(self) -> Dict[str, str]:
+        """Convert the configuration to a dictionary."""
+        return {k: str(v) if not isinstance(v, Enum) else v.value for k,v in asdict(self).items()}
 
 
 class VerboseTypeSystem(dspy.Signature):
@@ -113,9 +139,9 @@ class SimpleTypeSystem(dspy.Signature):
     """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
 
 The possible types are:
-    - {entity} - The result columns are all from {entity}. {entity} should be replaced with one of the entities in the schema.
-    - Aggregated[{entity}] - The result is the outcome of a computation derived from a stream of {entity}s. {entity} should be replaced with one of the entities in the schema.
-    - {type_1}, {type_2}, ..., {type_n} - The result is a combination of {entity} and Aggregated[{entity}] (not necessarily the same {entity}).
+    - {entity} - The result columns are all from {entity}. In case a foreign key is returned, the **referring** entity is what counts. {entity} should be replaced with one of the entities in the schema.
+    - Aggregated[{entity}] - The result is the outcome of a computation derived from a stream of {entity}s without additional columns. {entity} should be replaced with one of the entities in the schema.
+    - {type_1}, {type_2}, ..., {type_n} - The result is a combination of {entity}s and Aggregated[{entity}]s (not necessarily the same {entity}).
 """
     database_schema: str = dspy.InputField(desc="Database schema described in DDL.")
     entities: List[str] = dspy.InputField(desc="Entities in the schema.")
@@ -156,13 +182,10 @@ def load_dataset(
         test_db: TaggedDB,
         train_sample_size: int,
         test_sample_size: int,
-        split_train_ratio: Optional[float]
+        split_train_ratio: float
     ) -> Tuple[List[Dict], List[Dict]]:
 
     if train_db == test_db:
-        if not split_train_ratio:
-            raise ValueError("If train and test datasets are the same, split_train_ratio must be provided.")
-        
         dataset = json.loads(data_path(type_system, train_db).read_text())
         if test_sample_size > 0:
             dataset = random.sample(dataset, k=test_sample_size)
@@ -213,12 +236,17 @@ def compile_knn_fewshot(
 
 
 def parse_args() -> Config:
-    return from_dataclass(Config)
+    args = from_dataclass(Config)
+    log.info(f"Using Config:\n{json.dumps(args.to_dict(), indent=2)}")
+    return args
 
 
 def main(args: Config):
     # Configure LLM
-    lm = dspy.LM(args.llm_id)
+    if args.llm_id.startswith("ollama_chat/"):
+        lm = dspy.LM(args.llm_id, api_base="http://localhost:11434", api_key="")
+    else:
+        lm = dspy.LM(args.llm_id)
     dspy.configure(lm=lm)
     random.seed(args.seed)
 
@@ -264,7 +292,7 @@ def main(args: Config):
                     "db_id": example["db_id"],
                     "question": example["question"],
                     "actual_type": example["type"],
-                    "reasoning": pt.reasoning,
+                    "reasoning": pt.reasoning if hasattr(pt, 'reasoning') else None,
                     "predicted_type": pt.predicted_type,
                 }
                 for example, pt in zip(test, predicted_types)
