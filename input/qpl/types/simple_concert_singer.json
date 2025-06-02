@@ -87,7 +87,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show all countries and the number of singers in each country.",
-    "type": "Aggregated[singer]"
+    "type": "singer, Aggregated[singer]"
   },
   {
     "db_id": "concert_singer",
@@ -97,7 +97,7 @@
   {
     "db_id": "concert_singer",
     "question": "How many singers are from each country?",
-    "type": "Aggregated[singer]"
+    "type": "singer, Aggregated[singer]"
   },
   {
     "db_id": "concert_singer",
@@ -157,7 +157,9 @@
   {
     "db_id": "concert_singer",
     "question": "What is the maximum capacity and the average of all stadiums ?",
-    "type": "Aggregated[stadium]"
+    "type": "stadium, Aggregated[stadium]",
+    "notes": "average is ambiguous - in this example it is the average field",
+    "qpl": "#1 = Scan Table [ stadium ] Output [ Average , Capacity ] ; -- What is the capacity and the average of all stadiums?\n#2 = Aggregate [ #1 ] GroupBy [ Average ] Output [ Average , MAX(Capacity) AS Max_Capacity ] ;"
   },
   {
     "db_id": "concert_singer",
@@ -167,7 +169,9 @@
   {
     "db_id": "concert_singer",
     "question": "What is the average and maximum capacities for all stadiums ?",
-    "type": "Aggregated[stadium]"
+    "type": "Aggregated[stadium]",
+    "notes": "average is ambiguous - in this example it is the average capacity",
+    "qpl": "#1 = Scan Table [ stadium ] Output [ Capacity ] ; -- What is the capacity for all stadiums?\n#2 = Aggregate [ #1 ] Output [ MAX(Capacity) AS Max_Capacity , AVG(Capacity) AS Avg_Capacity ] ;"
   },
   {
     "db_id": "concert_singer",
@@ -247,7 +251,7 @@
   {
     "db_id": "concert_singer",
     "question": "List the stadium id of all concerts.",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -272,7 +276,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show the stadium id of concerts in year 2014 or after.",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -317,12 +321,12 @@
   {
     "db_id": "concert_singer",
     "question": "What is the year that had the most concerts?",
-    "type": "Aggregated[concert]"
+    "type": "concert"
   },
   {
     "db_id": "concert_singer",
     "question": "What is the number of concerts in each year?",
-    "type": "Aggregated[concert]"
+    "type": "concert, Aggregated[concert]"
   },
   {
     "db_id": "concert_singer",
@@ -337,7 +341,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show the stadium ids of all concerts.",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -347,7 +351,7 @@
   {
     "db_id": "concert_singer",
     "question": "What are the stadium ids of all concerts?",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -387,7 +391,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show stadium ids of concerts in year 2014.",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -467,7 +471,8 @@
   {
     "db_id": "concert_singer",
     "question": "List singer ids and number of concerts for each singer.",
-    "type": "singer, Aggregated[concert]"
+    "type": "singer, Aggregated[concert]",
+    "notes": "ambiguous - singer and concert can also be singer_in_concert"
   },
   {
     "db_id": "concert_singer",
@@ -622,7 +627,7 @@
   {
     "db_id": "concert_singer",
     "question": "Find the id of the stadium of all concerts.",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -647,7 +652,7 @@
   {
     "db_id": "concert_singer",
     "question": "What are the stadium id of all concerts?",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
