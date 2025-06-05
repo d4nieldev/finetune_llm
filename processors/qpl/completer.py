@@ -11,8 +11,8 @@ from datasets import load_dataset
 
 
 @ProcessorRegistry.register
-class QPLComposerProcessor(QPLProcessor):
-    dataset_id = "d4nieldev/qpl-composer-ds"
+class QPLCompleterProcessor(QPLProcessor):
+    dataset_id = "d4nieldev/qpl-completer-ds"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

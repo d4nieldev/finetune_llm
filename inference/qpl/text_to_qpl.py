@@ -6,7 +6,7 @@ import logging as log
 from pathlib import Path
 import argparse
 
-from processors.qpl import QPLDecomposerProcessor, QPLComposerProcessor
+from processors.qpl import QPLDecomposerProcessor, QPLCompleterProcessor
 from utils.generation import to_model_prompt, generate_batch
 from utils.lists import flatten, unflatten
 
@@ -100,7 +100,7 @@ def text_to_qpl(
 
     # complete QPL for trees
     torch.cuda.empty_cache()
-    completer_processor = QPLComposerProcessor()
+    completer_processor = QPLCompleterProcessor()
     completer_model = AutoPeftModelForCausalLM.from_pretrained(completer_model_path, attn_implementation="eager").to("cuda")
     completer_tokenizer = AutoTokenizer.from_pretrained(completer_model_path)
     completer_model.eval()
@@ -240,7 +240,7 @@ def post_order_index_tree(tree: QPLQDTree, counter: int = 1) -> int:
 @torch.no_grad()
 def complete(
         trees: List[QPLQDTree],
-        processor: QPLComposerProcessor,
+        processor: QPLCompleterProcessor,
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizerBase,
         batch_size: int,
