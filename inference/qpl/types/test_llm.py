@@ -300,9 +300,9 @@ def main(args: Config):
                 {
                     "db_id": example["db_id"],
                     "question": example["question"],
-                    "actual_type": example["type"],
                     "reasoning": pt.reasoning if hasattr(pt, 'reasoning') else None,
                     "predicted_type": pt.predicted_type,
+                    "actual_type": example["type"],
                 }
                 for example, pt in zip(test, predicted_types)
             ],
