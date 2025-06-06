@@ -27,12 +27,13 @@ class GreedyFirstStep(LogitsProcessor):
         return scores
 
 
-def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatTemplate) -> ModelPrompt:
+def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatTemplate, **kwargs) -> ModelPrompt:
     prompt = tokenizer.apply_chat_template(
         [msg for msg in chat_template["messages"] if msg['role'] in ['system', 'user']],  # only the system and user
         tokenize=False,
         add_generation_prompt=True,
         continue_final_message=False,
+        **kwargs
     )
     return ModelPrompt(prompt=prompt)
 
