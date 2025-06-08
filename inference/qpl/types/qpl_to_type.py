@@ -182,22 +182,28 @@ def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNo
     return node_output
 
 
-def filter_type(filter_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
+def same_child_type_change_cols(node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
     child_idx = ins[0]
 
-    child_output = qpl_tree_to_type(filter_node.children[0], schema)
+    child_output = qpl_tree_to_type(node.children[0], schema)
     return QPLNodeOutput.infer(captures['out'], {child_idx: child_output})
+
+def filter_type(filter_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
+    return same_child_type_change_cols(filter_node, captures, schema)
 
 
 def top_type(top_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    return same_child_type_change_cols(top_node, captures, schema)
+
 
 def sort_type(sort_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    return same_child_type_change_cols(sort_node, captures, schema)
+
 
 def topsort_type(topsort_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    return same_child_type_change_cols(topsort_node, captures, schema)
+
 
 def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     pass
