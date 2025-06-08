@@ -183,7 +183,12 @@ def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNo
 
 
 def filter_type(filter_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
+    child_idx = ins[0]
+
+    child_output = qpl_tree_to_type(filter_node.children[0], schema)
+    return QPLNodeOutput.infer(captures['out'], {child_idx: child_output})
+
 
 def top_type(top_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     pass
