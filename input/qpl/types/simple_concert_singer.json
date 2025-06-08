@@ -231,7 +231,7 @@
   {
     "db_id": "concert_singer",
     "question": "Show the stadium id of all concerts.",
-    "type": "concert"
+    "type": "stadium"
   },
   {
     "db_id": "concert_singer",
@@ -311,7 +311,7 @@
   {
     "db_id": "concert_singer",
     "question": "Find the number of concerts in each year.",
-    "type": "Aggregated[concert]"
+    "type": "concert, Aggregated[concert]"
   },
   {
     "db_id": "concert_singer",
