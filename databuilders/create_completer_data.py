@@ -91,8 +91,8 @@ def complete_trees_qpl(
         if len(root.children) > len(qpl_tree.children):
             raise ChildrenMismatchError(len(root.children), len(qpl_tree.children))
 
-        root.qpl_line = qpl_tree.qpl_row
-        root.prefix_qpl = qpl_tree.children_qpl
+        root.qpl_line = qpl_tree.qpl_line
+        root.prefix_qpl = qpl_tree.prefix_qpl
 
         # change order when necessary
         if len(root.children) == 2 and root.children[0].op != qpl_tree.children[0].op:

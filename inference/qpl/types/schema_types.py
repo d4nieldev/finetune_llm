@@ -1,9 +1,8 @@
 import os
 import json
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
-from inference.qpl.types.qpl_types import Entity
 import utils.qpl.paths as p
 
 
@@ -22,7 +21,7 @@ class ForeignKey:
     to_col: str
 
     def __post_init__(self):
-        assert self.to_col in self.to_table.columns_names, f"Foreign key column {self.to_col!r} does not exist in table {self.to_table.name!r}"
+        assert self.to_col in self.to_table.column_names, f"Foreign key column {self.to_col!r} does not exist in table {self.to_table.name!r}"
 
     def __repr__(self):
         return f"ForeignKey( {self.from_col!r} -> {self.to_table.name!r}.{self.to_col!r} )"
@@ -61,7 +60,7 @@ class Table:
     
     @pks.setter
     def pks(self, pks: List[PrimaryKey]):
-        assert all(pk.col_name in self.columns_names for pk in pks), f"Primary keys {pks} must be a subset of columns of table {self.name!r}: {self.columns}"
+        assert all(pk.col_name in self.column_names for pk in pks), f"Primary keys {pks} must be a subset of columns of table {self.name!r}: {self.columns}"
         self._pks = pks
     
     @property
@@ -70,12 +69,17 @@ class Table:
     
     @fks.setter
     def fks(self, fks: List[ForeignKey]):
-        assert all(fk.from_col in self.columns_names for fk in fks), f"Foreign keys {fks} must be a subset of columns of table {self.name!r}: {self.columns}"
+        assert all(fk.from_col in self.column_names for fk in fks), f"Foreign keys {fks} must be a subset of columns of table {self.name!r}: {self.columns}"
         self._fks = fks
 
     @property
-    def columns_names(self) -> List[str]:
+    def column_names(self) -> List[str]:
         return [col.name for col in self.columns]
+    
+    def src_colname_table(self, colname: str) -> Tuple[str, 'Table']:
+        if fk := next((fk for fk in self.fks if fk.from_col == colname), None):
+            return fk.to_table.src_colname_table(fk.from_col)
+        return colname, self
     
     def __str__(self):
         pk_str = ["PRIMARY KEY (" + ", ".join(pk.col_name for pk in self.pks) + ")"]
@@ -90,18 +94,6 @@ class DBSchema:
     def __init__(self, db_id: str, tables: Dict[str, Table]):
         self.db_id = db_id
         self.tables = tables
-
-    @property
-    def entities(self) -> List[Entity]:
-        # primary keys that are not foreign keys to other tables distinguish the table as an entity
-        return [
-            Entity(table.name)
-            for table in self.tables.values()
-            if set([pk.col_name for pk in table.pks]).difference([fk.from_col for fk in table.fks])
-        ]
-    
-    def __getitem__(self, item: str) -> Table:
-        return self.tables[item]
     
     @staticmethod
     def from_db_schemas_file(db_schemas_file: os.PathLike) -> Dict[str, "DBSchema"]:
@@ -156,5 +148,3 @@ if __name__ == "__main__":
     db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
     schema = db_schemas["battle_death"]
     print(schema)
-    print()
-    print(schema.entities)

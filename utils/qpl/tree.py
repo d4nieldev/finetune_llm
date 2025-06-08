@@ -20,24 +20,28 @@ class Operator(Enum):
 @dataclass
 class QPLTree:
     """A tree structure representing a QPL query."""
-    qpl_row: str = None  # type: ignore
+    qpl_line: str = None  # type: ignore
     children: Tuple["QPLTree", ...] = ()
 
     @property
     def op(self) -> Operator:
-        return Operator(self.qpl_row.split("=")[1].strip().split(" ")[0].strip())
+        return Operator(self.qpl_line.split("=")[1].strip().split(" ")[0].strip())
 
     @property
-    def children_qpl(self) -> str:
-        return "\n".join([(child.children_qpl + "\n" + child.qpl_row + " ; ").strip() for child in sorted(self.children, key=lambda x: x.line_num)])
+    def prefix_qpl(self) -> str:
+        return "\n".join([child.qpl for child in sorted(self.children, key=lambda x: x.line_num)])
     
     @property
     def line_num(self) -> int:
         """Extracts the line number from the QPL row."""
-        match = re.search(r"#(\d+)", self.qpl_row)
+        match = re.search(r"#(\d+)", self.qpl_line)
         if match:
             return int(match.group(1))
-        raise ValueError(f"Line number not found in QPL row: {self.qpl_row}")
+        raise ValueError(f"Line number not found in QPL row: {self.qpl_line}")
+    
+    @property
+    def qpl(self) -> str:
+        return (self.prefix_qpl + "\n" + self.qpl_line + " ;").strip()
     
     @staticmethod
     def from_qpl_lines(qpl_lines: List[str]) -> "QPLTree":
@@ -47,7 +51,7 @@ class QPLTree:
             line_numbers = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
             row_id = line_numbers[0] - 1
             children = [row_nodes[line_num - 1] for line_num in list(dict.fromkeys(line_numbers[1:]))]  # preserve children order!
-            row_nodes[row_id].qpl_row = qpl_row
+            row_nodes[row_id].qpl_line = qpl_row
             row_nodes[row_id].children = tuple(children)
         return row_nodes[-1]
 
