@@ -41,6 +41,7 @@ class QPLNodeOutput:
     """The types that the output columns belong to - types[i] is the table of cols[i]"""
 
     COUNTSTAR: ClassVar[str] = 'countstar'
+    ONE: ClassVar[str] = '1'
 
 
     def resolve_alias(self, alias: str) -> Tuple[str, QPLType]:
@@ -84,9 +85,9 @@ class QPLNodeOutput:
             col_identifier = split[0].strip()  # could be alias in one of the children
             alias = split[1].strip() if len(split) > 1 else split[0].strip()
 
-            if col_identifier == QPLNodeOutput.COUNTSTAR:
+            if col_identifier in QPLNodeOutput.COUNTSTAR:
                 if isinstance(input, Table):
-                    raise ValueError(f"{QPLNodeOutput.COUNTSTAR!r} cannot be used with a single table output.")
+                    raise ValueError(f"{QPLNodeOutput.COUNTSTAR!r} is an aggregation function, hence should be used in Aggregate.")
                 # countstar appears only in Aggregate operations 
                 # while the Count_Star alias can appear higher in the tree
                 colname = col_identifier
@@ -95,6 +96,15 @@ class QPLNodeOutput:
                 # TODO: is there a better way to determine the table of countstar?
                 table = max(set(child_tables), key=child_tables.count)
                 qpltype = QPLType(table=table, aggregated=True)
+            elif col_identifier == QPLNodeOutput.ONE:
+                colname = col_identifier
+                if isinstance(input, Table):
+                    table = input
+                elif isinstance(input, Dict):
+                    children_tables = [[qpltype.table for qpltype in inp.types] for inp in input.values()]
+                    common_tables = set.intersection(*[set(ct) for ct in children_tables])
+                    table = max(common_tables, key=lambda x: sum(ct.count(x) for ct in children_tables))
+                qpltype = QPLType(table=table, aggregated=False)
             elif isinstance(input, Dict):
                 qpltype = None
 
@@ -208,11 +218,14 @@ def topsort_type(topsort_node: QPLTree, captures: Dict, schema: DBSchema) -> QPL
 def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     pass
 
+
 def except_type(except_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     pass
 
+
 def intersect_type(intersect_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     pass
+
 
 def union_type(union_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     pass
