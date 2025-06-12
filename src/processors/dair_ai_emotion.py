@@ -1,5 +1,5 @@
 from .base import BaseProcessor, ProcessorRegistry
-from custom_types import ChatTemplate, ChatMessage
+from src.utils.chat_types import ChatTemplate, ChatMessage
 
 
 @ProcessorRegistry.register

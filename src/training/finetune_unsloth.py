@@ -15,8 +15,8 @@ from unsloth import FastModel, is_bfloat16_supported
 from unsloth.chat_templates import get_chat_template, standardize_data_formats, train_on_responses_only
 from trl import SFTTrainer, SFTConfig
 
-from callbacks import MemoryLoggingCallback
-from processors import ProcessorRegistry
+from src.callbacks import MemoryLoggingCallback
+from src.processors import ProcessorRegistry
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

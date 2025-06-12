@@ -6,10 +6,6 @@ import logging as log
 from pathlib import Path
 import argparse
 
-from processors.qpl import QPLDecomposerProcessor, QPLCompleterProcessor
-from utils.generation import to_model_prompt, generate_batch
-from utils.lists import flatten, unflatten
-
 import torch
 from peft import AutoPeftModelForCausalLM
 from transformers.models.auto.tokenization_auto import AutoTokenizer
@@ -18,7 +14,10 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from datasets import load_dataset
 from tqdm import tqdm
 
-from utils.qpl.tree import QPLQDTree, Operator
+from src.processors.qpl import QPLDecomposerProcessor, QPLCompleterProcessor
+from src.utils.qpl.tree import QPLQDTree, Operator
+from src.utils.generation import to_model_prompt, generate_batch
+from src.utils.lists import flatten, unflatten
 
 
 log.basicConfig(

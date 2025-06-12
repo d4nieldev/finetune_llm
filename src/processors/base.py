@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Type, Mapping
 
-from custom_types import ChatTemplate
+from src.utils.chat_types import ChatTemplate
 
 
 class BaseProcessor(ABC):

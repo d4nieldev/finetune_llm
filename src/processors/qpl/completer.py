@@ -3,9 +3,9 @@ import json
 from collections import defaultdict
 from typing import Dict, Any
 
-from custom_types import ChatTemplate, ChatMessage
-from processors.qpl.base import QPLProcessor
-from processors.base import ProcessorRegistry
+from src.utils.chat_types import ChatTemplate, ChatMessage
+from src.processors.qpl.base import QPLProcessor
+from src.processors.base import ProcessorRegistry
 
 from datasets import load_dataset
 

@@ -5,8 +5,8 @@ from typing import Any, Mapping
 from abc import abstractmethod
 import logging
 
-from processors.base import BaseProcessor
-import utils.qpl.paths as p
+from src.processors.base import BaseProcessor
+import src.utils.qpl.paths as p
 
 
 def update_type(col_type):

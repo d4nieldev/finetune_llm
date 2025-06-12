@@ -5,8 +5,8 @@ import logging as log
 
 import regex as re
 
-from utils.qpl.tree import QPLTree
-from inference.qpl.types.schema_types import DBSchema, Table
+from src.utils.qpl.tree import QPLTree
+from src.inference.qpl.types.schema_types import DBSchema, Table
 
 
 class Operator(StrEnum):

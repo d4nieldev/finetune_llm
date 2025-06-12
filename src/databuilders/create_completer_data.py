@@ -4,7 +4,7 @@ import logging as log
 from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
 
-from utils.qpl.tree import QPLTree, PartialQDTree, Operator
+from src.utils.qpl.tree import QPLTree, PartialQDTree, Operator
 
 
 log.basicConfig(

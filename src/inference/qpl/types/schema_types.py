@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-import utils.qpl.paths as p
+import src.utils.qpl.paths as p
 
 
 @dataclass

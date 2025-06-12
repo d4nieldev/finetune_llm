@@ -2,10 +2,6 @@ import os
 import argparse
 import logging
 
-from callbacks import MemoryLoggingCallback
-from processors import ProcessorRegistry
-import utils.paths as p
-
 import torch
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
@@ -13,6 +9,10 @@ from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
 from datasets import load_dataset, Dataset
 from peft import LoraConfig, TaskType
 import wandb
+
+from src.callbacks import MemoryLoggingCallback
+from src.processors import ProcessorRegistry
+import src.utils.paths as p
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -114,7 +114,7 @@ def train(
     # Step 3. Data preperation
     train_dataset: Dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
     processor = ProcessorRegistry.get(args.dataset_id)(with_assistant=True)
-    train_dataset = train_dataset.map(lambda ex: processor.to_chat_template(ex, assistant_response=True), remove_columns=train_dataset.column_names)
+    train_dataset = train_dataset.map(lambda ex: processor.to_chat_template(ex), remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}
         # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#6-applying-the-chat-template-is-not-a-homomorphism-with-respect-to-concatenation
