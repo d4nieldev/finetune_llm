@@ -1,0 +1,242 @@
+[
+  {
+    "db_id": "battle_death",
+    "question": "List 1 for each ship that ended up being 'Captured'.",
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "How many ships ended up being 'Captured'?",
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and tonnage of all ships.",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and tonnage ordered by in descending alphaetical order for the names.",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name, date and result of each battle.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the death toll caused each time?",
+    "type": "death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is maximum and minimum death toll caused each time?",
+    "type": "Aggregated[death]"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the number of injuries caused each time?",
+    "type": "death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the average number of injuries caused each time?",
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids of ship with tonnage 't'?",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the death and injury situations of all death events and the id of the ship that caused the death?",
+    "type": "death, ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the death and injury situations caused by the ship with tonnage 't'?",
+    "type": "death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the name and results of the battles when the bulgarian commander is not 'Boril'",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of all battles?",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the lost battle ids that lost any 'Brig' type shipes?",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the different ids and names of the battles that lost any 'Brig' type shipes?",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids of all ships and the id of the battle in which they were lost?",
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of all the battles?",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of the battles where a ship was lost?",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the number of people killed in all death events and the id of the ship that caused the death?",
+    "type": "death, ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the number of people killed in a ship in all death events and the id and name of the battle in which the ship was lost?",
+    "type": "death, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "For each battle, what is the id and name and the total number of people killed?",
+    "type": "battle, Aggregated[death]"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of the battles that led to more than 10 people killed in total.",
+    "type": "Column 'name' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the ship id of all injuries events?",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "For each ship, what is the id and the number of injuries events that caused by the ship?",
+    "type": "ship, Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the id and name of all ships?",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "For each ship, what is the id and name and the number of injuries events that caused by the ship?",
+    "type": "ship, Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the ship id and name that caused most total injuries?",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the distinct battle names which are between bulgarian commander 'Kaloyan' and latin commander 'Baldwin I'?",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show the different results for the battles.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "How many different results are there for the battles?",
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Find the ids of all battles.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Find the ids of the battles that lost ship with tonnage '225'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Find the ids of battles that did not lose any ship with tonnage '225'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "How many battles did not lose any ship with tonnage '225'?",
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id of the ship named 'Lettice'.",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id, name and date of all battles.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and date the battle that has lost the ship named 'Lettice'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id of the ship named 'HMS Atalanta'.",
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id, name and date of all battles.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and date the battle that has lost the ship named 'HMS Atalanta'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and date the battle that has lost the ship named 'Lettice' and the ship named 'HMS Atalanta'",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show the distinct names, results and bulgarian commanders of all battles.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show ids of the battles with ships lost in the 'English Channel'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show the ids, names, results and bulgarian commanders of all battles.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show names, results and bulgarian commanders of the battles with ships lost in the 'English Channel'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show names, results and bulgarian commanders of the battles with no ships lost in the 'English Channel'.",
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the notes of the death events which has substring 'East'?",
+    "type": "death"
+  }
+]

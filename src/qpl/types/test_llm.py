@@ -56,16 +56,16 @@ def data_path(type_system: TypeSystem, db_id: TaggedDB) -> Path:
 class Config:
     """Configuration for the type prediction task."""
 
-    llm_id: str = "openai/gpt-4.1-mini"
+    llm_id: str = "ollama_chat/qwen3:4b"
     """ID of the LLM to use."""
 
     type_system: TypeSystem = TypeSystem.AUTO
     """Type system to use for type prediction."""
 
-    train_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
+    train_db_id: TaggedDB = TaggedDB.BATTLE_DEATH
     """ID of the training dataset (examples for fewshot) name."""
 
-    test_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
+    test_db_id: TaggedDB = TaggedDB.BATTLE_DEATH
     """ID of the testing dataset name."""
 
     split_train_ratio: float = 0

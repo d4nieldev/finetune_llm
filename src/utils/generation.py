@@ -1,7 +1,7 @@
 from typing import List, Optional, Callable
 from typing_extensions import TypedDict
 
-from custom_types import ChatTemplate
+from src.utils.chat_types import ChatTemplate
 
 import torch
 from tqdm import tqdm
