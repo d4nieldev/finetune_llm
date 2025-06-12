@@ -1,0 +1,991 @@
+[
+  {
+    "db_id": "battle_death",
+    "question": "List 1 for each ship that ended up being 'Captured'.",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ disposition_of_ship = 'Captured' ] Output [ disposition_of_ship ]"
+    ],
+    "outputs": [
+      {
+        "col": "disposition_of_ship",
+        "alias": "disposition_of_ship",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "How many ships ended up being 'Captured'?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ disposition_of_ship = 'Captured' ] Output [ disposition_of_ship ]",
+      "#2 = Aggregate [ #1 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and tonnage of all ships.",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ tonnage , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "tonnage",
+        "alias": "tonnage",
+        "col_type": "ship"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and tonnage ordered by in descending alphaetical order for the names.",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ tonnage , name ]",
+      "#2 = Sort [ #1 ] OrderBy [ name DESC ] Output [ tonnage , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "tonnage",
+        "alias": "tonnage",
+        "col_type": "ship"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name, date and result of each battle.",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Output [ name , date ]"
+    ],
+    "outputs": [
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "date",
+        "alias": "date",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the death toll caused each time?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ killed ]"
+    ],
+    "outputs": [
+      {
+        "col": "killed",
+        "alias": "killed",
+        "col_type": "death"
+      }
+    ],
+    "type": "death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is maximum and minimum death toll caused each time?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ killed ]",
+      "#2 = Aggregate [ #1 ] Output [ MAX(killed) AS Max_killed , MIN(killed) AS Min_killed ]"
+    ],
+    "outputs": [
+      {
+        "col": "killed",
+        "alias": "Max_killed",
+        "col_type": "Aggregated[death]"
+      },
+      {
+        "col": "killed",
+        "alias": "Min_killed",
+        "col_type": "Aggregated[death]"
+      }
+    ],
+    "type": "Aggregated[death]"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the number of injuries caused each time?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ injured ]"
+    ],
+    "outputs": [
+      {
+        "col": "injured",
+        "alias": "injured",
+        "col_type": "death"
+      }
+    ],
+    "type": "death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the average number of injuries caused each time?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ injured ]",
+      "#2 = Aggregate [ #1 ] Output [ AVG(injured) AS Avg_injured ]"
+    ],
+    "outputs": [
+      {
+        "col": "injured",
+        "alias": "Avg_injured",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids of ship with tonnage 't'?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ tonnage = 't' ] Output [ id , tonnage ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "ship"
+      },
+      {
+        "col": "tonnage",
+        "alias": "tonnage",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the death and injury situations of all death events and the id of the ship that caused the death?",
+    "qpl": [
+      "#2 = Scan Table [ death ] Output [ injured , caused_by_ship_id , killed ]"
+    ],
+    "outputs": [
+      {
+        "col": "injured",
+        "alias": "injured",
+        "col_type": "death"
+      },
+      {
+        "col": "caused_by_ship_id",
+        "alias": "caused_by_ship_id",
+        "col_type": "ship"
+      },
+      {
+        "col": "killed",
+        "alias": "killed",
+        "col_type": "death"
+      }
+    ],
+    "type": "ship, death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the death and injury situations caused by the ship with tonnage 't'?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ tonnage = 't' ] Output [ id , tonnage ]",
+      "#2 = Scan Table [ death ] Output [ injured , caused_by_ship_id , killed ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.id = #2.caused_by_ship_id ] Output [ #2.injured , #2.killed ]"
+    ],
+    "outputs": [
+      {
+        "col": "injured",
+        "alias": "injured",
+        "col_type": "death"
+      },
+      {
+        "col": "killed",
+        "alias": "killed",
+        "col_type": "death"
+      }
+    ],
+    "type": "death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the name and results of the battles when the bulgarian commander is not 'Boril'",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Predicate [ bulgarian_commander <> 'Boril' ] Output [ bulgarian_commander , result , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "bulgarian_commander",
+        "alias": "bulgarian_commander",
+        "col_type": "battle"
+      },
+      {
+        "col": "result",
+        "alias": "result",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of all battles?",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Output [ id , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the lost battle ids that lost any 'Brig' type shipes?",
+    "qpl": [
+      "#2 = Scan Table [ ship ] Predicate [ ship_type = 'Brig' ] Output [ lost_in_battle , ship_type ]"
+    ],
+    "outputs": [
+      {
+        "col": "lost_in_battle",
+        "alias": "lost_in_battle",
+        "col_type": "battle"
+      },
+      {
+        "col": "ship_type",
+        "alias": "ship_type",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the different ids and names of the battles that lost any 'Brig' type shipes?",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Output [ id , name ]",
+      "#2 = Scan Table [ ship ] Predicate [ ship_type = 'Brig' ] Output [ lost_in_battle , ship_type ]",
+      "#3 = Intersect [ #1 , #2 ] Predicate [ #2.lost_in_battle = #1.id ] Output [ #1.id , #1.name ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids of all ships and the id of the battle in which they were lost?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ lost_in_battle , id ]"
+    ],
+    "outputs": [
+      {
+        "col": "lost_in_battle",
+        "alias": "lost_in_battle",
+        "col_type": "battle"
+      },
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of all the battles?",
+    "qpl": [
+      "#2 = Scan Table [ battle ] Output [ name , id ]"
+    ],
+    "outputs": [
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of the battles where a ship was lost?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ lost_in_battle , id ]",
+      "#2 = Scan Table [ battle ] Output [ name , id ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.lost_in_battle = #2.id ] Output [ #2.id , #2.name ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the number of people killed in all death events and the id of the ship that caused the death?",
+    "qpl": [
+      "#4 = Scan Table [ death ] Output [ caused_by_ship_id , killed ]"
+    ],
+    "outputs": [
+      {
+        "col": "caused_by_ship_id",
+        "alias": "caused_by_ship_id",
+        "col_type": "ship"
+      },
+      {
+        "col": "killed",
+        "alias": "killed",
+        "col_type": "death"
+      }
+    ],
+    "type": "ship, death"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the number of people killed in a ship in all death events and the id and name of the battle in which the ship was lost?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ lost_in_battle , id ]",
+      "#2 = Scan Table [ battle ] Output [ name , id ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.lost_in_battle = #2.id ] Output [ #2.id , #2.name ]",
+      "#4 = Scan Table [ death ] Output [ caused_by_ship_id , killed ]",
+      "#5 = Join [ #3 , #4 ] Predicate [ #3.id = #4.caused_by_ship_id ] Output [ #3.id , #3.name , #4.killed ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "killed",
+        "alias": "killed",
+        "col_type": "death"
+      }
+    ],
+    "type": "death, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "For each battle, what is the id and name and the total number of people killed?",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ lost_in_battle , id ]",
+      "#2 = Scan Table [ battle ] Output [ name , id ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.lost_in_battle = #2.id ] Output [ #2.id , #2.name ]",
+      "#4 = Scan Table [ death ] Output [ caused_by_ship_id , killed ]",
+      "#5 = Join [ #3 , #4 ] Predicate [ #3.id = #4.caused_by_ship_id ] Output [ #3.id , #3.name , #4.killed ]",
+      "#6 = Aggregate [ #5 ] GroupBy [ id ] Output [ SUM(killed) AS Sum_killed , name , id ]"
+    ],
+    "error": "Column 'name' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the ids and names of the battles that led to more than 10 people killed in total.",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Output [ lost_in_battle , id ]",
+      "#2 = Scan Table [ battle ] Output [ name , id ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.lost_in_battle = #2.id ] Output [ #2.id , #2.name ]",
+      "#4 = Scan Table [ death ] Output [ caused_by_ship_id , killed ]",
+      "#5 = Join [ #3 , #4 ] Predicate [ #3.id = #4.caused_by_ship_id ] Output [ #3.id , #3.name , #4.killed ]",
+      "#6 = Aggregate [ #5 ] GroupBy [ id ] Output [ SUM(killed) AS Sum_killed , name , id ]",
+      "#7 = Filter [ #6 ] Predicate [ Sum_killed > 10 ] Output [ name , id ]"
+    ],
+    "error": "Column 'name' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the ship id of all injuries events?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ caused_by_ship_id ]"
+    ],
+    "outputs": [
+      {
+        "col": "caused_by_ship_id",
+        "alias": "caused_by_ship_id",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "For each ship, what is the id and the number of injuries events that caused by the ship?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ caused_by_ship_id ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ caused_by_ship_id ] Output [ countstar AS Count_Star , caused_by_ship_id ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "caused_by_ship_id",
+        "alias": "caused_by_ship_id",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship, Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the id and name of all ships?",
+    "qpl": [
+      "#3 = Scan Table [ ship ] Output [ id , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "ship"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      }
+    ],
+    "type": "ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "For each ship, what is the id and name and the number of injuries events that caused by the ship?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ caused_by_ship_id ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ caused_by_ship_id ] Output [ countstar AS Count_Star , caused_by_ship_id ]",
+      "#3 = Scan Table [ ship ] Output [ id , name ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.caused_by_ship_id = #3.id ] Output [ #3.id , #2.Count_Star , #3.name ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "ship"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      }
+    ],
+    "type": "Number, ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What is the ship id and name that caused most total injuries?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Output [ caused_by_ship_id ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ caused_by_ship_id ] Output [ countstar AS Count_Star , caused_by_ship_id ]",
+      "#3 = Scan Table [ ship ] Output [ id , name ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.caused_by_ship_id = #3.id ] Output [ #3.id , #2.Count_Star , #3.name ]",
+      "#5 = TopSort [ #4 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ id , Count_Star , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "ship"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      }
+    ],
+    "type": "Number, ship"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the distinct battle names which are between bulgarian commander 'Kaloyan' and latin commander 'Baldwin I'?",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Predicate [ bulgarian_commander = 'Kaloyan' AND latin_commander = 'Baldwin I' ] Output [ latin_commander , bulgarian_commander , name ]"
+    ],
+    "outputs": [
+      {
+        "col": "latin_commander",
+        "alias": "latin_commander",
+        "col_type": "battle"
+      },
+      {
+        "col": "bulgarian_commander",
+        "alias": "bulgarian_commander",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show the different results for the battles.",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Distinct [ true ] Output [ result ]"
+    ],
+    "outputs": [
+      {
+        "col": "result",
+        "alias": "result",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "How many different results are there for the battles?",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Distinct [ true ] Output [ result ]",
+      "#2 = Aggregate [ #1 ] Output [ COUNT(DISTINCT result) AS Count_Dist_result ]"
+    ],
+    "error": "Column 'COUNT(DISTINCT result)' not found."
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Find the ids of all battles.",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Output [ id ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Find the ids of the battles that lost ship with tonnage '225'.",
+    "qpl": [
+      "#2 = Scan Table [ ship ] Predicate [ tonnage = '225' ] Output [ tonnage , lost_in_battle ]"
+    ],
+    "outputs": [
+      {
+        "col": "tonnage",
+        "alias": "tonnage",
+        "col_type": "ship"
+      },
+      {
+        "col": "lost_in_battle",
+        "alias": "lost_in_battle",
+        "col_type": "battle"
+      }
+    ],
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Find the ids of battles that did not lose any ship with tonnage '225'.",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Output [ id ]",
+      "#2 = Scan Table [ ship ] Predicate [ tonnage = '225' ] Output [ tonnage , lost_in_battle ]",
+      "#3 = Except [ #1 , #2 ] Predicate [ #2.lost_in_battle IS NULL OR #1.id = #2.lost_in_battle ] Output [ #1.id ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "How many battles did not lose any ship with tonnage '225'?",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Output [ id ]",
+      "#2 = Scan Table [ ship ] Predicate [ tonnage = '225' ] Output [ tonnage , lost_in_battle ]",
+      "#3 = Except [ #1 , #2 ] Predicate [ #2.lost_in_battle IS NULL OR #1.id = #2.lost_in_battle ] Output [ #1.id ]",
+      "#4 = Aggregate [ #3 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id of the ship named 'Lettice'.",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ name = 'Lettice' ] Output [ name , lost_in_battle ]"
+    ],
+    "outputs": [
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      },
+      {
+        "col": "lost_in_battle",
+        "alias": "lost_in_battle",
+        "col_type": "battle"
+      }
+    ],
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id, name and date of all battles.",
+    "qpl": [
+      "#5 = Scan Table [ battle ] Output [ id , name , date ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "date",
+        "alias": "date",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and date the battle that has lost the ship named 'Lettice'.",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ name = 'Lettice' ] Output [ name , lost_in_battle ]",
+      "#2 = Scan Table [ battle ] Output [ id , name , date ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.lost_in_battle = #2.id ] Distinct [ true ] Output [ #2.date , #2.name ]"
+    ],
+    "outputs": [
+      {
+        "col": "date",
+        "alias": "date",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id of the ship named 'HMS Atalanta'.",
+    "qpl": [
+      "#4 = Scan Table [ ship ] Predicate [ name = 'HMS Atalanta' ] Output [ name , lost_in_battle ]"
+    ],
+    "outputs": [
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "ship"
+      },
+      {
+        "col": "lost_in_battle",
+        "alias": "lost_in_battle",
+        "col_type": "battle"
+      }
+    ],
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the id, name and date of all battles.",
+    "qpl": [
+      "#5 = Scan Table [ battle ] Output [ id , name , date ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "date",
+        "alias": "date",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and date the battle that has lost the ship named 'HMS Atalanta'.",
+    "qpl": [
+      "#4 = Scan Table [ ship ] Predicate [ name = 'HMS Atalanta' ] Output [ name , lost_in_battle ]",
+      "#5 = Scan Table [ battle ] Output [ id , name , date ]",
+      "#6 = Join [ #4 , #5 ] Predicate [ #4.lost_in_battle = #5.id ] Output [ #5.name , #5.date ]"
+    ],
+    "outputs": [
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "date",
+        "alias": "date",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "List the name and date the battle that has lost the ship named 'Lettice' and the ship named 'HMS Atalanta'",
+    "qpl": [
+      "#1 = Scan Table [ ship ] Predicate [ name = 'Lettice' ] Output [ name , lost_in_battle ]",
+      "#2 = Scan Table [ battle ] Output [ id , name , date ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.lost_in_battle = #2.id ] Distinct [ true ] Output [ #2.date , #2.name ]",
+      "#4 = Scan Table [ ship ] Predicate [ name = 'HMS Atalanta' ] Output [ name , lost_in_battle ]",
+      "#5 = Scan Table [ battle ] Output [ id , name , date ]",
+      "#6 = Join [ #4 , #5 ] Predicate [ #4.lost_in_battle = #5.id ] Output [ #5.name , #5.date ]",
+      "#7 = Intersect [ #3 , #6 ] Predicate [ #3.name = #6.name ] Output [ #3.date , #3.name ]"
+    ],
+    "outputs": [
+      {
+        "col": "date",
+        "alias": "date",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show the distinct names, results and bulgarian commanders of all battles.",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Distinct [ true ] Output [ bulgarian_commander , name , result ]"
+    ],
+    "outputs": [
+      {
+        "col": "bulgarian_commander",
+        "alias": "bulgarian_commander",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "result",
+        "alias": "result",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show ids of the battles with ships lost in the 'English Channel'.",
+    "qpl": [
+      "#2 = Scan Table [ ship ] Predicate [ location = 'English Channel' ] Output [ location , lost_in_battle ]"
+    ],
+    "outputs": [
+      {
+        "col": "location",
+        "alias": "location",
+        "col_type": "ship"
+      },
+      {
+        "col": "lost_in_battle",
+        "alias": "lost_in_battle",
+        "col_type": "battle"
+      }
+    ],
+    "type": "ship, battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show the ids, names, results and bulgarian commanders of all battles.",
+    "qpl": [
+      "#3 = Scan Table [ battle ] Output [ id , bulgarian_commander , name , result ]"
+    ],
+    "outputs": [
+      {
+        "col": "id",
+        "alias": "id",
+        "col_type": "battle"
+      },
+      {
+        "col": "bulgarian_commander",
+        "alias": "bulgarian_commander",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "result",
+        "alias": "result",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show names, results and bulgarian commanders of the battles with ships lost in the 'English Channel'.",
+    "qpl": [
+      "#2 = Scan Table [ ship ] Predicate [ location = 'English Channel' ] Output [ location , lost_in_battle ]",
+      "#3 = Scan Table [ battle ] Output [ id , bulgarian_commander , name , result ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.lost_in_battle = #3.id ] Output [ #3.result , #3.name , #3.bulgarian_commander ]"
+    ],
+    "outputs": [
+      {
+        "col": "result",
+        "alias": "result",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      },
+      {
+        "col": "bulgarian_commander",
+        "alias": "bulgarian_commander",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "Show names, results and bulgarian commanders of the battles with no ships lost in the 'English Channel'.",
+    "qpl": [
+      "#1 = Scan Table [ battle ] Distinct [ true ] Output [ bulgarian_commander , name , result ]",
+      "#2 = Scan Table [ ship ] Predicate [ location = 'English Channel' ] Output [ location , lost_in_battle ]",
+      "#3 = Scan Table [ battle ] Output [ id , bulgarian_commander , name , result ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.lost_in_battle = #3.id ] Output [ #3.result , #3.name , #3.bulgarian_commander ]",
+      "#5 = Except [ #1 , #4 ] Predicate [ #1.name = #4.name ] Output [ #1.result , #1.bulgarian_commander , #1.name ]"
+    ],
+    "outputs": [
+      {
+        "col": "result",
+        "alias": "result",
+        "col_type": "battle"
+      },
+      {
+        "col": "bulgarian_commander",
+        "alias": "bulgarian_commander",
+        "col_type": "battle"
+      },
+      {
+        "col": "name",
+        "alias": "name",
+        "col_type": "battle"
+      }
+    ],
+    "type": "battle"
+  },
+  {
+    "db_id": "battle_death",
+    "question": "What are the notes of the death events which has substring 'East'?",
+    "qpl": [
+      "#1 = Scan Table [ death ] Predicate [ note like '%East%' ] Output [ note ]"
+    ],
+    "outputs": [
+      {
+        "col": "note",
+        "alias": "note",
+        "col_type": "death"
+      }
+    ],
+    "type": "death"
+  }
+]

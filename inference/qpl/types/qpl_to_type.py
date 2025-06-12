@@ -1,7 +1,9 @@
-import re
-from typing import List, Dict, Tuple, ClassVar, Set, Union, Iterator
+from typing import List, Dict, Tuple, ClassVar, Set, Union, Iterator, Any, Literal
 from enum import StrEnum
 from dataclasses import dataclass
+import logging as log
+
+import regex as re
 
 from utils.qpl.tree import QPLTree
 from inference.qpl.types.schema_types import DBSchema, Table
@@ -19,14 +21,26 @@ class Operator(StrEnum):
     INTERSECT = "Intersect"
     UNION = "Union"
 
+NUMBER = "Number"
 
 @dataclass
 class QPLType:
-    table: Table
+    entity: Union[Table, Literal['Number']]
     """The table (entity) that this type represents"""
 
     aggregated: bool = False
     """Whether this type is aggregated or not"""
+
+    def __post_init__(self):
+        if self.entity == NUMBER:
+            self.aggregated = True
+
+    def __str__(self) -> str:
+        if self.entity == NUMBER:
+            return NUMBER
+        if self.aggregated:
+            return f"Aggregated[{self.entity.name}]"
+        return f"{self.entity.name}"
 
 
 @dataclass
@@ -41,7 +55,16 @@ class QPLNodeOutput:
     """The types that the output columns belong to - types[i] is the table of cols[i]"""
 
     COUNTSTAR: ClassVar[str] = 'countstar'
+    """Special case for COUNT(*) aggregation function"""
+
     ONE: ClassVar[str] = '1'
+    """Special case for a column value of 1, used in some QPL operations"""
+
+    AGG_NUM: ClassVar[List[str]] = ['COUNT', 'SUM', 'AVG']
+    """List of aggregation functions that return a numeric type"""
+
+    AGG_COL: ClassVar[List[str]] = ['MAX', 'MIN']
+    """List of aggregation functions that return a column type"""
 
 
     def resolve_alias(self, alias: str) -> Tuple[str, QPLType]:
@@ -55,9 +78,11 @@ class QPLNodeOutput:
         qpltype = self.types[col_idx]
 
         # Follow foreign keys to find the source table and column name
-        colname, table = qpltype.table.src_colname_table(colname)
+        table = NUMBER
+        if isinstance(qpltype.entity, Table):
+            colname, table = qpltype.entity.src_colname_table(colname)
         
-        return colname, QPLType(table=table, aggregated=qpltype.aggregated)
+        return colname, QPLType(entity=table, aggregated=qpltype.aggregated)
 
 
     @staticmethod
@@ -81,30 +106,16 @@ class QPLNodeOutput:
         types = []
 
         for value in captures_out.split(","):
-            split = re.split(r' AS ', value.strip(), flags=re.IGNORECASE)
-            col_identifier = split[0].strip()  # could be alias in one of the children
-            alias = split[1].strip() if len(split) > 1 else split[0].strip()
+            as_split = re.split(r' AS ', value.strip(), flags=re.IGNORECASE)
+            col_identifier = as_split[0].strip()  # could be alias in one of the children
+            alias = as_split[1].strip() if len(as_split) > 1 else as_split[0].split('.')[-1].strip()
 
-            if col_identifier in QPLNodeOutput.COUNTSTAR:
-                if isinstance(input, Table):
+            if col_identifier in [QPLNodeOutput.COUNTSTAR, QPLNodeOutput.ONE]:
+                # Special cases
+                if col_identifier == QPLNodeOutput.COUNTSTAR and isinstance(input, Table):
                     raise ValueError(f"{QPLNodeOutput.COUNTSTAR!r} is an aggregation function, hence should be used in Aggregate.")
-                # countstar appears only in Aggregate operations 
-                # while the Count_Star alias can appear higher in the tree
                 colname = col_identifier
-                child_tables = [qpltype.table for qpltype in list(input.values())[0].types]
-                # take the most common table as a heuristic to be the table of the countstar
-                # TODO: is there a better way to determine the table of countstar?
-                table = max(set(child_tables), key=child_tables.count)
-                qpltype = QPLType(table=table, aggregated=True)
-            elif col_identifier == QPLNodeOutput.ONE:
-                colname = col_identifier
-                if isinstance(input, Table):
-                    table = input
-                elif isinstance(input, Dict):
-                    children_tables = [[qpltype.table for qpltype in inp.types] for inp in input.values()]
-                    common_tables = set.intersection(*[set(ct) for ct in children_tables])
-                    table = max(common_tables, key=lambda x: sum(ct.count(x) for ct in children_tables))
-                qpltype = QPLType(table=table, aggregated=False)
+                qpltype = QPLType(entity=NUMBER, aggregated=True)
             elif isinstance(input, Dict):
                 qpltype = None
 
@@ -123,17 +134,22 @@ class QPLNodeOutput:
                     if match_agg:
                         func, col_identifier = match_agg.groups()
                         aggregated = True
-                    
-                    # Automatically resolve to a child input
-                    inp = list(input.values())[0]
-                    colname, qpltype = inp.resolve_alias(col_identifier)
-                    qpltype.aggregated = aggregated
+                        if func.upper() not in QPLNodeOutput.AGG_NUM + QPLNodeOutput.AGG_COL:
+                            raise ValueError(f"Unknown aggregation function {func!r} in {col_identifier!r}.")
+                        if func.upper() in QPLNodeOutput.AGG_NUM:
+                            colname = col_identifier.replace('DISTINCT', '').strip()
+                            qpltype = QPLType(entity=NUMBER, aggregated=True)
+                    if not match_agg or func.upper() in QPLNodeOutput.AGG_COL:
+                        # Automatically resolve to a child input
+                        inp = list(input.values())[0]
+                        colname, qpltype = inp.resolve_alias(col_identifier)
+                        qpltype.aggregated = aggregated
             else:
                 # Scan operation - resolve to the table directly
                 if col_identifier not in input.column_names:
                     raise ValueError(f"Column '{col_identifier}' not found in table {input.name}.")
-                colname = col_identifier
-                qpltype = QPLType(table=input, aggregated=False)
+                colname, table = input.src_colname_table(col_identifier)
+                qpltype = QPLType(entity=table, aggregated=False)
             
             cols.append(colname)
             aliases.append(alias)
@@ -142,22 +158,35 @@ class QPLNodeOutput:
         return QPLNodeOutput(cols=cols, aliases=aliases, types=types)
     
     @property
-    def type_set(self) -> Set[QPLType]:
+    def type_set(self) -> Set[str]:
         """Returns a set of unique QPLTypes in the output."""
-        return set(self.types)
+        return set(str(t) for t in self.types)
     
     def __iter__(self) -> Iterator[Tuple[str, str, QPLType]]:
         """Iterate over the output columns, aliases, and types."""
         return iter(zip(self.cols, self.aliases, self.types))
+    
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            "outputs": [
+                {
+                    "col": col,
+                    "alias": alias,
+                    "col_type": str(qpltype),
+                }
+                for col, alias, qpltype in self
+            ],
+            "type": ', '.join(self.type_set),
+        }
 
 
-def scan_type(captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    table_name = captures["table"]
+def scan_type(groups: Dict, schema: DBSchema) -> QPLNodeOutput:
+    table_name = groups["table"]
     table = schema.tables.get(table_name)
     if not table:
         raise ValueError(f"Table {table_name} not found in schema.")
 
-    return QPLNodeOutput.infer(captures['out'], table)
+    return QPLNodeOutput.infer(groups['out'], table)
 
 def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
@@ -168,10 +197,10 @@ def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNo
     opts = dict(zip(option_names, args))
 
     child_output = qpl_tree_to_type(agg_node.children[0], schema)
-    node_output = QPLNodeOutput.infer(captures['out'], {child_idx: child_output})
+    node_output = QPLNodeOutput.infer(captures['out'][0], {child_idx: child_output})
 
     # Verify that the output columns match the GroupBy columns
-    gb_cols = [alias.strip() for alias in opts.get("GroupBy", "").split(",")]
+    gb_cols = [alias.strip() for alias in opts.get("GroupBy", "").split(",") if "GroupBy" in opts]
     for col, alias, qpltype in node_output:
         if alias in gb_cols:
             idx = child_output.aliases.index(alias)
@@ -197,7 +226,7 @@ def same_child_type_change_cols(node: QPLTree, captures: Dict, schema: DBSchema)
     child_idx = ins[0]
 
     child_output = qpl_tree_to_type(node.children[0], schema)
-    return QPLNodeOutput.infer(captures['out'], {child_idx: child_output})
+    return QPLNodeOutput.infer(captures['out'][0], {child_idx: child_output})
 
 def filter_type(filter_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
     return same_child_type_change_cols(filter_node, captures, schema)
@@ -216,19 +245,25 @@ def topsort_type(topsort_node: QPLTree, captures: Dict, schema: DBSchema) -> QPL
 
 
 def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
+    lhs, rhs = ins
+
+    lhs_output = qpl_tree_to_type(join_node.children[0], schema)
+    rhs_output = qpl_tree_to_type(join_node.children[1], schema)
+
+    return QPLNodeOutput.infer(captures_out=captures['out'][0], input={lhs: lhs_output, rhs: rhs_output})
 
 
 def except_type(except_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    return same_child_type_change_cols(except_node, captures, schema)
 
 
 def intersect_type(intersect_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    return same_child_type_change_cols(intersect_node, captures, schema)
 
 
 def union_type(union_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    pass
+    return same_child_type_change_cols(union_node, captures, schema)
 
 
 def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema) -> QPLNodeOutput:
@@ -243,13 +278,8 @@ def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema) -> QPLNodeOutput:
         if m := scan_regex.match(node.qpl_line):
             return scan_type(m.groupdict(), schema)
         elif m := flat_qpl_line_pattern.match(node.qpl_line):
-            captures = m.groupdict()
+            captures = m.capturesdict()
             op = captures["op"][0]
-            ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
-            option_names = captures["opt"]
-            args = captures["arg"]
-            opts = dict(zip(option_names, args))
-            output_list = re.split(r"\s*, ", captures["out"][0])
 
             if op == Operator.AGGREGATE:
                 return aggregate_type(node, captures, schema)
@@ -274,4 +304,44 @@ def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema) -> QPLNodeOutput:
 
     return rec(qpl_tree)
 
+
+if __name__ == "__main__":
+    import json
+    from datasets import load_dataset
+    import utils.qpl.paths as p
+
+    DB_ID = 'battle_death'
+    SPLIT = 'validation'
+
+    dataset = load_dataset("d4nieldev/qpl-completer-ds", split=SPLIT)
+    dataset = map(lambda row: {
+        'db_id': row['db_id'],
+        'question': row['question'],
+        'qpl': [line.split(";")[0].strip() for line in row['prefix_qpl'].split("\n") if line] + [row['qpl_line']]
+    }, dataset)
+    dataset = filter(lambda row: row['db_id'] == DB_ID, dataset)
+    dataset = list(dataset)
+
+    qpl_trees = [QPLTree.from_qpl_lines(row['qpl']) for row in dataset]
+    db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
+
+    types = []
+    errs = 0
+    for row, qpl_tree in zip(dataset, qpl_trees):
+        db_schema = db_schemas[row['db_id']]
+        try:
+            types.append(qpl_tree_to_type(qpl_tree, db_schema).to_json())
+        except Exception as e:
+            types.append({"error": str(e)})
+            log.warning(f"Error processing QPL tree for QPL: {' ; '.join(row['qpl'])}\n{e}")
+            errs += 1
+
+    print(f"Error rate: {errs}/{len(types)} ({errs/len(types)*100:.2f}%)")
     
+    output = []
+    for row, qpl_type in zip(dataset, types):
+        output.append(row | qpl_type)
+
+    with open(f"qpl_types_{DB_ID}.json", "w") as f:
+        json.dump(output, f, indent=2)
+

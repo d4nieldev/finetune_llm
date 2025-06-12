@@ -139,6 +139,15 @@ class DBSchema:
 
         return DBSchema(db_id=db_id, tables=tables)
     
+    @property
+    def entities(self) -> List[str]:
+        # primary keys that are not foreign keys to other tables distinguish the table as an entity
+        return [
+            table.name
+            for table in self.tables.values()
+            if set([pk.col_name for pk in table.pks]).difference([fk.from_col for fk in table.fks])
+        ]
+    
     def __str__(self):
         tables_str = "\n\n".join(str(table) for table in self.tables.values())
         return f"```DDL\n{tables_str}\n```"

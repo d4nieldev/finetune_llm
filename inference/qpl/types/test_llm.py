@@ -33,6 +33,7 @@ class TaggedDB(Enum):
 class TypeSystem(Enum):
     VERBOSE = "verbose"
     SIMPLE = "simple"
+    AUTO = "auto"
 
     @property
     def signature(self):
@@ -40,6 +41,7 @@ class TypeSystem(Enum):
         return {
             TypeSystem.VERBOSE: VerboseTypeSystem,
             TypeSystem.SIMPLE: SimpleTypeSystem,
+            TypeSystem.AUTO: AutoTypeSystem,
         }[self]
     
 REASONING_MODELS = ['qwen3']
@@ -57,10 +59,10 @@ class Config:
     llm_id: str = "openai/gpt-4.1-mini"
     """ID of the LLM to use."""
 
-    type_system: TypeSystem = TypeSystem.SIMPLE
+    type_system: TypeSystem = TypeSystem.AUTO
     """Type system to use for type prediction."""
 
-    train_db_id: TaggedDB = TaggedDB.BATTLE_DEATH
+    train_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
     """ID of the training dataset (examples for fewshot) name."""
 
     test_db_id: TaggedDB = TaggedDB.CONCERT_SINGER
@@ -69,7 +71,7 @@ class Config:
     split_train_ratio: float = 0
     """Ratio of training data to use - in case train and test datasets are the same."""
 
-    fewshot_examples: int = 3
+    fewshot_examples: int = 0
     """Number of few-shot examples to use."""
 
     cot: bool = True
@@ -144,8 +146,19 @@ class SimpleTypeSystem(TypeSystemFields):
     """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
 
 The possible types are:
-    - {entity} - The result columns are all from {entity}. In case a only a foreign key is returned from a table, the **referred** entity is what counts. {entity} should be replaced with one of the entities in the schema.
+    - {entity} - The result columns are all from {entity}. In case only a foreign key is returned from a table, the **referred** entity is what counts. {entity} should be replaced with one of the entities in the schema.
     - Aggregated[{entity}] - The result is the outcome of a computation derived from a stream of {entity}s without additional columns. {entity} should be replaced with one of the entities in the schema.
+    - {type_1}, {type_2}, ..., {type_n} - The result is a combination of {entity}s and Aggregated[{entity}]s (not necessarily the same {entity}).
+"""
+
+
+class AutoTypeSystem(TypeSystemFields):
+    """Predict the type of the result that would be returned by executing an SQL query that correctly answers the question.
+
+The possible types are:
+    - {entity} - The result contains columns from {entity}. In case a foreign key is in the result, the **referred** entity that **originally** contains this column (NOT as a foreign key) is what counts. {entity} should be replaced with one of the entities in the schema.
+    - Aggregated[{entity}] - The result contains at least one column that is the outcome of a computation derived from a stream of {entity}s and this outcome is a value of one of the rows in the table (for example MIN/MAX). {entity} should be replaced with one of the entities in the schema.
+    - Number - The result is a number that is either (1) a computation derived from a steam of entities, and this outcome is NOT a value of one of the rows in the table (for example COUNT/AVG/SUM), or (2) a number that is not derived from any entity.
     - {type_1}, {type_2}, ..., {type_n} - The result is a combination of {entity}s and Aggregated[{entity}]s (not necessarily the same {entity}).
 """
 

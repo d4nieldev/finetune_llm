@@ -1,0 +1,2770 @@
+[
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each singer.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ 1 AS One ]"
+    ],
+    "outputs": [
+      {
+        "col": "1",
+        "alias": "One",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many singers do we have?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ 1 AS One ]",
+      "#2 = Aggregate [ #1 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each singer.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ 1 AS One ]"
+    ],
+    "outputs": [
+      {
+        "col": "1",
+        "alias": "One",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the total number of singers?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ 1 AS One ]",
+      "#2 = Aggregate [ #1 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show name, country, age for all singers.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Name , Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show name, country, age for all singers ordered by age from the oldest to the youngest.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Name , Country , Age ]",
+      "#2 = Sort [ #1 ] OrderBy [ Age DESC ] Output [ Name , Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names, countries, and ages for every singer?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Name , Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names, countries, and ages for every singer in descending order of age?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Name , Country , Age ]",
+      "#2 = Sort [ #1 ] OrderBy [ Age DESC ] Output [ Name , Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the age of singers from France?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Country = 'France' ] Output [ Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average, minimum, and maximum age of all singers from France?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Country = 'France' ] Output [ Country , Age ]",
+      "#2 = Aggregate [ #1 ] Output [ MIN(Age) AS Min_Age , AVG(Age) AS Avg_Age , MAX(Age) AS Max_Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Age",
+        "alias": "Min_Age",
+        "col_type": "Aggregated[singer]"
+      },
+      {
+        "col": "Age",
+        "alias": "Avg_Age",
+        "col_type": "Number"
+      },
+      {
+        "col": "Age",
+        "alias": "Max_Age",
+        "col_type": "Aggregated[singer]"
+      }
+    ],
+    "type": "Number, Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the age for all France singers?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Country = 'France' ] Output [ Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average, minimum, and maximum age for all French singers?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Country = 'France' ] Output [ Country , Age ]",
+      "#2 = Aggregate [ #1 ] Output [ MIN(Age) AS Min_Age , AVG(Age) AS Avg_Age , MAX(Age) AS Max_Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Age",
+        "alias": "Min_Age",
+        "col_type": "Aggregated[singer]"
+      },
+      {
+        "col": "Age",
+        "alias": "Avg_Age",
+        "col_type": "Number"
+      },
+      {
+        "col": "Age",
+        "alias": "Max_Age",
+        "col_type": "Aggregated[singer]"
+      }
+    ],
+    "type": "Number, Aggregated[singer]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the age, name of the song and the release year of the song of all singers.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Song_Name , Song_release_year , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Song_release_year",
+        "alias": "Song_release_year",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the name and the release year of the song by the youngest singer.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Song_Name , Song_release_year , Age ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Age ASC ] Output [ Song_Name , Song_release_year , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Song_release_year",
+        "alias": "Song_release_year",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of songs, release years of songs and ages of all singers?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Song_Name , Song_release_year , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Song_release_year",
+        "alias": "Song_release_year",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and release years for all the songs of the youngest singer?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Song_Name , Song_release_year , Age ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Age ASC ] Output [ Song_Name , Song_release_year , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Song_release_year",
+        "alias": "Song_release_year",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are all distinct countries where singers above age 20 are from?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Age > 20 ] Distinct [ true ] Output [ Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are  the different countries with singers above age 20?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Age > 20 ] Distinct [ true ] Output [ Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the countries of all singers.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show all countries and the number of singers in each country.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Country ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Country ] Output [ countstar AS Count_Star , Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "Number, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the country of all singers.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many singers are from each country?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Country ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Country ] Output [ countstar AS Count_Star , Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "Number, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the ages of all singers.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the average age of all singers.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Age ]",
+      "#2 = Aggregate [ #1 ] Output [ AVG(Age) AS Avg_Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Age",
+        "alias": "Avg_Age",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the song names and ages of all singers.",
+    "qpl": [
+      "#3 = Scan Table [ singer ] Output [ Song_Name , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all song names by singers above the average age.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Age ]",
+      "#2 = Aggregate [ #1 ] Output [ AVG(Age) AS Avg_Age ]",
+      "#3 = Scan Table [ singer ] Output [ Song_Name , Age ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #3.Age > #2.Avg_Age ] Output [ #3.Song_Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ages of all singers?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average age of all singers?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Age ]",
+      "#2 = Aggregate [ #1 ] Output [ AVG(Age) AS Avg_Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Age",
+        "alias": "Avg_Age",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the song names and ages of all singers?",
+    "qpl": [
+      "#3 = Scan Table [ singer ] Output [ Song_Name , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are all the song names by singers who are older than average?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Output [ Age ]",
+      "#2 = Aggregate [ #1 ] Output [ AVG(Age) AS Avg_Age ]",
+      "#3 = Scan Table [ singer ] Output [ Song_Name , Age ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #3.Age > #2.Avg_Age ] Output [ #3.Song_Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show location and name for all stadiums with a capacity between 5000 and 10000.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Predicate [ Capacity >= 5000 AND Capacity <= 10000 ] Output [ Name , Location , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the locations and names of all stations with capacity between 5000 and 10000?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Predicate [ Capacity >= 5000 AND Capacity <= 10000 ] Output [ Name , Location , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the capacity and the average of all stadiums?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Average , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Average",
+        "alias": "Average",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the maximum capacity and the average of all stadiums ?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Average , Capacity ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Average ] Output [ Average , MAX(Capacity) AS Max_Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Average",
+        "alias": "Average",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Max_Capacity",
+        "col_type": "Aggregated[stadium]"
+      }
+    ],
+    "type": "Aggregated[stadium], stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the capacity for all stadiums?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the average and maximum capacities for all stadiums ?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity ]",
+      "#2 = Aggregate [ #1 ] Output [ MAX(Capacity) AS Max_Capacity , AVG(Capacity) AS Avg_Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Max_Capacity",
+        "col_type": "Aggregated[stadium]"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Avg_Capacity",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number, Aggregated[stadium]"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity and average attendance of all stadiums?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Average , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Average",
+        "alias": "Average",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity for the stadium with highest average attendance?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Average , Capacity ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Average DESC ] Output [ Name , Average , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Average",
+        "alias": "Average",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity and average attendance of all stadiums?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Average , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Average",
+        "alias": "Average",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity for the stadium with the highest average attendance?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Average , Capacity ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Average DESC ] Output [ Name , Average , Capacity ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Average",
+        "alias": "Average",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert in year 2014 or 2015.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 OR Year = 2015 ] Output [ Year ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many concerts are there in year 2014 or 2015?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 OR Year = 2015 ] Output [ Year ]",
+      "#2 = Aggregate [ #1 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert that occurred in 2014 or 2015.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 OR Year = 2015 ] Output [ Year ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "How many concerts occurred in 2014 or 2015?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 OR Year = 2015 ] Output [ Year ]",
+      "#2 = Aggregate [ #1 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium id of all concerts.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id and name of all stadiums.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium name of all concerts.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #1.Stadium_ID , #2.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium name and the number of concerts in each stadium.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #1.Stadium_ID , #2.Name ]",
+      "#4 = Aggregate [ #3 ] GroupBy [ Stadium_ID ] Output [ Name , countstar AS Count_Star ]"
+    ],
+    "error": "Column 'Name' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the stadium id of all concerts.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the id and name of all stadiums.",
+    "qpl": [
+      "#2 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the stadium name of all concerts.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #1.Stadium_ID , #2.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "For each stadium, how many concerts play there?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #1.Stadium_ID , #2.Name ]",
+      "#4 = Aggregate [ #3 ] GroupBy [ Stadium_ID ] Output [ Name , countstar AS Count_Star ]"
+    ],
+    "error": "Column 'Name' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium id of concerts in year 2014 or after.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year >= 2014 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id, name and capacity of all stadiums.",
+    "qpl": [
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium id, stadium name and stadium capacity of concerts in year 2014 or after.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year >= 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #2.Stadium_ID , #2.Capacity , #2.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "For each stadium, show the stadium name and capacity and number of concerts in year 2014 or after.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year >= 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #2.Stadium_ID , #2.Capacity , #2.Name ]",
+      "#4 = Aggregate [ #3 ] GroupBy [ Stadium_ID ] Output [ Capacity , Name , countstar AS Count_Star ]"
+    ],
+    "error": "Column 'Capacity' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium name and capacity with most number of concerts in year 2014 or after.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year >= 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #2.Stadium_ID , #2.Capacity , #2.Name ]",
+      "#4 = Aggregate [ #3 ] GroupBy [ Stadium_ID ] Output [ Capacity , Name , countstar AS Count_Star ]",
+      "#5 = TopSort [ #4 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ Count_Star , Capacity , Name ]"
+    ],
+    "error": "Column 'Capacity' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id of stadiums with concerts after 2013?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year > 2013 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id, name and capacity of all stadiums?",
+    "qpl": [
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id, name and capacity of stadiums with concerts after 2013?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year > 2013 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #2.Stadium_ID , #2.Capacity , #2.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "For each stadium, what is the name and capacity and number of concerts after 2013.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year > 2013 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #2.Stadium_ID , #2.Capacity , #2.Name ]",
+      "#4 = Aggregate [ #3 ] GroupBy [ Stadium_ID ] Output [ Capacity , Name , countstar AS Count_Star ]"
+    ],
+    "error": "Column 'Capacity' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and capacity of the stadium with the most concerts after 2013 ?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year > 2013 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID , Name ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Output [ #2.Stadium_ID , #2.Capacity , #2.Name ]",
+      "#4 = Aggregate [ #3 ] GroupBy [ Stadium_ID ] Output [ Capacity , Name , countstar AS Count_Star ]",
+      "#5 = TopSort [ #4 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ Count_Star , Capacity , Name ]"
+    ],
+    "error": "Column 'Capacity' not in GroupBy and thus must be aggregated."
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the year of all concerts.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Year ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the number of concerts in each year.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Year ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Year ] Output [ Year , countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Which year has most number of concerts?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Year ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Year ] Output [ Year , countstar AS Count_Star ]",
+      "#3 = TopSort [ #2 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ Year , Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the year of all concerts?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Year ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the number of concerts in each year?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Year ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Year ] Output [ Year , countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the year that had the most concerts?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Output [ Year ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Year ] Output [ Year , countstar AS Count_Star ]",
+      "#3 = TopSort [ #2 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ Year , Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id and name of all stadiums.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium ids of all concerts.",
+    "qpl": [
+      "#2 = Scan Table [ concert ] Output [ Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the stadium names without any concert.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#2 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#3 = Except [ #1 , #2 ] Predicate [ #2.Stadium_ID IS NULL OR #1.Stadium_ID = #2.Stadium_ID ] Output [ #1.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and names of all stadiums?",
+    "qpl": [
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the stadium ids of all concerts?",
+    "qpl": [
+      "#2 = Scan Table [ concert ] Output [ Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of the stadiums without any concerts?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#2 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#3 = Except [ #1 , #2 ] Predicate [ #2.Stadium_ID IS NULL OR #1.Stadium_ID = #2.Stadium_ID ] Output [ #1.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show countries where a singer above age 40 are from.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Age > 40 ] Distinct [ true ] Output [ Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show countries where a singer below age 30 are from.",
+    "qpl": [
+      "#2 = Scan Table [ singer ] Predicate [ Age < 30 ] Output [ Country , Age ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      },
+      {
+        "col": "Age",
+        "alias": "Age",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show countries where a singer above age 40 and a singer below 30 are from.",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Age > 40 ] Distinct [ true ] Output [ Country , Age ]",
+      "#2 = Scan Table [ singer ] Predicate [ Age < 30 ] Output [ Country , Age ]",
+      "#3 = Intersect [ #1 , #2 ] Predicate [ #1.Country = #2.Country ] Output [ #1.Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show distinct names for all stadiums.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Distinct [ true ] Output [ Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show stadium ids of concerts in year 2014.",
+    "qpl": [
+      "#2 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show ids and names of all stadiums.",
+    "qpl": [
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show ids and names of stadiums that having a concert in year 2014.",
+    "qpl": [
+      "#2 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #3.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show names for all stadiums except for stadiums having a concert in year 2014.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Distinct [ true ] Output [ Name ]",
+      "#2 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #3.Name ]",
+      "#5 = Except [ #1 , #4 ] Predicate [ #1.Name = #4.Name ] Output [ #1.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the distinct names of all stadiums?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Distinct [ true ] Output [ Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of concerts in 2014?",
+    "qpl": [
+      "#2 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and names of all stadiums?",
+    "qpl": [
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of stadiums that have a concert in 2014?",
+    "qpl": [
+      "#2 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #3.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of all stadiums that did not have a concert in 2014?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Distinct [ true ] Output [ Name ]",
+      "#2 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#3 = Scan Table [ stadium ] Output [ Name , Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #3.Name ]",
+      "#5 = Except [ #1 , #4 ] Predicate [ #1.Name = #4.Name ] Output [ #1.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the concert id of all records of singer in concert.",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id for all concerts and the number of singers in each concert.",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ concert_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ concert_ID ] Output [ countstar AS Count_Star , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the id, name and theme of all concerts.",
+    "qpl": [
+      "#3 = Scan Table [ concert ] Output [ Theme , concert_Name , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Theme",
+        "alias": "Theme",
+        "col_type": "concert"
+      },
+      {
+        "col": "concert_Name",
+        "alias": "concert_Name",
+        "col_type": "concert"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Show the name and theme for all concerts and the number of singers in each concert.",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ concert_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ concert_ID ] Output [ countstar AS Count_Star , concert_ID ]",
+      "#3 = Scan Table [ concert ] Output [ Theme , concert_Name , concert_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.concert_ID = #3.concert_ID ] Output [ #3.Theme , #2.Count_Star , #3.concert_Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Theme",
+        "alias": "Theme",
+        "col_type": "concert"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "concert_Name",
+        "alias": "concert_Name",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the concert ids of all records of singer in concert?",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and number of singers for every concert?",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ concert_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ concert_ID ] Output [ countstar AS Count_Star , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids, names, themes of all concerts?",
+    "qpl": [
+      "#3 = Scan Table [ concert ] Output [ Theme , concert_Name , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Theme",
+        "alias": "Theme",
+        "col_type": "concert"
+      },
+      {
+        "col": "concert_Name",
+        "alias": "concert_Name",
+        "col_type": "concert"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names , themes , and number of singers for every concert ?",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ concert_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ concert_ID ] Output [ countstar AS Count_Star , concert_ID ]",
+      "#3 = Scan Table [ concert ] Output [ Theme , concert_Name , concert_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.concert_ID = #3.concert_ID ] Output [ #3.Theme , #2.Count_Star , #3.concert_Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Theme",
+        "alias": "Theme",
+        "col_type": "concert"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      },
+      {
+        "col": "concert_Name",
+        "alias": "concert_Name",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert, Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List singer ids of all records of singer in concert.",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ Singer_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List singer ids and number of concerts for each singer.",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ Singer_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Singer_ID ] Output [ Singer_ID , countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the ids and names of all singers.",
+    "qpl": [
+      "#4 = Scan Table [ singer ] Output [ Singer_ID , Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List singer names and number of concerts for each singer.",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ Singer_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Singer_ID ] Output [ Singer_ID , countstar AS Count_Star ]",
+      "#3 = Scan Table [ singer ] Output [ Singer_ID , Name ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Singer_ID = #3.Singer_ID ] Output [ #3.Name , #2.Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the singers of all records of singer in concert?",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ Singer_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the singers and number of concerts for each person?",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ Singer_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Singer_ID ] Output [ Singer_ID , countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids and names of all singers?",
+    "qpl": [
+      "#3 = Scan Table [ singer ] Output [ Singer_ID , Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of the singers and number of concerts for each person?",
+    "qpl": [
+      "#1 = Scan Table [ singer_in_concert ] Output [ Singer_ID ]",
+      "#2 = Aggregate [ #1 ] GroupBy [ Singer_ID ] Output [ Singer_ID , countstar AS Count_Star ]",
+      "#3 = Scan Table [ singer ] Output [ Singer_ID , Name ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Singer_ID = #3.Singer_ID ] Output [ #3.Name , #2.Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all ids of concerts in year 2014.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all concert ids and the singer ids in the concerts.",
+    "qpl": [
+      "#2 = Scan Table [ singer_in_concert ] Output [ Singer_ID , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all singer ids in concerts in year 2014.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , concert_ID ]",
+      "#2 = Scan Table [ singer_in_concert ] Output [ Singer_ID , concert_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.concert_ID = #2.concert_ID ] Output [ #2.Singer_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List the ids and names of all singers.",
+    "qpl": [
+      "#4 = Scan Table [ singer ] Output [ Singer_ID , Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List all singer names in concerts in year 2014.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , concert_ID ]",
+      "#2 = Scan Table [ singer_in_concert ] Output [ Singer_ID , concert_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.concert_ID = #2.concert_ID ] Output [ #2.Singer_ID ]",
+      "#4 = Scan Table [ singer ] Output [ Singer_ID , Name ]",
+      "#5 = Join [ #3 , #4 ] Predicate [ #3.Singer_ID = #4.Singer_ID ] Output [ #4.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of concerts in year 2014?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the concerts and the ids of singers who performed in the concerts?",
+    "qpl": [
+      "#2 = Scan Table [ singer_in_concert ] Output [ Singer_ID , concert_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "concert_ID",
+        "alias": "concert_ID",
+        "col_type": "concert"
+      }
+    ],
+    "type": "concert, singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the singers who performed in a concert in 2014?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , concert_ID ]",
+      "#2 = Scan Table [ singer_in_concert ] Output [ Singer_ID , concert_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.concert_ID = #2.concert_ID ] Output [ #2.Singer_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What the ids and names og all singers?",
+    "qpl": [
+      "#4 = Scan Table [ singer ] Output [ Singer_ID , Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Singer_ID",
+        "alias": "Singer_ID",
+        "col_type": "singer"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names of the singers who performed in a concert in 2014?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , concert_ID ]",
+      "#2 = Scan Table [ singer_in_concert ] Output [ Singer_ID , concert_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.concert_ID = #2.concert_ID ] Output [ #2.Singer_ID ]",
+      "#4 = Scan Table [ singer ] Output [ Singer_ID , Name ]",
+      "#5 = Join [ #3 , #4 ] Predicate [ #3.Singer_ID = #4.Singer_ID ] Output [ #4.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "what is the name and nation of the singer who have a song having 'Hey' in its name?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Song_Name like '%Hey%' ] Output [ Name , Song_Name , Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the name and country of origin of every singer who has a song with the word 'Hey' in its title?",
+    "qpl": [
+      "#1 = Scan Table [ singer ] Predicate [ Song_Name like '%Hey%' ] Output [ Name , Song_Name , Country ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Song_Name",
+        "alias": "Song_Name",
+        "col_type": "singer"
+      },
+      {
+        "col": "Country",
+        "alias": "Country",
+        "col_type": "singer"
+      }
+    ],
+    "type": "singer"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadiums which some concerts happened in the years of 2014.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id, name and location of all stadiums.",
+    "qpl": [
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the name and location of the stadiums which some concerts happened in the years of 2014.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Distinct [ true ] Output [ #2.Location , #2.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadiums which some concerts happened in the years of 2015.",
+    "qpl": [
+      "#4 = Scan Table [ concert ] Predicate [ Year = 2015 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id, name and location of all stadiums.",
+    "qpl": [
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the ame and location of the stadiums which some concerts happened in the years of 2015.",
+    "qpl": [
+      "#4 = Scan Table [ concert ] Predicate [ Year = 2015 ] Output [ Year , Stadium_ID ]",
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#6 = Join [ #4 , #5 ] Predicate [ #4.Stadium_ID = #5.Stadium_ID ] Output [ #5.Location , #5.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the name and location of the stadiums which some concerts happened in the years of both 2014 and 2015.",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Distinct [ true ] Output [ #2.Location , #2.Name ]",
+      "#4 = Scan Table [ concert ] Predicate [ Year = 2015 ] Output [ Year , Stadium_ID ]",
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#6 = Join [ #4 , #5 ] Predicate [ #4.Stadium_ID = #5.Stadium_ID ] Output [ #5.Location , #5.Name ]",
+      "#7 = Intersect [ #3 , #6 ] Predicate [ #3.Name = #6.Name ] Output [ #3.Name , #3.Location ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the stadiums that had concerts that occurred in 2014?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids, names and locations of all stadiums?",
+    "qpl": [
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and locations of the stadiums that had concerts that occurred in 2014?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Distinct [ true ] Output [ #2.Location , #2.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids of the stadiums that had concerts that occurred in 2015?",
+    "qpl": [
+      "#4 = Scan Table [ concert ] Predicate [ Year = 2015 ] Output [ Year , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Year",
+        "alias": "Year",
+        "col_type": "concert"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "concert, stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the ids, names and locations of all stadiums?",
+    "qpl": [
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and locations of the stadiums that had concerts that occurred in 2015?",
+    "qpl": [
+      "#4 = Scan Table [ concert ] Predicate [ Year = 2015 ] Output [ Year , Stadium_ID ]",
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#6 = Join [ #4 , #5 ] Predicate [ #4.Stadium_ID = #5.Stadium_ID ] Output [ #5.Location , #5.Name ]"
+    ],
+    "outputs": [
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the names and locations of the stadiums that had concerts that occurred in both 2014 and 2015?",
+    "qpl": [
+      "#1 = Scan Table [ concert ] Predicate [ Year = 2014 ] Output [ Year , Stadium_ID ]",
+      "#2 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#3 = Join [ #1 , #2 ] Predicate [ #1.Stadium_ID = #2.Stadium_ID ] Distinct [ true ] Output [ #2.Location , #2.Name ]",
+      "#4 = Scan Table [ concert ] Predicate [ Year = 2015 ] Output [ Year , Stadium_ID ]",
+      "#5 = Scan Table [ stadium ] Output [ Name , Location , Stadium_ID ]",
+      "#6 = Join [ #4 , #5 ] Predicate [ #4.Stadium_ID = #5.Stadium_ID ] Output [ #5.Location , #5.Name ]",
+      "#7 = Intersect [ #3 , #6 ] Predicate [ #3.Name = #6.Name ] Output [ #3.Name , #3.Location ]"
+    ],
+    "outputs": [
+      {
+        "col": "Name",
+        "alias": "Name",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Location",
+        "alias": "Location",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id and capacity of all stadiums.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadium with the highest capacity.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Capacity DESC ] Output [ Capacity , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the id of the stadium of all concerts.",
+    "qpl": [
+      "#3 = Scan Table [ concert ] Output [ Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert that happened in the stadium with the highest capacity.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Capacity DESC ] Output [ Capacity , Stadium_ID ]",
+      "#3 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #2.Capacity , #2.Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "Find the number of concerts happened in the stadium with the highest capacity .",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Capacity DESC ] Output [ Capacity , Stadium_ID ]",
+      "#3 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #2.Capacity , #2.Stadium_ID ]",
+      "#5 = Aggregate [ #4 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the id and capacity of all stadiums?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What is the id of that stadium with the largest capacity?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Capacity DESC ] Output [ Capacity , Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the stadium id of all concerts?",
+    "qpl": [
+      "#3 = Scan Table [ concert ] Output [ Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "List 1 for each concert that occurred in the stadium with the largest capacity.",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Capacity DESC ] Output [ Capacity , Stadium_ID ]",
+      "#3 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #2.Capacity , #2.Stadium_ID ]"
+    ],
+    "outputs": [
+      {
+        "col": "Capacity",
+        "alias": "Capacity",
+        "col_type": "stadium"
+      },
+      {
+        "col": "Stadium_ID",
+        "alias": "Stadium_ID",
+        "col_type": "stadium"
+      }
+    ],
+    "type": "stadium"
+  },
+  {
+    "db_id": "concert_singer",
+    "question": "What are the number of concerts that occurred in the stadium with the largest capacity ?",
+    "qpl": [
+      "#1 = Scan Table [ stadium ] Output [ Capacity , Stadium_ID ]",
+      "#2 = TopSort [ #1 ] Rows [ 1 ] OrderBy [ Capacity DESC ] Output [ Capacity , Stadium_ID ]",
+      "#3 = Scan Table [ concert ] Output [ Stadium_ID ]",
+      "#4 = Join [ #2 , #3 ] Predicate [ #2.Stadium_ID = #3.Stadium_ID ] Output [ #2.Capacity , #2.Stadium_ID ]",
+      "#5 = Aggregate [ #4 ] Output [ countstar AS Count_Star ]"
+    ],
+    "outputs": [
+      {
+        "col": "countstar",
+        "alias": "Count_Star",
+        "col_type": "Number"
+      }
+    ],
+    "type": "Number"
+  }
+]
