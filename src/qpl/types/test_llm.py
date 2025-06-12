@@ -8,13 +8,13 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Tuple, Optional
 from abc import ABC
 
+from inference.qpl.types.schema_types import DBSchema
+from utils.lists import split_train_test
+import utils.qpl.paths as p
+from utils.argparse import from_dataclass
+
 import dspy
 from sentence_transformers import SentenceTransformer
-
-from src.inference.qpl.types.schema_types import DBSchema
-from src.utils.lists import split_train_test
-import src.utils.qpl.paths as p
-from src.utils.argparse import from_dataclass
 
 
 log = logging.getLogger(__name__)
