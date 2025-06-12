@@ -2,6 +2,7 @@ import re
 from enum import Enum
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
+from collections import defaultdict
 
 
 class Operator(Enum):
@@ -46,14 +47,15 @@ class QPLTree:
     @staticmethod
     def from_qpl_lines(qpl_lines: List[str]) -> "QPLTree":
         """Construct a QPLTree from a list of QPL lines."""
-        row_nodes = [QPLTree() for _ in qpl_lines]
+        row_nodes = defaultdict(lambda: QPLTree())
         for qpl_row in qpl_lines:
             line_numbers = [int(match) for match in re.findall(r"#(\d+)", qpl_row)]
             row_id = line_numbers[0] - 1
             children = [row_nodes[line_num - 1] for line_num in list(dict.fromkeys(line_numbers[1:]))]  # preserve children order!
             row_nodes[row_id].qpl_line = qpl_row
             row_nodes[row_id].children = tuple(children)
-        return row_nodes[-1]
+        root_row_id = max(row_nodes.keys())
+        return row_nodes[root_row_id]
 
 
 @dataclass
