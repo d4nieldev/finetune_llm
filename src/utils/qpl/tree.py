@@ -1,11 +1,11 @@
 import re
-from enum import Enum
+from enum import StrEnum
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 from collections import defaultdict
 
 
-class Operator(Enum):
+class Operator(StrEnum):
     SCAN = "Scan"
     AGGREGATE = "Aggregate"
     FILTER = "Filter"
@@ -56,6 +56,14 @@ class QPLTree:
             row_nodes[row_id].children = tuple(children)
         root_row_id = max(row_nodes.keys())
         return row_nodes[root_row_id]
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "line_num": self.line_num,
+            "op": self.op,
+            "qpl_line": self.qpl_line,
+            "children": [child.to_dict() for child in self.children],
+        }
 
 
 @dataclass
@@ -121,7 +129,7 @@ class QPLQDTree:
 
     @property
     def is_valid(self) -> bool:
-        return self.op and all(child.is_valid for child in self.children)
+        return self.op is not None and all(child.is_valid for child in self.children)
 
 
 @dataclass
