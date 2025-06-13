@@ -1,3 +1,4 @@
+from itertools import chain, combinations
 from typing import Dict, List, Tuple, TypeVar
 import random
 
@@ -21,3 +22,10 @@ def split_train_test(dataset: List[Dict], train_ratio: float = 0.8) -> Tuple[Lis
     split_index = int(len(dataset) * train_ratio)
     random.shuffle(dataset)
     return dataset[:split_index], dataset[split_index:]
+
+
+def powerset(iterable, include_empty: bool = True):
+    "powerset([1,2,3]) --> [()] [(1,)] [(2,)] [(3,)] [(1, 2)] [(1, 3)] [(2, 3)] [(1, 2, 3)]"
+    start = 0 if include_empty else 1
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(start, len(s)+1))
