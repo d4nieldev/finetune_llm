@@ -6,7 +6,7 @@ import logging as log
 import regex as re
 
 from src.utils.qpl.tree import QPLTree, Operator
-from src.inference.qpl.types.schema_types import DBSchema, Table
+from src.inference.qpl.types.schema_types import DBSchema, Table, ColType
 
 
 NUMBER = "Number"
@@ -53,8 +53,11 @@ class QPLNodeOutput:
     aliases: List[str]
     """The aliases of the output columns of the QPL node - aliases[i] same as cols[i] if no alias is given"""
 
-    types: List[QPLType]
-    """The types that the output columns belong to - types[i] is the table of cols[i]"""
+    coltypes: List[str]
+    """The types (number / text) of the output columns of the QPL node - coltypes[i] is the type of cols[i]"""
+
+    qpltypes: List[QPLType]
+    """The QPL types (entities / aggregated) that the output columns belong to - types[i] is the table of cols[i]"""
 
     COUNTSTAR: ClassVar[str] = 'countstar'
     """Special case for COUNT(*) aggregation function"""
@@ -77,7 +80,7 @@ class QPLNodeOutput:
         # Find the column name and table in the child output
         col_idx = self.aliases.index(alias)
         colname = self.cols[col_idx]
-        qpltype = self.types[col_idx]
+        qpltype = self.qpltypes[col_idx]
 
         # Follow foreign keys to find the source table and column name
         table = NUMBER
@@ -104,8 +107,9 @@ class QPLNodeOutput:
         """
 
         cols = []
+        coltypes = []
         aliases = []
-        types = []
+        qpltypes = []
 
         for value in captures_out.split(","):
             value = value.lower()
@@ -169,32 +173,42 @@ class QPLNodeOutput:
                 colname, table = inputs.src_colname_table(col_identifier)
                 qpltype = QPLType(entity=table, aggregated=False)
             
+            if qpltype.aggregated or qpltype.entity == NUMBER:
+                coltype = ColType.NUMBER
+            else:
+                try:
+                    coltype = next(col.type for col in qpltype.entity.columns if col.name == colname)
+                except StopIteration:
+                    raise ValueError(f"Column {colname!r} not found in table {qpltype.entity.name!r}.")
+            
             cols.append(colname)
+            coltypes.append(coltype)
             aliases.append(alias)
-            types.append(qpltype)
+            qpltypes.append(qpltype)
         
-        return QPLNodeOutput(cols=cols, aliases=aliases, types=types)
+        return QPLNodeOutput(cols=cols, coltypes=coltypes, aliases=aliases, qpltypes=qpltypes)
     
     @property
     def type_set(self) -> Set[QPLType]:
         """Returns a set of unique QPLTypes in the output."""
-        return set(self.types)
+        return set(self.qpltypes)
     
-    def __iter__(self) -> Iterator[Tuple[str, str, QPLType]]:
+    def __iter__(self) -> Iterator[Tuple[str, str, str, QPLType]]:
         """Iterate over the output columns, aliases, and types."""
-        return iter(zip(self.cols, self.aliases, self.types))
+        return iter(zip(self.cols, self.coltypes, self.aliases, self.qpltypes))
     
     def to_json(self) -> Dict[str, Any]:
         return {
             "outputs": [
                 {
                     "col": col,
+                    "col_type": coltype,
                     "alias": alias,
-                    "col_type": str(qpltype),
+                    "qpl_type": str(qpltype),
                 }
-                for col, alias, qpltype in self
+                for col, coltype, alias, qpltype in self
             ],
-            "type": ', '.join(set(str(t) for t in self.types)),
+            "type": ', '.join(set(str(t) for t in self.qpltypes)),
         }
 
 
@@ -219,10 +233,10 @@ def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNo
 
     # Verify that the output columns match the GroupBy columns
     gb_cols = [alias.lower().strip() for alias in opts.get("GroupBy", "").split(",") if "GroupBy" in opts]
-    for col, alias, qpltype in node_output:
+    for col, coltype, alias, qpltype in node_output:
         if alias in gb_cols:
             idx = child_output.aliases.index(alias)
-            child_aggregated = child_output.types[idx].aggregated
+            child_aggregated = child_output.qpltypes[idx].aggregated
             if child_aggregated:
                 # Interesting edge case
                 # The column is the result of a previous aggregation and now used in GroupBy

@@ -1,10 +1,18 @@
 import os
 import json
+from enum import StrEnum
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 import src.utils.qpl.paths as p
 
+
+class ColType(StrEnum):
+    TEXT = "text"
+    NUMBER = "number"
+    DATE = "date"
+    BOOLEAN = "boolean"
+    OTHERS = "others"
 
 @dataclass
 class PrimaryKey:
@@ -52,15 +60,15 @@ class Column:
     def __post_init__(self):
         if not self.case_sensitive:
             self.name = self.name.lower()
-            self.type = self.type.lower()
             if self.simple_type:
-                self._simplify_type()
+                self.type = self._simplify_type()
             if self.constraint:
                 self.constraint = self.constraint.lower()
 
-    def _simplify_type(self):
+    def _simplify_type(self) -> ColType:
+        self.type = self.type.lower()
         if "char" in self.type or self.type == "" or "text" in self.type or "var" in self.type:
-            return "text"
+            return ColType.TEXT
         elif (
             "int" in self.type
             or "numeric" in self.type
@@ -71,13 +79,13 @@ class Column:
             or "double" in self.type
             or "float" in self.type
         ):
-            return "number"
+            return ColType.NUMBER
         elif "date" in self.type or "time" in self.type:
-            return "date"
+            return ColType.DATE
         elif "boolean" in self.type or self.type == "bit":
-            return "boolean"
+            return ColType.BOOLEAN
         else:
-            return "others"
+            return ColType.OTHERS
 
     def __str__(self):
         if self.constraint:
@@ -128,7 +136,7 @@ class Table:
         if not self.case_sensitive:
             colname = colname.lower()
         if fk := next((fk for fk in self.fks if fk.from_col == colname and fk.to_table != self), None):
-            return fk.to_table.src_colname_table(fk.from_col)
+            return fk.to_table.src_colname_table(fk.to_col)
         return colname, self
     
     def __str__(self):
