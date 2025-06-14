@@ -11,14 +11,7 @@ from src.inference.qpl.types.schema_types import DBSchema, Table
 
 NUMBER = "Number"
 
-@dataclass
 class QPLType:
-    entity: Union[Table, Literal['Number']]
-    """The table (entity) that this type represents"""
-
-    _aggregated: bool = False
-    """Whether this type is aggregated or not"""
-
     def __init__(self, entity: Union[Table, Literal['Number']], aggregated: bool = False):
         self.entity = entity
         self.aggregated = aggregated
@@ -43,8 +36,13 @@ class QPLType:
             return f"Aggregated[{self.entity.name}]"
         return f"{self.entity.name}"
     
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, QPLType):
+            return False
+        return str(self) == str(other)
+    
     def __hash__(self) -> int:
-        return hash((self.entity.name if self.entity != NUMBER else NUMBER, self.aggregated))
+        return hash(str(self))
 
 
 @dataclass
