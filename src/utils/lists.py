@@ -1,5 +1,5 @@
 from itertools import chain, combinations
-from typing import Dict, List, Tuple, TypeVar
+from typing import Dict, List, Tuple, Iterable, TypeVar, Iterator
 import random
 
 def flatten(list_of_lists: List[List]) -> Tuple[List, List[int]]:
@@ -24,7 +24,8 @@ def split_train_test(dataset: List[Dict], train_ratio: float = 0.8) -> Tuple[Lis
     return dataset[:split_index], dataset[split_index:]
 
 
-def powerset(iterable, include_empty: bool = True):
+T = TypeVar('T')
+def powerset(iterable: Iterable[T], include_empty: bool = True) -> Iterator[Tuple[T, ...]]:
     "powerset([1,2,3]) --> [()] [(1,)] [(2,)] [(3,)] [(1, 2)] [(1, 3)] [(2, 3)] [(1, 2, 3)]"
     start = 0 if include_empty else 1
     s = list(iterable)

@@ -69,9 +69,17 @@ def check_and_resolve(op: Operator, type_1: Set[QPLType], type_2: Optional[Set[Q
         
         types = [set(t) for t in powerset(type_1.union(type_2), include_empty=False)]
     elif op in [Operator.EXCEPT, Operator.INTERSECT, Operator.UNION]:
-        if type_1 != type_2:
+        # FIXME: this is a heuristic, for better type checking, we should document the number of columns returned from each child
+        #                             for even better type checking, we should also include the column types or resolve to the original column
+        if not type_2:
+            raise ValueError(f"{op.value} operator requires two types.")
+        
+        intersection = type_1.intersection(type_2)
+        if not intersection:
             raise IncompatibleTypesError(op, type_1, type_2)
-        types = [set(sub_t) for sub_t in powerset(type_1, include_empty=False)]  # any subset of type_1 is valid, except empty set
+        
+        # any subset of the intersection between type_1 and type_2 is valid, except empty set
+        types = [set(sub_t) for sub_t in powerset(intersection, include_empty=False)]
     else:
         raise ValueError(f"Unknown operator: {op!r}.")
     
