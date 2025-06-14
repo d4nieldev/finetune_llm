@@ -100,8 +100,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Except': 'Courses, People, Student_Course_Registrations' and 'People'"
+    "status": "Structure Error",
+    "error": "StructureError in line #4: Input types 'Courses, People, Student_Course_Registrations' and 'People' are incompatible with output type 'Courses, People, Student_Course_Registrations' for operator 'Except'. Possible types: ['People', 'Number']."
   },
   {
     "split": "train",
@@ -130,8 +130,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Except': 'Courses, People, Student_Course_Registrations' and 'People'"
+    "status": "Structure Error",
+    "error": "StructureError in line #4: Input types 'Courses, People, Student_Course_Registrations' and 'People' are incompatible with output type 'Courses, People, Student_Course_Registrations' for operator 'Except'. Possible types: ['People', 'Number']."
   },
   {
     "split": "train",
@@ -280,52 +280,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #4: Incompatible types for operator 'Join': 'Number' and 'trip'"
-  },
-  {
-    "split": "train",
-    "db_id": "bike_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.station_id = #1.id ] Output [ #1.name , #1.id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ station ] Output [ name , id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ status ] Predicate [ bikes_available > 12 ] Output [ station_id , bikes_available ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'station' and 'station, status'"
-  },
-  {
-    "split": "train",
-    "db_id": "bike_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.station_id = #1.id ] Output [ #1.name , #1.id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ station ] Output [ name , id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ status ] Predicate [ bikes_available > 12 ] Output [ station_id , bikes_available ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'station' and 'station, status'"
   },
   {
     "split": "train",
@@ -743,210 +697,6 @@
     ],
     "status": "Inference Error",
     "error": "TypeInferenceError in line #6: Column 'name' not in GroupBy and thus must be aggregated."
-  },
-  {
-    "split": "train",
-    "db_id": "allergy_1",
-    "line_num": 5,
-    "op": "Except",
-    "qpl_line": "#5 = Except [ #1 , #4 ] ExceptColumns [ #1.StuID ] Output [ #1.LName , #1.Fname ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Output [ LName , Fname , StuID ]",
-        "children": []
-      },
-      {
-        "line_num": 4,
-        "op": "Join",
-        "qpl_line": "#4 = Join [ #2 , #3 ] Predicate [ #3.Allergy = #2.Allergy ] Output [ #2.Allergy , #3.AllergyType , #2.StuID ]",
-        "children": [
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Has_Allergy ] Predicate [ StuID IS NULL OR StuID = StuID ] Output [ StuID , Allergy ]",
-            "children": []
-          },
-          {
-            "line_num": 3,
-            "op": "Scan",
-            "qpl_line": "#3 = Scan Table [ Allergy_Type ] Predicate [ AllergyType = 'food' ] Output [ AllergyType , Allergy ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Except': 'Student' and 'Allergy_Type, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "allergy_1",
-    "line_num": 5,
-    "op": "Except",
-    "qpl_line": "#5 = Except [ #1 , #4 ] ExceptColumns [ #1.StuID ] Output [ #1.LName , #1.Fname ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Output [ LName , Fname , StuID ]",
-        "children": []
-      },
-      {
-        "line_num": 4,
-        "op": "Join",
-        "qpl_line": "#4 = Join [ #2 , #3 ] Predicate [ #3.Allergy = #2.Allergy ] Output [ #2.Allergy , #3.AllergyType , #2.StuID ]",
-        "children": [
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Has_Allergy ] Predicate [ StuID IS NULL OR StuID = StuID ] Output [ StuID , Allergy ]",
-            "children": []
-          },
-          {
-            "line_num": 3,
-            "op": "Scan",
-            "qpl_line": "#3 = Scan Table [ Allergy_Type ] Predicate [ AllergyType = 'food' ] Output [ AllergyType , Allergy ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Except': 'Student' and 'Allergy_Type, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "allergy_1",
-    "line_num": 6,
-    "op": "Aggregate",
-    "qpl_line": "#6 = Aggregate [ #5 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 5,
-        "op": "Except",
-        "qpl_line": "#5 = Except [ #1 , #4 ] ExceptColumns [ #1.StuID ] Output [ #1.Age , #1.StuID ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Age > 18 ] Output [ StuID , Age ]",
-            "children": []
-          },
-          {
-            "line_num": 4,
-            "op": "Join",
-            "qpl_line": "#4 = Join [ #2 , #3 ] Predicate [ #3.Allergy = #2.Allergy ] Output [ #2.Allergy , #3.AllergyType , #2.StuID ]",
-            "children": [
-              {
-                "line_num": 2,
-                "op": "Scan",
-                "qpl_line": "#2 = Scan Table [ Has_Allergy ] Predicate [ StuID IS NULL OR StuID = StuID ] Output [ StuID , Allergy ]",
-                "children": []
-              },
-              {
-                "line_num": 3,
-                "op": "Scan",
-                "qpl_line": "#3 = Scan Table [ Allergy_Type ] Predicate [ AllergyType = 'animal' OR AllergyType = 'food' ] Output [ AllergyType , Allergy ]",
-                "children": []
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Except': 'Student' and 'Allergy_Type, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "allergy_1",
-    "line_num": 6,
-    "op": "Aggregate",
-    "qpl_line": "#6 = Aggregate [ #5 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 5,
-        "op": "Except",
-        "qpl_line": "#5 = Except [ #1 , #4 ] ExceptColumns [ #1.StuID ] Output [ #1.Age , #1.StuID ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Age > 18 ] Output [ StuID , Age ]",
-            "children": []
-          },
-          {
-            "line_num": 4,
-            "op": "Join",
-            "qpl_line": "#4 = Join [ #2 , #3 ] Predicate [ #3.Allergy = #2.Allergy ] Output [ #2.Allergy , #3.AllergyType , #2.StuID ]",
-            "children": [
-              {
-                "line_num": 2,
-                "op": "Scan",
-                "qpl_line": "#2 = Scan Table [ Has_Allergy ] Predicate [ StuID IS NULL OR StuID = StuID ] Output [ StuID , Allergy ]",
-                "children": []
-              },
-              {
-                "line_num": 3,
-                "op": "Scan",
-                "qpl_line": "#3 = Scan Table [ Allergy_Type ] Predicate [ AllergyType = 'animal' OR AllergyType = 'food' ] Output [ AllergyType , Allergy ]",
-                "children": []
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Except': 'Student' and 'Allergy_Type, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "allergy_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.StuID IS NULL OR #1.StuID = #2.StuID ] Output [ #1.Major , #1.Fname ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Output [ Fname , StuID , Major ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Has_Allergy ] Predicate [ Allergy = 'Soy' ] Output [ StuID , Allergy ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Student' and 'Allergy_Type, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "allergy_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.StuID IS NULL OR #1.StuID = #2.StuID ] Output [ #1.Major , #1.Fname ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Output [ Fname , StuID , Major ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Has_Allergy ] Predicate [ Allergy = 'Soy' ] Output [ StuID , Allergy ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Student' and 'Allergy_Type, Student'"
   },
   {
     "split": "train",
@@ -1963,29 +1713,6 @@
   },
   {
     "split": "train",
-    "db_id": "soccer_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.player_api_id = #1.player_api_id ] Output [ #1.player_api_id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Player ] Predicate [ height >= 180 ] Output [ player_api_id , height ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Player_Attributes ] Predicate [ overall_rating > 85 ] Output [ player_api_id , overall_rating ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Player' and 'Player, Player_Attributes'"
-  },
-  {
-    "split": "train",
     "db_id": "college_2",
     "line_num": 4,
     "op": "Join",
@@ -2224,8 +1951,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Intersect': 'course, student' and 'course'"
+    "status": "Structure Error",
+    "error": "StructureError in line #5: Input types 'course, student' and 'course' are incompatible with output type 'student' for operator 'Intersect'. Possible types: ['course', 'Number']."
   },
   {
     "split": "train",
@@ -2273,8 +2000,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Intersect': 'course, student' and 'course'"
+    "status": "Structure Error",
+    "error": "StructureError in line #5: Input types 'course, student' and 'course' are incompatible with output type 'student' for operator 'Intersect'. Possible types: ['course', 'Number']."
   },
   {
     "split": "train",
@@ -2335,126 +2062,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #4: Incompatible types for operator 'Join': 'Number' and 'instructor'"
-  },
-  {
-    "split": "train",
-    "db_id": "college_2",
-    "line_num": 4,
-    "op": "Intersect",
-    "qpl_line": "#4 = Intersect [ #2 , #3 ] Predicate [ #2.course_id = #3.course_id ] Output [ #2.course_id ]",
-    "children": [
-      {
-        "line_num": 2,
-        "op": "Aggregate",
-        "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ course_id ] Output [ course_id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ section ] Predicate [ year = 2009 AND semester = 'Fall' ] Output [ course_id , semester , year ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 3,
-        "op": "Scan",
-        "qpl_line": "#3 = Scan Table [ section ] Predicate [ year = 2010 AND semester = 'Spring' ] Output [ course_id , semester , year ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Intersect': 'course' and 'course, section'"
-  },
-  {
-    "split": "train",
-    "db_id": "college_2",
-    "line_num": 4,
-    "op": "Intersect",
-    "qpl_line": "#4 = Intersect [ #2 , #3 ] Predicate [ #2.course_id = #3.course_id ] Output [ #2.course_id ]",
-    "children": [
-      {
-        "line_num": 2,
-        "op": "Aggregate",
-        "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ course_id ] Output [ course_id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ section ] Predicate [ year = 2009 AND semester = 'Fall' ] Output [ course_id , semester , year ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 3,
-        "op": "Scan",
-        "qpl_line": "#3 = Scan Table [ section ] Predicate [ year = 2010 AND semester = 'Spring' ] Output [ course_id , semester , year ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Intersect': 'course' and 'course, section'"
-  },
-  {
-    "split": "train",
-    "db_id": "college_2",
-    "line_num": 4,
-    "op": "Except",
-    "qpl_line": "#4 = Except [ #2 , #3 ] Predicate [ #2.course_id = #3.course_id ] Output [ #2.course_id ]",
-    "children": [
-      {
-        "line_num": 2,
-        "op": "Aggregate",
-        "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ course_id ] Output [ course_id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ section ] Predicate [ year = 2009 AND semester = 'Fall' ] Output [ course_id , semester , year ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 3,
-        "op": "Scan",
-        "qpl_line": "#3 = Scan Table [ section ] Predicate [ year = 2010 AND semester = 'Spring' ] Output [ course_id , semester , year ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Except': 'course' and 'course, section'"
-  },
-  {
-    "split": "train",
-    "db_id": "college_2",
-    "line_num": 4,
-    "op": "Except",
-    "qpl_line": "#4 = Except [ #2 , #3 ] Predicate [ #2.course_id = #3.course_id ] Output [ #2.course_id ]",
-    "children": [
-      {
-        "line_num": 2,
-        "op": "Aggregate",
-        "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ course_id ] Output [ course_id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ section ] Predicate [ year = 2009 AND semester = 'Fall' ] Output [ course_id , semester , year ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 3,
-        "op": "Scan",
-        "qpl_line": "#3 = Scan Table [ section ] Predicate [ year = 2010 AND semester = 'Spring' ] Output [ course_id , semester , year ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Except': 'course' and 'course, section'"
   },
   {
     "split": "train",
@@ -3532,36 +3139,6 @@
   },
   {
     "split": "train",
-    "db_id": "products_for_hire",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.product_id = #2.product_id ] Output [ 1 AS One ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ Products_for_Hire ] Output [ product_id ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Products_Booked ] Predicate [ booked_amount > 200.0 ] Output [ product_id , booked_amount ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Products_for_Hire' and 'Products_Booked, Products_for_Hire'"
-  },
-  {
-    "split": "train",
     "db_id": "gas_company",
     "line_num": 4,
     "op": "Aggregate",
@@ -3693,42 +3270,6 @@
     ],
     "status": "Inference Error",
     "error": "TypeInferenceError in line #4: Column 'member_name' not in GroupBy and thus must be aggregated."
-  },
-  {
-    "split": "train",
-    "db_id": "cre_Doc_Control_Systems",
-    "line_num": 5,
-    "op": "Except",
-    "qpl_line": "#5 = Except [ #1 , #4 ] Predicate [ #1.document_id = #4.document_id ] Output [ #1.document_id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Documents ] Predicate [ document_status_code = 'done' AND document_type_code = 'Paper' ] Output [ document_status_code , document_id , document_type_code ]",
-        "children": []
-      },
-      {
-        "line_num": 4,
-        "op": "Join",
-        "qpl_line": "#4 = Join [ #2 , #3 ] Predicate [ #2.shipping_agent_code = #3.shipping_agent_code ] Output [ #3.document_id ]",
-        "children": [
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Ref_Shipping_Agents ] Predicate [ shipping_agent_name = 'USPS' ] Output [ shipping_agent_code , shipping_agent_name ]",
-            "children": []
-          },
-          {
-            "line_num": 3,
-            "op": "Scan",
-            "qpl_line": "#3 = Scan Table [ Documents ] Output [ shipping_agent_code , document_id ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Except': 'Documents, Ref_Document_Status, Ref_Document_Types' and 'Documents'"
   },
   {
     "split": "train",
@@ -3820,52 +3361,6 @@
   {
     "split": "train",
     "db_id": "formula_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.driverId = #1.driverId ] Output [ #1.driverId , #1.nationality ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ drivers ] Output [ driverId , nationality ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ lapTimes ] Predicate [ milliseconds > 100000 ] Output [ driverId , milliseconds ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'drivers' and 'drivers, lapTimes'"
-  },
-  {
-    "split": "train",
-    "db_id": "formula_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.driverId = #1.driverId ] Output [ #1.driverId , #1.nationality ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ drivers ] Output [ driverId , nationality ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ lapTimes ] Predicate [ milliseconds > 100000 ] Output [ driverId , milliseconds ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'drivers' and 'drivers, lapTimes'"
-  },
-  {
-    "split": "train",
-    "db_id": "formula_1",
     "line_num": 11,
     "op": "Filter",
     "qpl_line": "#11 = Filter [ #10 ] Predicate [ Count_Star > 5 ] Output [ driverId , surname ]",
@@ -4299,52 +3794,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #7: Incompatible types for operator 'Join': 'Number' and 'Movie, Rating'"
-  },
-  {
-    "split": "train",
-    "db_id": "movie_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.rID = #2.rID ] Output [ #1.rID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Rating ] Distinct [ true ] Output [ rID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Rating ] Predicate [ stars = 4 ] Output [ rID , stars ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Reviewer' and 'Rating, Reviewer'"
-  },
-  {
-    "split": "train",
-    "db_id": "movie_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.rID = #2.rID ] Output [ #1.rID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Rating ] Distinct [ true ] Output [ rID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Rating ] Predicate [ stars = 4 ] Output [ rID , stars ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Reviewer' and 'Rating, Reviewer'"
   },
   {
     "split": "train",
@@ -4627,52 +4076,6 @@
     ],
     "status": "Inference Error",
     "error": "TypeInferenceError in line #4: GroupBy column 'fname' not found in aggregate output: ['count_star', 'lname']."
-  },
-  {
-    "split": "train",
-    "db_id": "sakila_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.customer_id = #1.customer_id ] Output [ #1.first_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ customer ] Output [ customer_id , first_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ rental ] Predicate [ rental_date > '2005-08-23 02:06:01.000' ] Output [ rental_date , customer_id ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'customer' and 'customer, rental'"
-  },
-  {
-    "split": "train",
-    "db_id": "sakila_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.customer_id = #1.customer_id ] Output [ #1.first_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ customer ] Output [ customer_id , first_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ rental ] Predicate [ rental_date > '2005-08-23 02:06:01.000' ] Output [ rental_date , customer_id ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'customer' and 'customer, rental'"
   },
   {
     "split": "train",
@@ -5489,8 +4892,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'departments, employees, jobs' and 'departments'"
+    "status": "Structure Error",
+    "error": "StructureError in line #3: Input types 'departments, employees, jobs' and 'departments' are incompatible with output type 'departments, employees, jobs' for operator 'Except'. Possible types: ['departments', 'Number']."
   },
   {
     "split": "train",
@@ -5512,8 +4915,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'departments, employees, jobs' and 'departments'"
+    "status": "Structure Error",
+    "error": "StructureError in line #3: Input types 'departments, employees, jobs' and 'departments' are incompatible with output type 'departments, employees, jobs' for operator 'Except'. Possible types: ['departments', 'Number']."
   },
   {
     "split": "train",
@@ -5600,190 +5003,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #4: Incompatible types for operator 'Join': 'Number' and 'departments, employees'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.artist_name = #1.artist_name ] Output [ #1.country , #1.artist_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ artist ] Output [ country , artist_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ rating > 9 ] Output [ rating , artist_name ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'artist' and 'artist, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.artist_name = #1.artist_name ] Output [ #1.country , #1.artist_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ artist ] Output [ country , artist_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ rating > 9 ] Output [ rating , artist_name ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'artist' and 'artist, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #1.artist_name = #2.artist_name ] Output [ #1.artist_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ artist ] Predicate [ country = 'UK' ] Output [ country , artist_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ languages = 'english' ] Output [ languages , artist_name ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'artist' and 'artist, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #1.artist_name = #2.artist_name ] Output [ #1.artist_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ artist ] Predicate [ country = 'UK' ] Output [ country , artist_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ languages = 'english' ] Output [ languages , artist_name ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'artist' and 'artist, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.f_id = #1.f_id ] Output [ #1.f_id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ files ] Predicate [ formats = 'mp4' ] Output [ formats , f_id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ resolution < 1000 ] Output [ resolution , f_id ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'files' and 'files, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.f_id = #1.f_id ] Output [ #1.f_id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ files ] Predicate [ formats = 'mp4' ] Output [ formats , f_id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ resolution < 1000 ] Output [ resolution , f_id ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'files' and 'files, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Union",
-    "qpl_line": "#3 = Union [ #1 , #2 ] Output [ #1.f_id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ files ] Predicate [ formats = 'mp4' ] Output [ formats , f_id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ resolution > 720 ] Output [ resolution , f_id ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Union': 'files' and 'files, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Union",
-    "qpl_line": "#3 = Union [ #1 , #2 ] Output [ #1.f_id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ files ] Predicate [ formats = 'mp4' ] Output [ formats , f_id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ resolution > 720 ] Output [ resolution , f_id ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Union': 'files' and 'files, song'"
   },
   {
     "split": "train",
@@ -5966,52 +5185,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #4: Incompatible types for operator 'Join': 'Number' and 'files, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.artist_name = #2.artist_name ] Output [ #1.artist_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ artist ] Predicate [ country = 'Bangladesh' ] Output [ country , artist_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ rating > 7 ] Distinct [ true ] Output [ rating , artist_name ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'artist' and 'artist, song'"
-  },
-  {
-    "split": "train",
-    "db_id": "music_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.artist_name = #2.artist_name ] Output [ #1.artist_name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ artist ] Predicate [ country = 'Bangladesh' ] Output [ country , artist_name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ song ] Predicate [ rating > 7 ] Distinct [ true ] Output [ rating , artist_name ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'artist' and 'artist, song'"
   },
   {
     "split": "train",
@@ -6817,8 +5990,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'classroom, list' and 'classroom'"
+    "status": "Structure Error",
+    "error": "StructureError in line #3: Input types 'classroom, list' and 'classroom' are incompatible with output type 'list' for operator 'Intersect'. Possible types: ['classroom', 'Number']."
   },
   {
     "split": "train",
@@ -6866,154 +6039,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'classroom, list' and 'classroom'"
-  },
-  {
-    "split": "train",
-    "db_id": "tracking_grants_for_research",
-    "line_num": 7,
-    "op": "Union",
-    "qpl_line": "#7 = Union [ #5 , #6 ] Output [ #5.date_to , #5.date_from ]",
-    "children": [
-      {
-        "line_num": 5,
-        "op": "Join",
-        "qpl_line": "#5 = Join [ #3 , #4 ] Predicate [ #3.project_id = #4.project_id ] Output [ #4.date_to , #4.date_from ]",
-        "children": [
-          {
-            "line_num": 3,
-            "op": "TopSort",
-            "qpl_line": "#3 = TopSort [ #2 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ project_id , Count_Star ]",
-            "children": [
-              {
-                "line_num": 2,
-                "op": "Aggregate",
-                "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ project_id ] Output [ project_id , countstar AS Count_Star ]",
-                "children": [
-                  {
-                    "line_num": 1,
-                    "op": "Scan",
-                    "qpl_line": "#1 = Scan Table [ Project_Staff ] Output [ project_id ]",
-                    "children": []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "line_num": 4,
-            "op": "Scan",
-            "qpl_line": "#4 = Scan Table [ Project_Staff ] Output [ project_id , date_from , date_to ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 6,
-        "op": "Scan",
-        "qpl_line": "#6 = Scan Table [ Project_Staff ] Predicate [ role_code = 'leader' ] Output [ date_to , role_code , date_from ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #7: Incompatible types for operator 'Union': 'Project_Staff' and 'Project_Staff, Staff_Roles'"
-  },
-  {
-    "split": "train",
-    "db_id": "tracking_grants_for_research",
-    "line_num": 7,
-    "op": "Union",
-    "qpl_line": "#7 = Union [ #5 , #6 ] Output [ #5.date_to , #5.date_from ]",
-    "children": [
-      {
-        "line_num": 5,
-        "op": "Join",
-        "qpl_line": "#5 = Join [ #3 , #4 ] Predicate [ #3.project_id = #4.project_id ] Output [ #4.date_to , #4.date_from ]",
-        "children": [
-          {
-            "line_num": 3,
-            "op": "TopSort",
-            "qpl_line": "#3 = TopSort [ #2 ] Rows [ 1 ] OrderBy [ Count_Star DESC ] Output [ project_id , Count_Star ]",
-            "children": [
-              {
-                "line_num": 2,
-                "op": "Aggregate",
-                "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ project_id ] Output [ project_id , countstar AS Count_Star ]",
-                "children": [
-                  {
-                    "line_num": 1,
-                    "op": "Scan",
-                    "qpl_line": "#1 = Scan Table [ Project_Staff ] Output [ project_id ]",
-                    "children": []
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "line_num": 4,
-            "op": "Scan",
-            "qpl_line": "#4 = Scan Table [ Project_Staff ] Output [ project_id , date_from , date_to ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 6,
-        "op": "Scan",
-        "qpl_line": "#6 = Scan Table [ Project_Staff ] Predicate [ role_code = 'leader' ] Output [ date_to , role_code , date_from ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #7: Incompatible types for operator 'Union': 'Project_Staff' and 'Project_Staff, Staff_Roles'"
-  },
-  {
-    "split": "train",
-    "db_id": "tracking_grants_for_research",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.project_id = #1.project_id ] Output [ #1.project_details ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Projects ] Output [ project_id , project_details ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Project_Staff ] Predicate [ role_code = 'researcher' ] Output [ project_id , role_code ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Projects' and 'Projects, Staff_Roles'"
-  },
-  {
-    "split": "train",
-    "db_id": "tracking_grants_for_research",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.project_id = #1.project_id ] Output [ #1.project_details ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Projects ] Output [ project_id , project_details ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Project_Staff ] Predicate [ role_code = 'researcher' ] Output [ project_id , role_code ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Projects' and 'Projects, Staff_Roles'"
+    "status": "Structure Error",
+    "error": "StructureError in line #3: Input types 'classroom, list' and 'classroom' are incompatible with output type 'list' for operator 'Intersect'. Possible types: ['classroom', 'Number']."
   },
   {
     "split": "train",
@@ -7672,104 +6699,6 @@
     "split": "train",
     "db_id": "department_store",
     "line_num": 7,
-    "op": "Intersect",
-    "qpl_line": "#7 = Intersect [ #3 , #6 ] Predicate [ #3.dept_store_id = #6.dept_store_id ] Output [ #3.store_name , #3.dept_store_id ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Intersect",
-        "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.dept_store_id = #1.dept_store_id ] Output [ #1.store_name , #1.dept_store_id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ Department_Stores ] Output [ store_name , dept_store_id ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Departments ] Predicate [ department_name = 'marketing' ] Output [ dept_store_id , department_name ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 6,
-        "op": "Join",
-        "qpl_line": "#6 = Join [ #4 , #5 ] Predicate [ #4.dept_store_id = #5.dept_store_id ] Output [ #5.dept_store_id , #5.store_name ]",
-        "children": [
-          {
-            "line_num": 4,
-            "op": "Scan",
-            "qpl_line": "#4 = Scan Table [ Departments ] Predicate [ department_name = 'managing' ] Output [ dept_store_id , department_name ]",
-            "children": []
-          },
-          {
-            "line_num": 5,
-            "op": "Scan",
-            "qpl_line": "#5 = Scan Table [ Department_Stores ] Output [ store_name , dept_store_id ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Department_Stores' and 'Department_Stores, Departments'"
-  },
-  {
-    "split": "train",
-    "db_id": "department_store",
-    "line_num": 7,
-    "op": "Intersect",
-    "qpl_line": "#7 = Intersect [ #3 , #6 ] Predicate [ #3.dept_store_id = #6.dept_store_id ] Output [ #3.store_name , #3.dept_store_id ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Intersect",
-        "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.dept_store_id = #1.dept_store_id ] Output [ #1.store_name , #1.dept_store_id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ Department_Stores ] Output [ store_name , dept_store_id ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Departments ] Predicate [ department_name = 'marketing' ] Output [ dept_store_id , department_name ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 6,
-        "op": "Join",
-        "qpl_line": "#6 = Join [ #4 , #5 ] Predicate [ #4.dept_store_id = #5.dept_store_id ] Output [ #5.dept_store_id , #5.store_name ]",
-        "children": [
-          {
-            "line_num": 4,
-            "op": "Scan",
-            "qpl_line": "#4 = Scan Table [ Departments ] Predicate [ department_name = 'managing' ] Output [ dept_store_id , department_name ]",
-            "children": []
-          },
-          {
-            "line_num": 5,
-            "op": "Scan",
-            "qpl_line": "#5 = Scan Table [ Department_Stores ] Output [ store_name , dept_store_id ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Department_Stores' and 'Department_Stores, Departments'"
-  },
-  {
-    "split": "train",
-    "db_id": "department_store",
-    "line_num": 7,
     "op": "Filter",
     "qpl_line": "#7 = Filter [ #6 ] Predicate [ Count_Star >= 2 ] Distinct [ true ] Output [ product_name ]",
     "children": [
@@ -8176,52 +7105,6 @@
   },
   {
     "split": "train",
-    "db_id": "aircraft",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Winning_Pilot IS NULL OR #1.Pilot_Id = #2.Winning_Pilot ] Output [ #1.Name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ pilot ] Output [ Name , Pilot_Id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ match ] Predicate [ Country = 'Australia' ] Output [ Country , Winning_Pilot ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'pilot' and 'match, pilot'"
-  },
-  {
-    "split": "train",
-    "db_id": "aircraft",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Winning_Pilot IS NULL OR #1.Pilot_Id = #2.Winning_Pilot ] Output [ #1.Name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ pilot ] Output [ Name , Pilot_Id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ match ] Predicate [ Country = 'Australia' ] Output [ Country , Winning_Pilot ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'pilot' and 'match, pilot'"
-  },
-  {
-    "split": "train",
     "db_id": "store_product",
     "line_num": 5,
     "op": "Aggregate",
@@ -8293,66 +7176,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #4: Incompatible types for operator 'Join': 'Number' and 'district'"
-  },
-  {
-    "split": "train",
-    "db_id": "soccer_2",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ SUM(enr) AS Sum_enr ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.cName = #1.cName ] Output [ #1.enr ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ College ] Output [ cName , enr ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Tryout ] Predicate [ pPos = 'goalie' ] Output [ cName , pPos ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'College' and 'College, Tryout'"
-  },
-  {
-    "split": "train",
-    "db_id": "soccer_2",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ SUM(enr) AS Sum_enr ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.cName = #1.cName ] Output [ #1.enr ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ College ] Output [ cName , enr ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ Tryout ] Predicate [ pPos = 'goalie' ] Output [ cName , pPos ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'College' and 'College, Tryout'"
   },
   {
     "split": "train",
@@ -9104,8 +7927,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Intersect': 'Dorm, Student' and 'Dorm'"
+    "status": "Structure Error",
+    "error": "StructureError in line #5: Input types 'Dorm, Student' and 'Dorm' are incompatible with output type 'Student' for operator 'Intersect'. Possible types: ['Dorm', 'Number']."
   },
   {
     "split": "train",
@@ -9153,8 +7976,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Intersect': 'Dorm, Student' and 'Dorm'"
+    "status": "Structure Error",
+    "error": "StructureError in line #5: Input types 'Dorm, Student' and 'Dorm' are incompatible with output type 'Student' for operator 'Intersect'. Possible types: ['Dorm', 'Number']."
   },
   {
     "split": "train",
@@ -9202,8 +8025,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #6: Incompatible types for operator 'Except': 'Dorm, Student' and 'Dorm'"
+    "status": "Structure Error",
+    "error": "StructureError in line #6: Input types 'Dorm, Student' and 'Dorm' are incompatible with output type 'Student' for operator 'Except'. Possible types: ['Dorm', 'Number']."
   },
   {
     "split": "train",
@@ -9251,8 +8074,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #6: Incompatible types for operator 'Except': 'Dorm, Student' and 'Dorm'"
+    "status": "Structure Error",
+    "error": "StructureError in line #6: Input types 'Dorm, Student' and 'Dorm' are incompatible with output type 'Student' for operator 'Except'. Possible types: ['Dorm', 'Number']."
   },
   {
     "split": "train",
@@ -9422,144 +8245,6 @@
   },
   {
     "split": "train",
-    "db_id": "game_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.StuID = #1.StuID ] Output [ #1.StuID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Major = 600 ] Output [ StuID , Major ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ SportsInfo ] Predicate [ OnScholarship = 'Y' ] Output [ OnScholarship , StuID ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Student' and 'SportsInfo, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "game_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.StuID = #1.StuID ] Output [ #1.StuID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Major = 600 ] Output [ StuID , Major ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ SportsInfo ] Predicate [ OnScholarship = 'Y' ] Output [ OnScholarship , StuID ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Student' and 'SportsInfo, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "game_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.StuID = #1.StuID ] Output [ #1.StuID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Sex = 'F' ] Output [ Sex , StuID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ SportsInfo ] Predicate [ SportName = 'Football' ] Output [ StuID , SportName ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Student' and 'SportsInfo, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "game_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.StuID = #1.StuID ] Output [ #1.StuID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Sex = 'F' ] Output [ Sex , StuID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ SportsInfo ] Predicate [ SportName = 'Football' ] Output [ StuID , SportName ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'Student' and 'SportsInfo, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "game_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.StuID = #1.StuID ] Output [ #1.StuID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Sex = 'M' ] Output [ Sex , StuID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ SportsInfo ] Predicate [ SportName = 'Football' ] Output [ StuID , SportName ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Student' and 'SportsInfo, Student'"
-  },
-  {
-    "split": "train",
-    "db_id": "game_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.StuID = #1.StuID ] Output [ #1.StuID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Student ] Predicate [ Sex = 'M' ] Output [ Sex , StuID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ SportsInfo ] Predicate [ SportName = 'Football' ] Output [ StuID , SportName ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Student' and 'SportsInfo, Student'"
-  },
-  {
-    "split": "train",
     "db_id": "customers_and_addresses",
     "line_num": 7,
     "op": "TopSort",
@@ -9657,82 +8342,6 @@
     ],
     "status": "Inference Error",
     "error": "TypeInferenceError in line #6: GroupBy column 'customer_name' not found in aggregate output: ['sum_order_quantity', 'payment_method']."
-  },
-  {
-    "split": "train",
-    "db_id": "roller_coaster",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Country_ID IS NULL OR #1.Country_ID = #2.Country_ID ] Output [ #1.Country_ID ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ country ] Output [ Country_ID ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ roller_coaster ] Predicate [ Length > 3000.0 ] Output [ Country_ID , Length ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'country' and 'country, roller_coaster'"
-  },
-  {
-    "split": "train",
-    "db_id": "ship_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Ship_ID IS NULL OR #1.Ship_ID = #2.Ship_ID ] Output [ #1.Flag , #1.Name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Ship ] Output [ Flag , Name , Ship_ID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ captain ] Predicate [ Rank = 'Midshipman' ] Output [ Rank , Ship_ID ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Ship' and 'Ship, captain'"
-  },
-  {
-    "split": "train",
-    "db_id": "ship_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Ship_ID IS NULL OR #1.Ship_ID = #2.Ship_ID ] Output [ #1.Flag , #1.Name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Ship ] Output [ Flag , Name , Ship_ID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ captain ] Predicate [ Rank = 'Midshipman' ] Output [ Rank , Ship_ID ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Ship' and 'Ship, captain'"
   },
   {
     "split": "train",
@@ -9847,82 +8456,6 @@
   },
   {
     "split": "train",
-    "db_id": "flight_company",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.airport_id IS NULL OR #1.id = #2.airport_id ] Output [ #1.id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ airport ] Output [ id ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ flight ] Predicate [ Pilot = 'Thompson' ] Output [ Pilot , airport_id ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'airport' and 'airport, flight'"
-  },
-  {
-    "split": "train",
-    "db_id": "cre_Docs_and_Epenses",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.Document_ID = #2.Document_ID ] Output [ #1.Document_ID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Documents ] Predicate [ Document_Type_Code = 'CV' ] Output [ Document_Type_Code , Document_ID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Documents_with_Expenses ] Output [ Document_ID ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Documents, Ref_Document_Types' and 'Documents'"
-  },
-  {
-    "split": "train",
-    "db_id": "cre_Docs_and_Epenses",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #1.Document_ID = #2.Document_ID ] Output [ #1.Document_ID ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ Documents ] Predicate [ Document_Type_Code = 'CV' ] Output [ Document_Type_Code , Document_ID ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Documents_with_Expenses ] Output [ Document_ID ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'Documents, Ref_Document_Types' and 'Documents'"
-  },
-  {
-    "split": "train",
     "db_id": "scientist_1",
     "line_num": 4,
     "op": "Join",
@@ -9980,52 +8513,6 @@
     ],
     "status": "Operator Error",
     "error": "OperatorError in line #4: Incompatible types for operator 'Join': 'Number' and 'Projects'"
-  },
-  {
-    "split": "train",
-    "db_id": "wine_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #1.Grape = #2.Grape ] Output [ #1.Grape ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ grapes ] Predicate [ Color = 'White' ] Output [ Grape , Color ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ wine ] Predicate [ Score > 90 ] Output [ Grape , Score ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'grapes' and 'grapes, wine'"
-  },
-  {
-    "split": "train",
-    "db_id": "wine_1",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #1.Grape = #2.Grape ] Output [ #1.Grape ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ grapes ] Predicate [ Color = 'White' ] Output [ Grape , Color ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ wine ] Predicate [ Score > 90 ] Output [ Grape , Score ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'grapes' and 'grapes, wine'"
   },
   {
     "split": "train",
@@ -10100,8 +8587,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #6: Incompatible types for operator 'Except': 'appellations, wine' and 'appellations'"
+    "status": "Structure Error",
+    "error": "StructureError in line #6: Input types 'appellations, wine' and 'appellations' are incompatible with output type 'appellations, wine' for operator 'Except'. Possible types: ['appellations', 'Number']."
   },
   {
     "split": "train",
@@ -10176,8 +8663,8 @@
         ]
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #6: Incompatible types for operator 'Except': 'appellations, wine' and 'appellations'"
+    "status": "Structure Error",
+    "error": "StructureError in line #6: Input types 'appellations, wine' and 'appellations' are incompatible with output type 'appellations, wine' for operator 'Except'. Possible types: ['appellations', 'Number']."
   },
   {
     "split": "train",
@@ -10225,8 +8712,8 @@
         "children": []
       }
     ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #5: Incompatible types for operator 'Except': 'station, train' and 'station'"
+    "status": "Structure Error",
+    "error": "StructureError in line #5: Input types 'station, train' and 'station' are incompatible with output type 'train' for operator 'Except'. Possible types: ['station', 'Number']."
   },
   {
     "split": "train",
@@ -10558,36 +9045,6 @@
     ],
     "status": "Inference Error",
     "error": "TypeInferenceError in line #4: Column 'name' not in GroupBy and thus must be aggregated."
-  },
-  {
-    "split": "train",
-    "db_id": "architecture",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.architect_id IS NULL OR #1.id = #2.architect_id ] Output [ #1.id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ architect ] Output [ id ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ mill ] Predicate [ built_year < 1850 ] Output [ architect_id , built_year ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'architect' and 'architect, mill'"
   },
   {
     "split": "validation",
@@ -11246,29 +9703,6 @@
   {
     "split": "validation",
     "db_id": "battle_death",
-    "line_num": 3,
-    "op": "Intersect",
-    "qpl_line": "#3 = Intersect [ #1 , #2 ] Predicate [ #2.lost_in_battle = #1.id ] Output [ #1.id , #1.name ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ battle ] Output [ id , name ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ ship ] Predicate [ ship_type = 'Brig' ] Output [ lost_in_battle , ship_type ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Intersect': 'battle' and 'battle, ship'"
-  },
-  {
-    "split": "validation",
-    "db_id": "battle_death",
     "line_num": 7,
     "op": "Filter",
     "qpl_line": "#7 = Filter [ #6 ] Predicate [ Sum_killed > 10 ] Output [ name , id ]",
@@ -11318,36 +9752,6 @@
   },
   {
     "split": "validation",
-    "db_id": "battle_death",
-    "line_num": 4,
-    "op": "Aggregate",
-    "qpl_line": "#4 = Aggregate [ #3 ] Output [ countstar AS Count_Star ]",
-    "children": [
-      {
-        "line_num": 3,
-        "op": "Except",
-        "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.lost_in_battle IS NULL OR #1.id = #2.lost_in_battle ] Output [ #1.id ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ battle ] Output [ id ]",
-            "children": []
-          },
-          {
-            "line_num": 2,
-            "op": "Scan",
-            "qpl_line": "#2 = Scan Table [ ship ] Predicate [ tonnage = '225' ] Output [ tonnage , lost_in_battle ]",
-            "children": []
-          }
-        ]
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'battle' and 'battle, ship'"
-  },
-  {
-    "split": "validation",
     "db_id": "student_transcripts_tracking",
     "line_num": 5,
     "op": "Filter",
@@ -11419,204 +9823,6 @@
     ],
     "status": "Inference Error",
     "error": "TypeInferenceError in line #4: Column 'course_name' not in GroupBy and thus must be aggregated."
-  },
-  {
-    "split": "validation",
-    "db_id": "tvshow",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Channel = #1.id ] Output [ #1.id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ TV_Channel ] Output [ id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Cartoon ] Predicate [ Directed_by = 'Ben Jones' ] Output [ Directed_by , Channel ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'TV_Channel' and 'Cartoon, TV_Channel'"
-  },
-  {
-    "split": "validation",
-    "db_id": "tvshow",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Channel = #1.id ] Output [ #1.id ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ TV_Channel ] Output [ id ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Cartoon ] Predicate [ Directed_by = 'Ben Jones' ] Output [ Directed_by , Channel ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'TV_Channel' and 'Cartoon, TV_Channel'"
-  },
-  {
-    "split": "validation",
-    "db_id": "tvshow",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Channel IS NULL OR #1.id = #2.Channel ] Output [ #1.Package_Option ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ TV_Channel ] Output [ id , Package_Option ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Cartoon ] Predicate [ Directed_by = 'Ben Jones' ] Output [ Directed_by , Channel ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'TV_Channel' and 'Cartoon, TV_Channel'"
-  },
-  {
-    "split": "validation",
-    "db_id": "tvshow",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.Channel IS NULL OR #1.id = #2.Channel ] Output [ #1.Package_Option ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ TV_Channel ] Output [ id , Package_Option ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ Cartoon ] Predicate [ Directed_by = 'Ben Jones' ] Output [ Directed_by , Channel ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'TV_Channel' and 'Cartoon, TV_Channel'"
-  },
-  {
-    "split": "validation",
-    "db_id": "world_1",
-    "line_num": 4,
-    "op": "Except",
-    "qpl_line": "#4 = Except [ #2 , #3 ] Predicate [ #2.CountryCode = #3.CountryCode ] Output [ #2.CountryCode ]",
-    "children": [
-      {
-        "line_num": 2,
-        "op": "Aggregate",
-        "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ CountryCode ] Output [ CountryCode ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ countrylanguage ] Output [ CountryCode ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 3,
-        "op": "Scan",
-        "qpl_line": "#3 = Scan Table [ countrylanguage ] Predicate [ Language = 'English' ] Output [ Language , CountryCode ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Except': 'country' and 'country, countrylanguage'"
-  },
-  {
-    "split": "validation",
-    "db_id": "world_1",
-    "line_num": 4,
-    "op": "Except",
-    "qpl_line": "#4 = Except [ #2 , #3 ] Predicate [ #2.CountryCode = #3.CountryCode ] Output [ #2.CountryCode ]",
-    "children": [
-      {
-        "line_num": 2,
-        "op": "Aggregate",
-        "qpl_line": "#2 = Aggregate [ #1 ] GroupBy [ CountryCode ] Output [ CountryCode ]",
-        "children": [
-          {
-            "line_num": 1,
-            "op": "Scan",
-            "qpl_line": "#1 = Scan Table [ countrylanguage ] Output [ CountryCode ]",
-            "children": []
-          }
-        ]
-      },
-      {
-        "line_num": 3,
-        "op": "Scan",
-        "qpl_line": "#3 = Scan Table [ countrylanguage ] Predicate [ Language = 'English' ] Output [ Language , CountryCode ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #4: Incompatible types for operator 'Except': 'country' and 'country, countrylanguage'"
-  },
-  {
-    "split": "validation",
-    "db_id": "world_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.CountryCode = #1.Code ] Output [ #1.Code ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ country ] Predicate [ GovernmentForm <> 'Republic' ] Output [ GovernmentForm , Code ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ countrylanguage ] Predicate [ Language = 'English' ] Output [ Language , CountryCode ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'country' and 'country, countrylanguage'"
-  },
-  {
-    "split": "validation",
-    "db_id": "world_1",
-    "line_num": 3,
-    "op": "Except",
-    "qpl_line": "#3 = Except [ #1 , #2 ] Predicate [ #2.CountryCode = #1.Code ] Output [ #1.Code ]",
-    "children": [
-      {
-        "line_num": 1,
-        "op": "Scan",
-        "qpl_line": "#1 = Scan Table [ country ] Predicate [ GovernmentForm <> 'Republic' ] Output [ GovernmentForm , Code ]",
-        "children": []
-      },
-      {
-        "line_num": 2,
-        "op": "Scan",
-        "qpl_line": "#2 = Scan Table [ countrylanguage ] Predicate [ Language = 'English' ] Output [ Language , CountryCode ]",
-        "children": []
-      }
-    ],
-    "status": "Operator Error",
-    "error": "OperatorError in line #3: Incompatible types for operator 'Except': 'country' and 'country, countrylanguage'"
   },
   {
     "split": "validation",
