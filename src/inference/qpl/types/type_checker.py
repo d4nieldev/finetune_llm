@@ -70,7 +70,7 @@ def check_and_resolve(op: Operator, type_1: Set[QPLType], type_2: Optional[Set[Q
         types = [set(t) for t in powerset(type_1.union(type_2), include_empty=False)]
     elif op in [Operator.EXCEPT, Operator.INTERSECT, Operator.UNION]:
         # FIXME: this is a heuristic, for better type checking, we should document the number of columns returned from each child
-        #                             for even better type checking, we should also include the column types or resolve to the original column
+        #                             for even better type checking, we should also include the column types or return the actual column names
         if not type_2:
             raise ValueError(f"{op.value} operator requires two types.")
         

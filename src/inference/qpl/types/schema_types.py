@@ -47,13 +47,37 @@ class Column:
     type: str
     constraint: Optional[str] = None
     case_sensitive: bool = False
+    simple_type: bool = True
 
     def __post_init__(self):
         if not self.case_sensitive:
             self.name = self.name.lower()
             self.type = self.type.lower()
+            if self.simple_type:
+                self._simplify_type()
             if self.constraint:
                 self.constraint = self.constraint.lower()
+
+    def _simplify_type(self):
+        if "char" in self.type or self.type == "" or "text" in self.type or "var" in self.type:
+            return "text"
+        elif (
+            "int" in self.type
+            or "numeric" in self.type
+            or "decimal" in self.type
+            or "number" in self.type
+            or "id" in self.type
+            or "real" in self.type
+            or "double" in self.type
+            or "float" in self.type
+        ):
+            return "number"
+        elif "date" in self.type or "time" in self.type:
+            return "date"
+        elif "boolean" in self.type or self.type == "bit":
+            return "boolean"
+        else:
+            return "others"
 
     def __str__(self):
         if self.constraint:
