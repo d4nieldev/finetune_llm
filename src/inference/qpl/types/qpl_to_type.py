@@ -6,6 +6,7 @@ import logging as log
 import regex as re
 
 from src.utils.qpl.tree import QPLTree, Operator
+from src.utils.lists import set_str
 from src.inference.qpl.types.schema_types import DBSchema, Table, ColType
 
 
@@ -208,7 +209,7 @@ class QPLNodeOutput:
                 }
                 for col, coltype, alias, qpltype in self
             ],
-            "type": ', '.join(set(str(t) for t in self.qpltypes)),
+            "type": set_str(self.type_set),
         }
 
 

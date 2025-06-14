@@ -1,5 +1,5 @@
 from itertools import chain, combinations
-from typing import Dict, List, Tuple, Iterable, TypeVar, Iterator
+from typing import Dict, List, Set, Tuple, Iterable, TypeVar, Iterator
 import random
 
 def flatten(list_of_lists: List[List]) -> Tuple[List, List[int]]:
@@ -30,3 +30,10 @@ def powerset(iterable: Iterable[T], include_empty: bool = True) -> Iterator[Tupl
     start = 0 if include_empty else 1
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(start, len(s)+1))
+
+
+def set_str(s: Set, wrap: bool = True) -> str:
+    output = ', '.join(sorted(str(item) for item in s)) if s else 'empty set'
+    if wrap:
+        return f"'{output}'"
+    return output

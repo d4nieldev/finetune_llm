@@ -6,14 +6,7 @@ from src.utils.qpl.tree import Operator, QPLTree
 from src.utils.qpl.paths import DB_SCHEMAS_JSON_PATH
 from src.inference.qpl.types.qpl_to_type import QPLType, NUMBER, qpl_tree_to_type
 from src.inference.qpl.types.schema_types import DBSchema
-from src.utils.lists import powerset
-
-
-def set_str(s: Set, wrap: bool = True) -> str:
-    output = ', '.join(sorted(str(item) for item in s)) if s else 'empty set'
-    if wrap:
-        return f"'{output}'"
-    return output
+from src.utils.lists import powerset, set_str
 
 
 class Status(StrEnum):
