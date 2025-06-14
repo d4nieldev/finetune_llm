@@ -1,5 +1,5 @@
 from typing import List, Dict, Tuple, ClassVar, Set, Union, Iterator, Any, Literal
-from enum import StrEnum
+from collections import Counter
 from dataclasses import dataclass
 import logging as log
 
@@ -43,6 +43,13 @@ class QPLType:
     
     def __hash__(self) -> int:
         return hash(str(self))
+
+
+def types_str(type_count: Dict[QPLType, int]) -> str:
+    """
+    Converts a dictionary of QPLType to their counts into a string representation.
+    """
+    return ", ".join(f"{t}({count})" for t, count in type_count.items())
 
 
 @dataclass
@@ -176,9 +183,9 @@ class QPLNodeOutput:
         return QPLNodeOutput(cols=cols, aliases=aliases, types=types)
     
     @property
-    def type_set(self) -> Set[QPLType]:
-        """Returns a set of unique QPLTypes in the output."""
-        return set(self.types)
+    def type_count(self) -> Dict[QPLType, int]:
+        """Returns a dictionary of types and their counts."""
+        return dict(Counter(self.types))
     
     def __iter__(self) -> Iterator[Tuple[str, str, QPLType]]:
         """Iterate over the output columns, aliases, and types."""
@@ -194,7 +201,7 @@ class QPLNodeOutput:
                 }
                 for col, alias, qpltype in self
             ],
-            "type": ', '.join(set(str(t) for t in self.types)),
+            "type": types_str(self.type_count),
         }
 
 
