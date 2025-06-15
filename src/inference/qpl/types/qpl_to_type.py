@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, ClassVar, Set, Union, Iterator, Any, Literal
+from typing import List, Dict, Tuple, ClassVar, Union, Iterator, Any, Literal
 from collections import Counter
 from dataclasses import dataclass
 import logging as log
@@ -13,7 +13,7 @@ NUMBER = "Number"
 
 class QPLType:
     def __init__(self, entity: Union[Table, Literal['Number']], aggregated: bool = False):
-        self.entity = entity
+        self.entity: Union[Table, Literal['Number']] = entity
         self.aggregated = aggregated
 
     @property
@@ -205,7 +205,7 @@ class QPLNodeOutput:
         }
 
 
-def scan_type(groups: Dict, schema: DBSchema) -> QPLNodeOutput:
+def scan_type(groups: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
     table_name = groups["table"]
     table = schema.get_table(table_name)
     if not table:
@@ -213,7 +213,7 @@ def scan_type(groups: Dict, schema: DBSchema) -> QPLNodeOutput:
 
     return QPLNodeOutput.infer(groups['out'], table)
 
-def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
+def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
     child_idx = ins[0]
 
@@ -224,29 +224,30 @@ def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNo
     child_output = qpl_tree_to_type(agg_node.children[0], schema)
     node_output = QPLNodeOutput.infer(captures['out'][0], {child_idx: child_output})
 
-    # Verify that the output columns match the GroupBy columns
-    gb_cols = [alias.lower().strip() for alias in opts.get("GroupBy", "").split(",") if "GroupBy" in opts]
-    for col, alias, qpltype in node_output:
-        if alias in gb_cols:
-            idx = child_output.aliases.index(alias)
-            child_aggregated = child_output.types[idx].aggregated
-            if child_aggregated:
-                # Interesting edge case
-                # The column is the result of a previous aggregation and now used in GroupBy
-                raise ValueError(f"Column {alias!r} is aggregated in the child output but used in GroupBy.")
-            assert child_aggregated == qpltype.aggregated, f"Column {alias!r} in GroupBy and thus must not be aggregated."
-        else:
-            assert qpltype.aggregated, f"Column {alias!r} not in GroupBy and thus must be aggregated."
-    
-    # Verify that all GroupBy columns are present in the output
-    for colname in gb_cols:
-        if colname not in node_output.aliases:
-            raise AssertionError(f"GroupBy column {colname!r} not found in aggregate output: {node_output.aliases}.")
+    if strict:
+        # Verify that the output columns match the GroupBy columns
+        gb_cols = [alias.lower().strip() for alias in opts.get("GroupBy", "").split(",") if "GroupBy" in opts]
+        for col, alias, qpltype in node_output:
+            if alias in gb_cols:
+                idx = child_output.aliases.index(alias)
+                child_aggregated = child_output.types[idx].aggregated
+                if child_aggregated:
+                    # Interesting edge case
+                    # The column is the result of a previous aggregation and now used in GroupBy
+                    raise ValueError(f"Column {alias!r} is aggregated in the child output but used in GroupBy.")
+                assert child_aggregated == qpltype.aggregated, f"Column {alias!r} in GroupBy and thus must not be aggregated."
+            else:
+                assert qpltype.aggregated, f"Column {alias!r} not in GroupBy and thus must be aggregated."
+        
+        # Verify that all GroupBy columns are present in the output
+        for colname in gb_cols:
+            if colname not in node_output.aliases:
+                raise AssertionError(f"GroupBy column {colname!r} not found in aggregate output: {node_output.aliases}.")
     
     return node_output
 
 
-def same_child_type_change_cols(node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
+def same_child_type_change_cols(node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
 
     inputs = {
@@ -256,23 +257,23 @@ def same_child_type_change_cols(node: QPLTree, captures: Dict, schema: DBSchema)
 
     return QPLNodeOutput.infer(captures['out'][0], inputs)
 
-def filter_type(filter_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(filter_node, captures, schema)
+def filter_type(filter_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(filter_node, captures, schema, strict)
 
 
-def top_type(top_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(top_node, captures, schema)
+def top_type(top_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(top_node, captures, schema, strict)
 
 
-def sort_type(sort_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(sort_node, captures, schema)
+def sort_type(sort_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(sort_node, captures, schema, strict)
 
 
-def topsort_type(topsort_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(topsort_node, captures, schema)
+def topsort_type(topsort_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(topsort_node, captures, schema, strict)
 
 
-def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
+def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
     lhs, rhs = ins
 
@@ -282,19 +283,19 @@ def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOu
     return QPLNodeOutput.infer(captures_out=captures['out'][0], inputs={lhs: lhs_output, rhs: rhs_output})
 
 
-def except_type(except_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(except_node, captures, schema)
+def except_type(except_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(except_node, captures, schema, strict)
 
 
-def intersect_type(intersect_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(intersect_node, captures, schema)
+def intersect_type(intersect_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(intersect_node, captures, schema, strict)
 
 
-def union_type(union_node: QPLTree, captures: Dict, schema: DBSchema) -> QPLNodeOutput:
-    return same_child_type_change_cols(union_node, captures, schema)
+def union_type(union_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool) -> QPLNodeOutput:
+    return same_child_type_change_cols(union_node, captures, schema, strict)
 
 
-def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema) -> QPLNodeOutput:
+def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema, strict: bool = True) -> QPLNodeOutput:
     scan_regex = re.compile(
         r"#(?P<idx>\d+) = Scan Table \[ (?P<table>\w+) \]( Predicate \[ (?P<pred>[^\]]+) \])?( Distinct \[ (?P<distinct>true) \])? Output \[ (?P<out>[^\]]+) \]"
     )
@@ -304,29 +305,29 @@ def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema) -> QPLNodeOutput:
 
     def rec(node: QPLTree) -> QPLNodeOutput:
         if m := scan_regex.match(node.qpl_line):
-            return scan_type(m.groupdict(), schema)
+            return scan_type(m.groupdict(), schema, strict)
         elif m := flat_qpl_line_pattern.match(node.qpl_line):
             captures = m.capturesdict()
             op = captures["op"][0]
 
             if op == Operator.AGGREGATE:
-                return aggregate_type(node, captures, schema)
+                return aggregate_type(node, captures, schema, strict)
             elif op == Operator.FILTER:
-                return filter_type(node, captures, schema)
+                return filter_type(node, captures, schema, strict)
             elif op == Operator.TOP:
-                return top_type(node, captures, schema)
+                return top_type(node, captures, schema, strict)
             elif op == Operator.SORT:
-                return sort_type(node, captures, schema)
+                return sort_type(node, captures, schema, strict)
             elif op == Operator.TOPSORT:
-                return topsort_type(node, captures, schema)
+                return topsort_type(node, captures, schema, strict)
             elif op == Operator.JOIN:
-                return join_type(node, captures, schema)
+                return join_type(node, captures, schema, strict)
             elif op == Operator.EXCEPT:
-                return except_type(node, captures, schema)
+                return except_type(node, captures, schema, strict)
             elif op == Operator.INTERSECT:
-                return intersect_type(node, captures, schema)
+                return intersect_type(node, captures, schema, strict)
             elif op == Operator.UNION:
-                return union_type(node, captures, schema)
+                return union_type(node, captures, schema, strict)
 
         raise ValueError(f"Could not infer type for: {node.qpl_line}")
 
