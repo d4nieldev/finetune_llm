@@ -62,6 +62,7 @@ class QPLTree:
             "line_num": self.line_num,
             "op": self.op,
             "qpl_line": self.qpl_line,
+            "qpl": self.qpl,
             "children": [child.to_dict() for child in self.children],
         }
 
