@@ -31,3 +31,6 @@ qpl = [
 notebook = [
     "ipykernel>=6.29.5",
 ]
+viz = [
+    "graphviz>=0.21",
+]
