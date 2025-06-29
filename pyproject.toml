@@ -30,7 +30,11 @@ qpl = [
 ]
 notebook = [
     "ipykernel>=6.29.5",
+    "matplotlib>=3.10.3",
 ]
 viz = [
     "graphviz>=0.21",
+]
+error-analysis = [
+    "openpyxl>=3.1.5",
 ]
