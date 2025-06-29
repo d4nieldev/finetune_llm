@@ -79,12 +79,11 @@ def check_and_resolve(op: Operator, type_1: Dict[QPLType, int], type_2: Optional
             raise IncompatibleTypesError(op, type_1, type_2, suffix=f" (must have the same number of columns in total: {sum(type_1.values())} != {sum(type_2.values())}).")
 
         input_types = set(type_1.keys()).union(set(type_2.keys()))
-        types_cnt = {t: type_1.get(t, 0) + type_2.get(t, 0) for t in input_types}
+        types_cnt = {t: max(type_1.get(t, 0), type_2.get(t, 0)) for t in input_types}
         return lambda type_cnt: type_cnt == {QPLType(NUMBER): 1} or all(type_cnt.get(t, 0) <= types_cnt.get(t, 0) for t in type_cnt.keys())
     else:
         raise ValueError(f"Unknown operator: {op!r}.")
     
-    # remove duplicates
     return lambda type_cnt: type_cnt == {QPLType(NUMBER): 1} or frozenset(type_cnt.keys()) in set(types_sets)
     
 

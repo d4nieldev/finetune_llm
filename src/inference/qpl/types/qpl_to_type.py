@@ -221,7 +221,7 @@ def aggregate_type(agg_node: QPLTree, captures: Dict, schema: DBSchema, strict: 
     args = captures["arg"]
     opts = dict(zip(option_names, args))
 
-    child_output = qpl_tree_to_type(agg_node.children[0], schema)
+    child_output = qpl_tree_to_type(agg_node.children[0], schema, strict)
     node_output = QPLNodeOutput.infer(captures['out'][0], {child_idx: child_output})
 
     if strict:
@@ -251,7 +251,7 @@ def same_child_type_change_cols(node: QPLTree, captures: Dict, schema: DBSchema,
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
 
     inputs = {
-        child_idx: qpl_tree_to_type(node.children[i], schema)
+        child_idx: qpl_tree_to_type(node.children[i], schema, strict)
         for i, child_idx in enumerate(ins)
     }
 
@@ -277,8 +277,8 @@ def join_type(join_node: QPLTree, captures: Dict, schema: DBSchema, strict: bool
     ins = [int(x[1:]) for x in re.split(r"\s*, ", captures["ins"][0])]
     lhs, rhs = ins
 
-    lhs_output = qpl_tree_to_type(join_node.children[0], schema)
-    rhs_output = qpl_tree_to_type(join_node.children[1], schema)
+    lhs_output = qpl_tree_to_type(join_node.children[0], schema, strict)
+    rhs_output = qpl_tree_to_type(join_node.children[1], schema, strict)
 
     return QPLNodeOutput.infer(captures_out=captures['out'][0], inputs={lhs: lhs_output, rhs: rhs_output})
 
@@ -341,6 +341,7 @@ if __name__ == "__main__":
 
     DB_ID = 'battle_death'
     SPLIT = 'validation'
+    STRICT = True
 
     dataset = load_dataset("d4nieldev/qpl-completer-ds", split=SPLIT)
     dataset = map(lambda row: {
@@ -359,7 +360,7 @@ if __name__ == "__main__":
     for row, qpl_tree in zip(dataset, qpl_trees):
         db_schema = db_schemas[row['db_id']]
         try:
-            types.append(qpl_tree_to_type(qpl_tree, db_schema).to_json())
+            types.append(qpl_tree_to_type(qpl_tree, db_schema, STRICT).to_json())
         except Exception as e:
             types.append({"error": str(e)})
             log.warning(f"Error processing QPL tree for QPL: {' ; '.join(row['qpl'])}\n{e}")
