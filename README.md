@@ -18,7 +18,7 @@ The recommended option for installing all dependencies is `uv`:
 1. Make sure your python is configured to the project directory by executing: `export PYTHONPATH=/path/to/project/dir`.
 2. Login to HuggingFace Hub by executing: `huggingface-cli login` and insert your huggingface token (for pulling models and datasets).
 3. Login to Weights & Biases by executing: `wandb login` and insert your W&B api key (for reporting training statistics to W&B).
-4. Define a **processor** for your dataset (more on processors [here](processors/README.md)).
+4. Define a **processor** for your dataset (more on processors [here](src/processors/README.md)).
 
 
 To run the fine tuning:
