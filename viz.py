@@ -66,8 +66,11 @@ def visualize_tree(tree, schema):
 
 for i, tree in tqdm(enumerate(trees), desc="Visualizing trees", total=len(trees)):
     db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH, case_sensitive=False)
+    filename = f"{i}_{tree['db_id']}"
+    if tree['error'] is not None:
+        filename += "_error"
     try:
         dot = visualize_tree(tree, db_schemas[tree['db_id']])
-        dot.render(filename=f"{i}", directory="output/qpl/text_to_qpl/graphviz_trees", format="svg", cleanup=True)
+        dot.render(filename=filename, directory="output/qpl/text_to_qpl/graphviz_trees", format="svg", cleanup=True)
     except KeyError:
         continue
