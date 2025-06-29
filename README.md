@@ -1,6 +1,6 @@
 # Finetune LLM
 
-![FineTuna Overview](assets/FineTuna-Inside%20View.drawio.png FineTuna Overview)
+![FineTuna Overview](assets/FineTuna-Inside%20View.drawio.png "FineTuna Overview")
 
 A comprehensive framework to fine tune and evaluate LLMs.
 
