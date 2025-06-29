@@ -11,12 +11,18 @@ The recommended option for installing all dependencies is `uv`:
 
 ## Fine Tuning
 
-To fine tune on a dataset, you must define a **processor** for this dataset (more on processors [here](processors/README.md)).
+### Prerequisites
+
+1. Make sure your python is configured to the project directory by executing: `export PYTHONPATH=/path/to/project/dir`.
+2. Login to HuggingFace Hub by executing: `huggingface-cli login` and insert your huggingface token (for pulling models and datasets).
+3. Login to Weights & Biases by executing: `wandb login` and insert your W&B api key (for reporting training statistics to W&B).
+4. Define a **processor** for your dataset (more on processors [here](processors/README.md)).
+
 
 To run the fine tuning:
 
 ```bash
-accelerate launch finetune_sft.py \
+accelerate launch src/training/finetune_sft.py \
   --model_id=google/gemma-3-4b-it \
   --dataset_id=d4nieldev/qpl-composer-ds \
   --train_batch_size=1 \
@@ -33,4 +39,4 @@ accelerate launch finetune_sft.py \
   --dropout=0.05
 ```
 
-To see information about the different arguments run: `python finetune_sft.py --help`.
+To see information about the different arguments run: `python src/training/finetune_sft.py --help`.
