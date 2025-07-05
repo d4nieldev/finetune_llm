@@ -11,7 +11,7 @@ from abc import ABC
 import dspy
 from sentence_transformers import SentenceTransformer
 
-from src.inference.qpl.types.schema_types import DBSchema
+from utils.qpl.schema import DBSchema
 from src.utils.lists import split_train_test
 import src.utils.qpl.paths as p
 from src.utils.argparse import from_dataclass

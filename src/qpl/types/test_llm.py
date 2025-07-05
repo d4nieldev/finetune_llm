@@ -8,7 +8,7 @@ from dataclasses import dataclass, asdict
 from typing import List, Dict, Tuple, Optional
 from abc import ABC
 
-from inference.qpl.types.schema_types import DBSchema
+from utils.qpl.schema import DBSchema
 from utils.lists import split_train_test
 import utils.qpl.paths as p
 from utils.argparse import from_dataclass

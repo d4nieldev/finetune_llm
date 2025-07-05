@@ -9,7 +9,7 @@ from tqdm import tqdm
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 
-from src.inference.qpl.types.schema_types import DBSchema
+from utils.qpl.schema import DBSchema
 from src.inference.qpl.types.test_llm import TypeSystem, TaggedDB, data_path
 from src.utils.chat_types import ChatTemplate, ChatMessage
 import src.utils.qpl.paths as p

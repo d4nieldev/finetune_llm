@@ -1,6 +1,6 @@
 import json
 
-from src.inference.qpl.types.schema_types import DBSchema
+from utils.qpl.schema import DBSchema
 from src.inference.qpl.types.qpl_to_type import qpl_tree_to_type, types_str
 from src.inference.qpl.types.type_checker import rec_type_check
 from src.utils.qpl.tree import QPLTree

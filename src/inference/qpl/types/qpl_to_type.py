@@ -6,7 +6,7 @@ import logging as log
 import regex as re
 
 from src.utils.qpl.tree import QPLTree, Operator
-from src.inference.qpl.types.schema_types import DBSchema, Table
+from utils.qpl.schema import DBSchema, Table
 
 
 NUMBER = "Number"
