@@ -53,7 +53,7 @@ class QPLCompleterProcessor(QPLProcessor):
             + "Below is the formal specification for each operation in valid QPL:\n"
             + "<qpl> ::= <line>+\n"
             + "<line> ::= #<integer> = <operator>\n"
-            + "<operator> ::= <scan> | <aggregate> | <filter> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
+            + "<operator> ::= <scan> | <aggregate> | <filter> | <top> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
             
             + "-- Leaf operator\n"
             + "<scan> ::= Scan Table [ <table-name> ] <pred>? <distinct>? <output-non-qualif>\n\n"
