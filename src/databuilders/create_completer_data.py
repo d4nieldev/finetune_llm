@@ -147,6 +147,26 @@ def create_completer_dataset(decomposer_roots: List[PartialQDTree]) -> List[Dict
     return all_rows
 
 
+def load_qd_trees(
+        nl2qpl_dataset_id: str = "d4nieldev/nl2qpl-ds",
+        decomposer_dataset_id: str = "bgunlp/question_decomposer_ds"
+    ) -> List[PartialQDTree]:
+    # Load the NL2QPL data and create QPL tree for each question
+    nl2qpl_data = load_dataset(nl2qpl_dataset_id, split=split)
+    qpl_trees = get_qpl_trees(nl2qpl_data)
+    log.info(f"Number of QPL trees in {split}: {len(qpl_trees)}")
+
+    # Load the decomposer data and create partial QD trees
+    decomposer_data = load_dataset(decomposer_dataset_id, split=split)
+    root_qd_trees = get_decomposer_roots(decomposer_data)
+    log.info(f"Number of partial QD trees in {split}: {len(root_qd_trees)}")
+
+    # Complete the QD trees with QPL data
+    complete_trees_qpl(root_qd_trees, qpl_trees)
+
+    return root_qd_trees
+
+
 if __name__ == "__main__":
     nl2qpl_dataset_id = "d4nieldev/nl2qpl-ds"
     decomposer_dataset_id = "bgunlp/question_decomposer_ds"
@@ -154,18 +174,11 @@ if __name__ == "__main__":
     dataset = {}
 
     for split in ["train", "validation"]:
-        # Load the NL2QPL data and create QPL tree for each question
-        nl2qpl_data = load_dataset(nl2qpl_dataset_id, split=split)
-        qpl_trees = get_qpl_trees(nl2qpl_data)
-        log.info(f"Number of QPL trees in {split}: {len(qpl_trees)}")
-
-        # Load the decomposer data and create partial QD trees
-        decomposer_data = load_dataset(decomposer_dataset_id, split=split)
-        root_qd_trees = get_decomposer_roots(decomposer_data)
-        log.info(f"Number of partial QD trees in {split}: {len(root_qd_trees)}")
-
-        # Complete the QD trees with QPL data
-        complete_trees_qpl(root_qd_trees, qpl_trees)
+        # merge datasets to create combined QD trees
+        root_qd_trees = load_qd_trees(
+            nl2qpl_dataset_id=nl2qpl_dataset_id,
+            decomposer_dataset_id=decomposer_dataset_id
+        )
 
         # Create dataset rows
         split_data = create_completer_dataset(root_qd_trees)
