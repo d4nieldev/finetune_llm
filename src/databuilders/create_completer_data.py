@@ -149,7 +149,8 @@ def create_completer_dataset(decomposer_roots: List[PartialQDTree]) -> List[Dict
 
 def load_qd_trees(
         nl2qpl_dataset_id: str = "d4nieldev/nl2qpl-ds",
-        decomposer_dataset_id: str = "bgunlp/question_decomposer_ds"
+        decomposer_dataset_id: str = "bgunlp/question_decomposer_ds",
+        split: str = "train"
     ) -> List[PartialQDTree]:
     # Load the NL2QPL data and create QPL tree for each question
     nl2qpl_data = load_dataset(nl2qpl_dataset_id, split=split)
@@ -177,7 +178,8 @@ if __name__ == "__main__":
         # merge datasets to create combined QD trees
         root_qd_trees = load_qd_trees(
             nl2qpl_dataset_id=nl2qpl_dataset_id,
-            decomposer_dataset_id=decomposer_dataset_id
+            decomposer_dataset_id=decomposer_dataset_id,
+            split=split
         )
 
         # Create dataset rows
