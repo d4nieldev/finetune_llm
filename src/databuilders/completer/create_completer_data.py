@@ -7,13 +7,6 @@ from datasets import load_dataset, Dataset, DatasetDict
 from src.utils.qpl.tree import QPLTree, PartialQDTree, Operator
 
 
-log.basicConfig(
-    level=log.INFO,
-    format='[%(asctime)s] %(levelname)s - %(name)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-
-
 class CompleterDatasetError(Exception):
     pass
 
@@ -171,6 +164,12 @@ def load_qd_trees(
 if __name__ == "__main__":
     nl2qpl_dataset_id = "d4nieldev/nl2qpl-ds"
     decomposer_dataset_id = "bgunlp/question_decomposer_ds"
+
+    log.basicConfig(
+        level=log.INFO,
+        format='[%(asctime)s] %(levelname)s - %(name)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
     dataset = {}
 
