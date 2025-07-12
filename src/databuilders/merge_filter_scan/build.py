@@ -111,27 +111,37 @@ def get_examples(split: str = "validation") -> list[dict]:
     for qd_tree in qd_trees: fix_tree(qd_tree)
 
     def tree_rows(qd_tree: PartialQDTree) -> list[dict]:
-        if not qd_tree.op or not qd_tree.qpl_line:
-            return []
-        
-        qpl = "\n".join([qd_tree.prefix_qpl or "", qd_tree.qpl_line]).strip()
+        rows = [child_row for child in qd_tree.children for child_row in tree_rows(child)]
 
-        rows = [{
-            "db_id": qd_tree.db_id,
-            "question": qd_tree.question,
-            "op": qd_tree.op.value,
-            "sub_question_1": qd_tree.children[0].question if len(qd_tree.children) > 0 else None,
-            "sub_question_2": qd_tree.children[1].question if len(qd_tree.children) > 1 else None,
-            "qpl": qpl,
-        }]
-
-        if len(qd_tree.children) > 0:
-            for child in qd_tree.children:
-                rows += tree_rows(child)
+        if qd_tree.prefix_qpl is not None and qd_tree.qpl_line is not None and qd_tree.op is not None:
+            parent = qd_tree.parent
+            while parent and parent.prefix_qpl:
+                # enrich parent prefix QPL with child question
+                parent.prefix_qpl = parent.prefix_qpl.replace(
+                    qd_tree.qpl_line + " ;",
+                    f"{qd_tree.qpl_line} ; -- {qd_tree.question}"
+                )
+                parent = parent.parent
+            rows.append(
+                {
+                    "db_id": qd_tree.db_id,
+                    "parent_question": qd_tree.parent.question if qd_tree.parent else None,
+                    "question": qd_tree.question,
+                    "op": qd_tree.op.value,
+                    "sub_question_1": qd_tree.children[0].question if len(qd_tree.children) > 0 else None,
+                    "sub_question_2": qd_tree.children[1].question if len(qd_tree.children) > 1 else None,
+                    "prefix_qpl": qd_tree.prefix_qpl,
+                    "qpl_line": qd_tree.qpl_line
+                }
+            )
 
         return rows
-
-    return [ex for qd_tree in qd_trees for ex in tree_rows(qd_tree)]
+    
+    return [
+        row
+        for qd_tree in qd_trees
+        for row in tree_rows(qd_tree)
+    ]
 
 
 def main():
