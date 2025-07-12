@@ -5,6 +5,7 @@ description = "Fine tune any LLM on any dataset"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "aiolimiter>=1.2.1",
     "datasets==3.5.0",
     "evaluate==0.4.3",
     "huggingface-hub==0.30.2",
