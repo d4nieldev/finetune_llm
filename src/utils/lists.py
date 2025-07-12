@@ -30,3 +30,20 @@ def powerset(iterable: Iterable[T], include_empty: bool = True) -> Iterator[Tupl
     start = 0 if include_empty else 1
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(start, len(s)+1))
+
+
+def find_sublist(haystack: list[T], needle: list[T]) -> int:
+    """
+    Return the first index i such that haystack[i:i+len(needle)] == needle.
+    If needle is empty → 0            (matches at the very start)
+    If no match      → -1
+    """
+    n, m = len(haystack), len(needle)
+    if m == 0:
+        return 0                      # empty list is a prefix by convention
+
+    # slide a window the size of `needle` over `haystack`
+    for i in range(n - m + 1):
+        if haystack[i:i + m] == needle:
+            return i
+    return -1
