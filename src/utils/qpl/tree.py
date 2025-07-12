@@ -146,6 +146,20 @@ class PartialQDTree:
     prefix_qpl: Optional[str] = None
     qpl_line: Optional[str] = None
 
+    @property
+    def idx(self) -> int:
+        if not self.qpl_line:
+            raise ValueError("QPL line is not set, cannot extract index.")
+        m = re.match(r"#(\d+) = .*", self.qpl_line, re.DOTALL)
+        if not m:
+            raise ValueError(f"QPL line does not match expected format: {self.qpl_line}")
+        return int(m.group(1))
+    
+    def is_complete(self) -> bool:
+        """Check if the tree is complete, i.e., has a valid operator and QPL line."""
+        return self.op is not None and self.qpl_line is not None and all(child.is_complete() for child in self.children)
+
+
     def to_dict(self) -> dict:
         return {
             "question": self.question,
