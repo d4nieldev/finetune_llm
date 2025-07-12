@@ -68,7 +68,11 @@ class QPLDecomposerCotProcessor(QPLProcessor):
 
         if self.with_assistant:
             response = f"<think>\n{example['cot']}\n</think>\n\n"
-            response += f"{example['op']}"
+            op = example['op']
+            if op == "Top":
+                # Special case (only 1 row)
+                op = "TopSort"
+            response += op
             if example['sub_question_1']:
                 response += f"\n{example['sub_question_1']}"
             if example['sub_question_2']:
