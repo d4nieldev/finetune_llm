@@ -1,5 +1,8 @@
 from typing import Tuple, List, Optional, Dict
 import logging as log
+from collections import defaultdict
+from copy import deepcopy
+from itertools import product
 
 from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
@@ -11,8 +14,8 @@ class CompleterDatasetError(Exception):
     pass
 
 class OperatorMismatchError(CompleterDatasetError):
-    def __init__(self, decomposer_op: str, qpl_op: str):
-        super().__init__(f"Operator mismatch: Operator in decomposer dataset ({decomposer_op}) does not match operator in nl2sql dataset ({qpl_op})")
+    def __init__(self, decomposer_op: str, qpl_op: str, sub_question: str):
+        super().__init__(f"Operator mismatch: Operator in decomposer dataset ({decomposer_op}) does not match operator in nl2sql dataset ({qpl_op}) for sub-question {sub_question!r}. ")
 
 class ChildrenMismatchError(CompleterDatasetError):
     def __init__(self, qd_children: int, qpl_children: int):
@@ -20,46 +23,61 @@ class ChildrenMismatchError(CompleterDatasetError):
 
 
 
-def get_decomposer_roots(decomposer_data: Dataset) -> List[PartialQDTree]:
-    q_to_tree: dict[Tuple[str, str], PartialQDTree] = {}
-
-    def get_q_tree(question: Optional[str], db_id: str) -> Optional[PartialQDTree]:
-        """Returns the question tree for the given question, creating a leaf node if it doesn't exist."""
-        if question is None:
-            return None
-        if db_id == 'car_11':
-            db_id = 'car_1'
-        if (question, db_id) not in q_to_tree:
-            q_to_tree[(question, db_id)] = PartialQDTree(question=question, db_id=db_id)
-        return q_to_tree[(question, db_id)]
-
-    def construct_tree(row) -> PartialQDTree:
+def get_decomposer_roots(decomposer_data: Dataset, root_questions: set[str]) -> List[PartialQDTree]:
+    # A question might have multiple decompositions, so we need to group them by question and db_id
+    q_to_rows: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    for row in decomposer_data:
         question = row["question"]
         db_id = row["db_id"]
-        tree = get_q_tree(question, db_id)
+        q_to_rows[(question, db_id)].append(row)
 
-        if tree is None:
-            raise ValueError(f"Tree for question {question} not found in q_to_tree")
+    def construct_trees(row) -> list[PartialQDTree]:
+        question = row["question"]
+        db_id = row["db_id"]
+        op = Operator(row['op'])
+        
+        # The question and its children might have multiple decompositions, so we need to construct combinations of children
+        child_i_options = [[], []]
+        for i, sq_key in enumerate(['sub_question_1', 'sub_question_2']):
+            if (sq := row[sq_key]):
+                if (sq, db_id) not in q_to_rows:
+                    raise ValueError(
+                        f"Sub-question {sq!r} not found in decomposer data for question {question!r} with db_id {db_id!r}"
+                    )
+                for sq_row in q_to_rows[(sq, db_id)]:
+                    sq_child_options = construct_trees(sq_row)
+                    child_i_options[i].extend(sq_child_options)
+        
+        # For each combination of children, create a diffrent tree
+        child_i_options = [options if options else [None] for options in child_i_options]
+        children_combinations = list(product(*child_i_options))
+        trees = []
+        for children in children_combinations:
+            real_children = tuple([child for child in children if child is not None])
+            tree = PartialQDTree(
+                question=question,
+                db_id=db_id,
+                op=op,
+                children=real_children,
+            )
+            for child in real_children:
+                child.parent = tree
+            trees.append(tree)
 
-        tree.op = Operator(row['op'])
+        return trees
 
-        child1 = get_q_tree(row['sub_question_1'], db_id)
-        child2 = get_q_tree(row['sub_question_2'], db_id)
-        if child1 is not None:
-            child1.parent = tree
-        if child2 is not None:
-            child2.parent = tree
-        tree.children = tuple([child for child in [child1, child2] if child is not None])
-
-        return tree
-
-    all_trees = [construct_tree(row) for row in tqdm(decomposer_data, desc="Constructing QD trees")]
+    all_trees = [
+        tree 
+        for row in tqdm(decomposer_data, desc="Constructing QD trees") 
+        for tree in construct_trees(row)
+        if row["question"] in root_questions  # only take root questions
+    ]
 
     return [tree for tree in all_trees if tree.parent is None]
 
 
-def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, str], QPLTree]:
-    q_to_qpl_tree: Dict[Tuple[str, str], QPLTree] = {}
+def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, Operator, str], QPLTree]:
+    q_to_qpl_tree: Dict[Tuple[str, Operator, str], QPLTree] = {}
 
     # create QPL trees
     for row in tqdm(nl2qpl_data, desc="Creating QPL trees from NL2QPL data"):
@@ -67,20 +85,23 @@ def get_qpl_trees(nl2qpl_data: Dataset) -> Dict[Tuple[str, str], QPLTree]:
         qpl = row["qpl"]
         db_id, qpl_code = [item.strip() for item in qpl.split("|")]
         qpl_rows = [qpl_row.strip() for qpl_row in qpl_code.split(";")]
-
-        q_to_qpl_tree[(question, db_id)] = QPLTree.from_qpl_lines(qpl_rows)
+        op = qpl_rows[-1].split(' = ')[1].split(' ')[0].strip()
+        
+        if db_id == 'car_1':
+            db_id = 'car_11'
+        q_to_qpl_tree[(question, Operator(op), db_id)] = QPLTree.from_qpl_lines(qpl_rows)
 
     return q_to_qpl_tree
 
 
 def complete_trees_qpl(
     decomposer_roots: List[PartialQDTree],
-    q_to_qpl_tree: Dict[Tuple[str, str], QPLTree]
+    q_to_qpl_tree: Dict[Tuple[str, Operator, str], QPLTree]
 ) -> None:
 
     def complete_tree(root: PartialQDTree, qpl_tree: QPLTree) -> None:
         if root.op != qpl_tree.op:
-            raise OperatorMismatchError(root.op.value, qpl_tree.op.value)
+            raise OperatorMismatchError(root.op.value, qpl_tree.op.value, root.question)
         if len(root.children) > len(qpl_tree.children):
             raise ChildrenMismatchError(len(root.children), len(qpl_tree.children))
 
@@ -96,7 +117,7 @@ def complete_trees_qpl(
 
     for root in tqdm(decomposer_roots, desc="Completing trees with QPL"):
         try:
-            qpl_tree = q_to_qpl_tree[(root.question, root.db_id)]
+            qpl_tree = q_to_qpl_tree[(root.question, root.op, root.db_id)]
             complete_tree(root, qpl_tree)
         except (KeyError, CompleterDatasetError) as e:
             msg = f"Error for question {root.question!r} with db_id {root.db_id!r}:"
@@ -152,7 +173,9 @@ def load_qd_trees(
 
     # Load the decomposer data and create partial QD trees
     decomposer_data = load_dataset(decomposer_dataset_id, split=split)
-    root_qd_trees = get_decomposer_roots(decomposer_data)
+    decomposer_data = [row for row in decomposer_data if row['question'] not in [row['sub_question_1'], row['sub_question_2']]]
+    root_questions = set(row['question'] for row in nl2qpl_data)
+    root_qd_trees = get_decomposer_roots(decomposer_data, root_questions)
     log.info(f"Number of partial QD trees in {split}: {len(root_qd_trees)}")
 
     # Complete the QD trees with QPL data
