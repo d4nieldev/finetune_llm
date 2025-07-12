@@ -12,6 +12,8 @@ import wandb
 
 from src.callbacks import MemoryLoggingCallback
 from src.processors import ProcessorRegistry
+from src.utils.chat_types import ChatMessage, ChatTemplate
+from src.utils.lists import find_sublist
 import src.utils.paths as p
 
 
@@ -129,19 +131,24 @@ def train(
     train_dataset = train_dataset.map(to_model_prompt, remove_columns=train_dataset.column_names)
     
     # Find instruction and response prefixes
+    user_message = "!"
+    assistant_message = "<think>\n?\n</think>"
     ids = tokenizer.apply_chat_template(
-        [{"role": "user", "content": "!"}, {"role": "assistant", "content": "?"}],
+        conversation=[
+            ChatMessage(role="user", content=user_message),
+            ChatMessage(role="assistant", content=assistant_message)
+        ],
         tokenize=True,
         add_generation_prompt=False,
         continue_final_message=False,
     )
-    
-    a_id = tokenizer.convert_tokens_to_ids('!')
-    b_id = tokenizer.convert_tokens_to_ids('?')
-    
-    instruction_template = ids[:ids.index(a_id)]
-    response_template = ids[ids.index(a_id)+1:ids.index(b_id)]
-    
+
+    inst_ids = tokenizer.encode(user_message)
+    resp_ids = tokenizer.encode(assistant_message)
+
+    instruction_template = ids[:find_sublist(ids, inst_ids)]
+    response_template = ids[find_sublist(ids, inst_ids)+len(inst_ids):find_sublist(ids, resp_ids)]
+
     data_collator = DataCollatorForCompletionOnlyLM(
         instruction_template=instruction_template,  # can be None for single-turn conversations
         response_template=response_template,
