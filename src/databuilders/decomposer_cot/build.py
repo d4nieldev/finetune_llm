@@ -37,9 +37,13 @@ async def generate_CoT(
             f"Sub-Question 1: {example['sub_question_1']}\n"
             f"Sub-Question 2: {example['sub_question_2']}"
         )
+    if example['db_id'] == 'car_11':
+        db_schema = schemas['car_1']
+    else:
+        db_schema = schemas[example['db_id']]
     user_prompt = user_prompt_template.format(
         db_id=example['db_id'],
-        db_schema=schemas[example['db_id']],
+        db_schema=db_schema,
         question=example['question'],
         op=example['op'],
         sub_questions=sub_questions_str,
