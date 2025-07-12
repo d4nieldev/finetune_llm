@@ -133,12 +133,14 @@ def create_completer_dataset(decomposer_roots: List[PartialQDTree]) -> List[Dict
         rows_to_return = [child_row for child in root.children for child_row in get_tree_rows(child)]
 
         if root.prefix_qpl is not None and root.qpl_line is not None:
-            if root.parent is not None and root.parent.prefix_qpl is not None:
+            parent = root.parent
+            while parent and parent.prefix_qpl:
                 # enrich parent prefix QPL with child question
-                root.parent.prefix_qpl = root.parent.prefix_qpl.replace(
+                parent.prefix_qpl = parent.prefix_qpl.replace(
                     root.qpl_line + " ;",
                     f"{root.qpl_line} ; -- {root.question}"
                 )
+                parent = parent.parent
             rows_to_return.append(
                 {
                     "db_id": root.db_id,
