@@ -80,7 +80,7 @@ def generate_batch(
     if generation_params.get('do_sample') is False and is_valid_output is not None:
         raise ValueError("`retry_pred` is only supported when `do_sample` is True.")
     
-    model_outputs: List[Optional[str]] = [None for _ in range(len(model_prompts))]
+    model_outputs: List[Optional[str]] = [None for _ in model_prompts]
     remaining_prompts_indices = list(range(len(model_prompts)))
     tries_count = 0
 
