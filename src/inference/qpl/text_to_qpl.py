@@ -1,3 +1,4 @@
+import re
 import json
 from typing import Optional, List, Dict, Any
 from typing_extensions import TypedDict
@@ -14,7 +15,7 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from datasets import load_dataset
 from tqdm import tqdm
 
-from src.processors.qpl import QPLDecomposerProcessor, QPLCompleterProcessor
+from src.processors.qpl import QPLDecomposerProcessor, QPLDecomposerCotProcessor, QPLCompleterProcessor
 from src.utils.qpl.tree import QPLQDTree, Operator
 from src.utils.generation import to_model_prompt, generate_batch
 from src.utils.lists import flatten, unflatten
@@ -30,6 +31,7 @@ log.basicConfig(
 class DecomposerExample(TypedDict):
     question: str
     db_id: str
+    cot: str | None
 
 
 class CompleterExample(TypedDict):
@@ -68,7 +70,10 @@ def text_to_qpl(
     ) -> List[Result]:
     # Decompose input questions
     if not is_load_decomposer_trees:
-        decomposer_processor = QPLDecomposerProcessor(with_assistant=False)
+        if '-cot-' in decomposer_model_path:
+            decomposer_processor = QPLDecomposerCotProcessor(with_assistant=False)
+        else:
+            decomposer_processor = QPLDecomposerProcessor(with_assistant=False)
         decomposer_model = AutoPeftModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
         decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
         decomposer_model.eval()
@@ -157,7 +162,7 @@ def get_decomposer_generation_params(mode: DecomposerMode) -> Dict[str, Any]:
 @torch.no_grad()
 def decompose(
         examples: List[DecomposerExample],
-        processor: QPLDecomposerProcessor,
+        processor: QPLDecomposerProcessor | QPLDecomposerCotProcessor,
         model: PreTrainedModel,
         mode: DecomposerMode,
         tokenizer: PreTrainedTokenizerBase,
@@ -180,6 +185,7 @@ def decompose(
         chat_templates = list(map(processor.to_chat_template, examples))
         prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
         
+        output_pattern = re.compile(r"(?P<reasoning><think>.*?</think>)?\s*(?P<answer>.*)", re.DOTALL)
         outputs = generate_batch(
             model=model,
             tokenizer=tokenizer,
@@ -187,7 +193,7 @@ def decompose(
             batch_size=batch_size,
             max_new_tokens=max_new_tokens,
             progress_bar=progress_bar,
-            is_valid_output=(lambda i, output: examples[i]['question'] != output) if mode in [DecomposerMode.FIRST_GREEDY, DecomposerMode.SAMPLING] else None,
+            is_valid_output=lambda i, output: (m := output_pattern.match(output)) is not None and examples[i]['question'] not in m.group("answer").split('\n'),
             max_retries=max_retries,
             **get_decomposer_generation_params(mode)
         )
@@ -200,14 +206,19 @@ def decompose(
                 log.warning(f"Question '{example['question']}' is decomposed into itself after {max_retries} tries. Skipping this tree.")
                 children_examples.append([])
                 continue
-            lines = output.split("\n")
+            if not (m := output_pattern.match(output)):
+                log.warning(f"Output for question '{example['question']}' does not match the expected format. Got:\n{output}\nSkipping this tree.")
+                children_examples.append([])
+                continue
+            lines = m.group('answer').split("\n")
             sub_questions = [l.strip() for l in lines[1:]]
             if example['question'] in sub_questions and mode == DecomposerMode.GREEDY:
                 log.warning(f"Question '{example['question']}' is decomposed into itself. With greedy decoding, this can lead to an infinite loop - consider using sampling. Skipping this tree.")
                 children_examples.append([])
                 continue
+            example['cot'] = cot if (cot := m.group('reasoning')) else None
             tree.op = Operator(lines[0].strip())
-            children_examples.append([DecomposerExample(question=sub_question, db_id=example['db_id']) for sub_question in sub_questions])
+            children_examples.append([DecomposerExample(question=sub_question, db_id=example['db_id'], cot=None) for sub_question in sub_questions])
 
         # Generate the trees of the children questions
         flat_children_examples, lengths = flatten(children_examples)
@@ -329,7 +340,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     nl2sql_dataset = list(load_dataset("d4nieldev/nl2qpl-ds", split="validation"))
-    examples = [DecomposerExample(question=ex['question'], db_id=ex['qpl'].split('|')[0].strip()) for ex in nl2sql_dataset]
+    examples = [DecomposerExample(question=ex['question'], db_id=ex['qpl'].split('|')[0].strip(), cot=None) for ex in nl2sql_dataset]
 
     results = text_to_qpl(
         examples=examples,
