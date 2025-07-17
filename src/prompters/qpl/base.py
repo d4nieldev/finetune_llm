@@ -5,7 +5,7 @@ from typing import Any, Mapping
 from abc import abstractmethod
 import logging
 
-from src.processors.base import BaseProcessor
+from src.prompters.base import BasePrompter
 import src.utils.qpl.paths as p
 
 
@@ -31,7 +31,7 @@ def update_type(col_type):
         return "others"
 
 
-class QPLProcessor(BaseProcessor):
+class QPLPrompter(BasePrompter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

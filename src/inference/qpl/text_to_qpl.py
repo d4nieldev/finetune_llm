@@ -15,7 +15,7 @@ from transformers.tokenization_utils_base import PreTrainedTokenizerBase
 from datasets import load_dataset
 from tqdm import tqdm
 
-from src.processors.qpl import QPLDecomposerProcessor, QPLDecomposerCotProcessor, QPLCompleterProcessor
+from src.prompters.qpl import QPLDecomposerPrompter, QPLDecomposerCotPrompter, QPLCompleterPrompter
 from src.utils.qpl.tree import QPLQDTree, Operator
 from src.utils.generation import to_model_prompt, generate_batch
 from src.utils.lists import flatten, unflatten
@@ -71,16 +71,16 @@ def text_to_qpl(
     # Decompose input questions
     if not is_load_decomposer_trees:
         if '-cot-' in decomposer_model_path:
-            decomposer_processor = QPLDecomposerCotProcessor(with_assistant=False)
+            decomposer_prompter = QPLDecomposerCotPrompter(with_assistant=False)
         else:
-            decomposer_processor = QPLDecomposerProcessor(with_assistant=False)
+            decomposer_prompter = QPLDecomposerPrompter(with_assistant=False)
         decomposer_model = AutoPeftModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
         decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
         decomposer_model.eval()
 
         trees = decompose(
             examples=examples,
-            processor=decomposer_processor,
+            prompter=decomposer_prompter,
             model=decomposer_model,
             mode=decomposer_mode,
             tokenizer=decomposer_tokenizer,
@@ -104,13 +104,13 @@ def text_to_qpl(
 
     # complete QPL for trees
     torch.cuda.empty_cache()
-    completer_processor = QPLCompleterProcessor()
+    completer_prompter = QPLCompleterPrompter()
     completer_model = AutoPeftModelForCausalLM.from_pretrained(completer_model_path, attn_implementation="eager").to("cuda")
     completer_tokenizer = AutoTokenizer.from_pretrained(completer_model_path)
     completer_model.eval()
     complete(
         trees=valid_trees,
-        processor=completer_processor,
+        prompter=completer_prompter,
         model=completer_model,
         tokenizer=completer_tokenizer,
         batch_size=completer_bsz,
@@ -162,7 +162,7 @@ def get_decomposer_generation_params(mode: DecomposerMode) -> Dict[str, Any]:
 @torch.no_grad()
 def decompose(
         examples: List[DecomposerExample],
-        processor: QPLDecomposerProcessor | QPLDecomposerCotProcessor,
+        prompter: QPLDecomposerPrompter | QPLDecomposerCotPrompter,
         model: PreTrainedModel,
         mode: DecomposerMode,
         tokenizer: PreTrainedTokenizerBase,
@@ -182,7 +182,7 @@ def decompose(
 
         # Use the decomposer model to generate the questions for the next layer of each QPL tree
         # If llm is in sampling mode, retry the decomposition until a sub-question is different from its parent question
-        chat_templates = list(map(processor.to_chat_template, examples))
+        chat_templates = list(map(prompter.to_chat_template, examples))
         prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
         
         output_pattern = re.compile(r"(?P<reasoning><think>.*?</think>)?\s*(?P<answer>.*)", re.DOTALL)
@@ -250,7 +250,7 @@ def post_order_index_tree(tree: QPLQDTree, counter: int = 1) -> int:
 @torch.no_grad()
 def complete(
         trees: List[QPLQDTree],
-        processor: QPLCompleterProcessor,
+        prompter: QPLCompleterPrompter,
         model: PreTrainedModel,
         tokenizer: PreTrainedTokenizerBase,
         batch_size: int,
@@ -285,7 +285,7 @@ def complete(
             )
             for tree in trees
         ]
-        chat_templates = list(map(processor.to_chat_template, examples))
+        chat_templates = list(map(prompter.to_chat_template, examples))
         prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
         outputs = generate_batch(
             model=model,

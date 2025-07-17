@@ -11,7 +11,7 @@ from peft import LoraConfig, TaskType
 import wandb
 
 from src.callbacks import MemoryLoggingCallback
-from src.processors import ProcessorRegistry
+from src.prompters import PrompterRegistry
 from src.utils.chat_types import ChatMessage, ChatTemplate
 from src.utils.lists import find_sublist
 import src.utils.paths as p
@@ -115,8 +115,8 @@ def train(
     
     # Step 3. Data preperation
     train_dataset: Dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
-    processor = ProcessorRegistry.get(args.dataset_id)(with_assistant=True)
-    train_dataset = train_dataset.map(lambda ex: processor.to_chat_template(ex), remove_columns=train_dataset.column_names)
+    prompter = PrompterRegistry.get(args.dataset_id)(with_assistant=True)
+    train_dataset = train_dataset.map(lambda ex: prompter.to_chat_template(ex), remove_columns=train_dataset.column_names)
     def to_model_prompt(example):
         # example["messages"] is a list of {"role": "...", "content": "..."}
         # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#6-applying-the-chat-template-is-not-a-homomorphism-with-respect-to-concatenation

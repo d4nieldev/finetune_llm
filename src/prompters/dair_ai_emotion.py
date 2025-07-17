@@ -1,9 +1,9 @@
-from .base import BaseProcessor, ProcessorRegistry
+from .base import BasePrompter, PrompterRegistry
 from src.utils.chat_types import ChatTemplate, ChatMessage
 
 
-@ProcessorRegistry.register
-class EmotionProcessor(BaseProcessor):
+@PrompterRegistry.register
+class EmotionPrompter(BasePrompter):
     dataset_id = "dair-ai/emotion"
     
     def __init__(self, *args, **kwargs):

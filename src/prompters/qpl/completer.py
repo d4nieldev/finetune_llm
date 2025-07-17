@@ -4,14 +4,14 @@ from collections import defaultdict
 from typing import Dict, Any
 
 from src.utils.chat_types import ChatTemplate, ChatMessage
-from src.processors.qpl.base import QPLProcessor
-from src.processors.base import ProcessorRegistry
+from src.prompters.qpl.base import QPLPrompter
+from src.prompters.base import PrompterRegistry
 
 from datasets import load_dataset
 
 
-@ProcessorRegistry.register
-class QPLCompleterProcessor(QPLProcessor):
+@PrompterRegistry.register
+class QPLCompleterPrompter(QPLPrompter):
     dataset_id = "d4nieldev/qpl-completer-ds"
 
     def __init__(self, *args, **kwargs):

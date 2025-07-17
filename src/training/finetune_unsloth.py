@@ -16,7 +16,7 @@ from unsloth.chat_templates import get_chat_template, standardize_data_formats, 
 from trl import SFTTrainer, SFTConfig
 
 from src.callbacks import MemoryLoggingCallback
-from src.processors import ProcessorRegistry
+from src.prompters import PrompterRegistry
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -103,8 +103,8 @@ def train(
     
     # Step 3. Data preperation
     train_dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
-    processor = ProcessorRegistry.get(args.dataset_id)()
-    train_dataset = train_dataset.map(processor.to_chat_template, remove_columns=train_dataset.column_names)
+    prompter = PrompterRegistry.get(args.dataset_id)()
+    train_dataset = train_dataset.map(prompter.to_chat_template, remove_columns=train_dataset.column_names)
     train_dataset = train_dataset.rename_column("messages", "conversations")  # for standardization
     train_dataset = standardize_data_formats(train_dataset)
 

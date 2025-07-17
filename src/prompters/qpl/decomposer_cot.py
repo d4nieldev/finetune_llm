@@ -1,15 +1,16 @@
 from typing import Dict, Any, List
+from collections import defaultdict
 
 from src.utils.chat_types import ChatTemplate, ChatMessage
-from src.processors.qpl.base import QPLProcessor
-from src.processors.base import ProcessorRegistry
+from src.prompters.qpl.base import QPLPrompter
+from src.prompters.base import PrompterRegistry
 
 from datasets import load_dataset
 
 
-@ProcessorRegistry.register
-class QPLDecomposerProcessor(QPLProcessor):
-    dataset_id = "bgunlp/question_decomposer_ds"
+@PrompterRegistry.register
+class QPLDecomposerCotPrompter(QPLPrompter):
+    dataset_id = "d4nieldev/qpl-decomposer-cot-ds"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -21,14 +22,12 @@ class QPLDecomposerProcessor(QPLProcessor):
         
         self.__q_to_id = q_to_id
         dataset = load_dataset(self.dataset_id)
-        self.__q_to_parent = {}
+        self.__q_to_parent = defaultdict(list)
         for split in dataset:
             for example in dataset[split]:
                 for sub_question in [example['sub_question_1'], example['sub_question_2']]:
                     if not sub_question:
                         continue
-                    if sub_question not in self.__q_to_parent:
-                        self.__q_to_parent[sub_question] = []
                     if example not in self.__q_to_parent[sub_question]:
                         self.__q_to_parent[sub_question].append(example)
 
@@ -37,20 +36,22 @@ class QPLDecomposerProcessor(QPLProcessor):
 
         system = (
             "Given a database schema and a question in natural language, "
-            + "you must predict the toplevel operator and if needed, decompose the input question into one or two "
+            + "you must predict the toplevel QPL operator and if needed, decompose the input question into one or two "
             + "simpler sub-questions which describe the arguments of the toplevel operator.\n\n"
 
-            + "The toplevel operators are:\n"
+            + "The toplevel QPL operators are:\n"
             + "**Scan** - Scan all rows in a table with optional filtering predicate (no decomposition needed - the question is atomic)\n"
-            + "**Aggregate** - Aggregate a stream of tuples using a grouping criterion into a stream of groups (1 sub-question)\n"
+            + "**Aggregate** - Aggregate a stream of tuples, optionally using a grouping criterion into a stream of groups (1 sub-question)\n"
             + "**Filter** - Remove tuples from a stream that do not match a predicate (1 sub-question)\n"
             + "**Sort** - Sort a stream according to a sorting expression (1 sub-question)\n"
-            + "**Top** - Select the top-K tuples from a stream (1 sub-question)\n"
             + "**TopSort** - Select the top-K tuples from a stream according to a sorting expression (1 sub-question)\n"
             + "**Join** - Perform a logical join operation between two streams based on a join condition (2 sub-questions)\n"
             + "**Except** - Compute the set difference between two streams of tuples (2 sub-questions)\n"
             + "**Intersect** - Compute the set intersection between two streams of tuples (2 sub-questions)\n"
             + "**Union** - Compute the set union between two streams of tuples (2 sub-questions)\n\n"
+
+            + "Before providing the final answer, you must first reason step by step about the question and the database schema.\n"
+            + "First, determine the operator, then formulate the sub-questions if needed, and finally justify the decomposition."
         )
 
         user = (
@@ -61,11 +62,17 @@ class QPLDecomposerProcessor(QPLProcessor):
 
             + f"""Question: {example["question"].strip()}\n\n"""
 
-            + "The first line of the output should be the toplevel operator, the following lines should be the predicted sub-questions."
+            + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format:\n"
+            + "The first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
         if self.with_assistant:
-            response = f"{example['op']}"
+            response = f"<think>\n{example['cot']}\n</think>\n\n"
+            op = example['op']
+            if op == "Top":
+                # Special case (only 1 row)
+                op = "TopSort"
+            response += op
             if example['sub_question_1']:
                 response += f"\n{example['sub_question_1']}"
             if example['sub_question_2']:
