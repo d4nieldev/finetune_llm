@@ -116,12 +116,14 @@ class QPLQDTree:
 
     @property
     def prefix_qpl(self) -> str:
-        if not self.children:
+        if not self.children or any(child.qpl_line is None for child in self.children):
             return ""
         return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line + f" ;  -- {child.question}").strip() for child in sorted(self.children, key=lambda x: x.line_num)])
 
     @property
     def qpl(self) -> str:
+        if not self.qpl_line:
+            return None
         output = ""
         if self.prefix_qpl:
             output += self.prefix_qpl + "\n"
