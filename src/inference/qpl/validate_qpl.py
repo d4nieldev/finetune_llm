@@ -229,7 +229,7 @@ if __name__ == "__main__":
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
         try:
-            flat_qpl = model_result["pred_qpl"].split(' ; ')
+            flat_qpl = [line[:line.index('--')] if '--' in line else line for line in model_result["pred_qpl"].split('\n')]
             gold_cte = model_result["gold_cte"]
             pred_cte = flat_qpl_to_cte(flat_qpl, model_result['db_id'])
             prs = execute_sql(cursor, pred_cte)
