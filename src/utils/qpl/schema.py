@@ -1,3 +1,4 @@
+import sys
 import os
 import json
 from dataclasses import dataclass
@@ -217,5 +218,5 @@ class DBSchema:
 
 if __name__ == "__main__":
     db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH, apply_lower=False)
-    schema = db_schemas["battle_death"]
+    schema = db_schemas[sys.argv[1]]
     print(schema)
