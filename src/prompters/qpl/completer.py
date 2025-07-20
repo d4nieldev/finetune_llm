@@ -53,8 +53,8 @@ class QPLCompleterPrompter(QPLPrompter):
             + "Below is the formal specification for each operation in valid QPL:\n"
             + "<qpl> ::= <line>+\n"
             + "<line> ::= #<integer> = <operator>\n"
-            + "<operator> ::= <scan> | <aggregate> | <filter> | <top> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
-            
+            + "<operator> ::= <scan> | <aggregate> | <filter> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
+
             + "-- Leaf operator\n"
             + "<scan> ::= Scan Table [ <table-name> ] <pred>? <distinct>? <output-non-qualif>\n\n"
             
@@ -62,7 +62,6 @@ class QPLCompleterPrompter(QPLPrompter):
             + "<aggregate> ::= Aggregate [ <input> ] <group-by>? <output-non-qualif>\n"
             + "<filter> ::= Filter [ <input> ] <pred> <distinct>? <output-non-qualif>\n"
             + "<sort> ::= Sort [ <input> ] <order-by> <withTie>? <output-non-qualif>\n"
-            + "<top> ::= Top [ <input> ] Rows [ <number> ] <output-non-qualif>\n"
             + "<topsort> ::= TopSort [ <input> ] Rows [ <number> ] <order-by> <withTies>? <output-non-qualif>\n\n"
             
             + "-- Binary operators\n"
