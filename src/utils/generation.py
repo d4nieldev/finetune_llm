@@ -38,14 +38,14 @@ def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatTempl
     return ModelPrompt(prompt=prompt)
 
 
-def to_model_inputs_cuda(tokenizer: PreTrainedTokenizerBase, model_prompts: List[ModelPrompt]) -> BatchEncoding:
+def to_model_inputs_cuda(tokenizer: PreTrainedTokenizerBase, model_prompts: List[ModelPrompt], device) -> BatchEncoding:
     return tokenizer(
         [mp['prompt'] for mp in model_prompts],
         padding=True,
         padding_side="left",  # https://huggingface.co/docs/transformers/llm_tutorial?padding=right+pad#padding-side
         return_tensors="pt",
         add_special_tokens=False,
-    ).to("cuda")
+    ).to(device)
 
 
 def to_model_outputs(
@@ -91,7 +91,7 @@ def generate_batch(
         for i in range(0, len(remaining_prompts), batch_size):
             # Generate model outputs for the current batch
             batch_model_prompts = remaining_prompts[i:i + batch_size]
-            batch_model_inputs_cuda = to_model_inputs_cuda(tokenizer, batch_model_prompts)
+            batch_model_inputs_cuda = to_model_inputs_cuda(tokenizer, batch_model_prompts, model.device)
             batch_model_outputs = to_model_outputs(batch_model_inputs_cuda, model, tokenizer, max_new_tokens, first_greedy, **generation_params)
 
             if is_valid_output is not None:
