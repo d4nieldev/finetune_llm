@@ -118,7 +118,7 @@ class QPLQDTree:
     def prefix_qpl(self) -> str:
         if not self.children or any(child.qpl_line is None for child in self.children):
             return ""
-        return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line + f" ;  -- {child.question}").strip() for child in sorted(self.children, key=lambda x: x.line_num)])
+        return "\n".join([(child.prefix_qpl + "\n" + child.qpl_line + f" ; {'-- ' + child.question if child.question else ''}").strip() for child in sorted(self.children, key=lambda x: x.line_num)])
 
     @property
     def qpl(self) -> str:
@@ -170,4 +170,3 @@ class PartialQDTree:
             "prefix_qpl": self.prefix_qpl,
             "qpl_line": self.qpl_line
         }
-    
