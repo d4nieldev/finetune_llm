@@ -4,23 +4,19 @@ from src.utils.chat_types import ChatTemplate, ChatMessage
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
-from datasets import load_dataset
-
 
 @PrompterRegistry.register
 class QPLDecomposerPrompter(QPLPrompter):
-    dataset_id = "bgunlp/question_decomposer_ds"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         q_to_id = {}
         for id, content in self._db_content.items():
             question = content["question"]
             q_to_id[question] = id
         
         self.__q_to_id = q_to_id
-        dataset = load_dataset(self.dataset_id)
+        dataset = self.load_dataset()
         self.__q_to_parent = {}
         for split in dataset:
             for example in dataset[split]:
@@ -31,6 +27,10 @@ class QPLDecomposerPrompter(QPLPrompter):
                         self.__q_to_parent[sub_question] = []
                     if example not in self.__q_to_parent[sub_question]:
                         self.__q_to_parent[sub_question].append(example)
+
+    @property
+    def dataset_id(self) -> str:
+        return "bgunlp/question_decomposer_ds"
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']

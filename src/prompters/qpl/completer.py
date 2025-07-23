@@ -7,23 +7,19 @@ from src.utils.chat_types import ChatTemplate, ChatMessage
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
-from datasets import load_dataset
-
 
 @PrompterRegistry.register
 class QPLCompleterPrompter(QPLPrompter):
-    dataset_id = "d4nieldev/qpl-completer-ds"
-
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
+        super().__init__(*args, _dataset_id="d4nieldev/qpl-completer-ds", **kwargs)
+
         q_to_id = {}
         for id, content in self._db_content.items():
             question = content["question"]
             q_to_id[question] = id
         
         self.__q_to_id = q_to_id
-        dataset = load_dataset(self.dataset_id)
+        dataset = self.load_dataset()
         question_to_examples = defaultdict(list)
         for split in dataset:
             for example in dataset[split]:
@@ -39,6 +35,10 @@ class QPLCompleterPrompter(QPLPrompter):
                     if ex in self.__sub_q_to_parents[question]:
                         continue
                     self.__sub_q_to_parents[question].append(ex)
+    
+    @property
+    def dataset_id(self) -> str:
+        return "d4nieldev/qpl-completer-ds"
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
