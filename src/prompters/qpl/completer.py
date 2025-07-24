@@ -11,7 +11,7 @@ from src.prompters.base import PrompterRegistry
 @PrompterRegistry.register
 class QPLCompleterPrompter(QPLPrompter):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, _dataset_id="d4nieldev/qpl-completer-ds", **kwargs)
+        super().__init__(*args, **kwargs)
 
         q_to_id = {}
         for id, content in self._db_content.items():
