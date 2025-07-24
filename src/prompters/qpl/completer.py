@@ -7,23 +7,19 @@ from src.utils.chat_types import ChatTemplate, ChatMessage
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
-from datasets import load_dataset
-
 
 @PrompterRegistry.register
 class QPLCompleterPrompter(QPLPrompter):
-    dataset_id = "d4nieldev/qpl-completer-ds"
-
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
+        super().__init__(*args, _dataset_id="d4nieldev/qpl-completer-ds", **kwargs)
+
         q_to_id = {}
         for id, content in self._db_content.items():
             question = content["question"]
             q_to_id[question] = id
         
         self.__q_to_id = q_to_id
-        dataset = load_dataset(self.dataset_id)
+        dataset = self.load_dataset()
         question_to_examples = defaultdict(list)
         for split in dataset:
             for example in dataset[split]:
@@ -39,6 +35,10 @@ class QPLCompleterPrompter(QPLPrompter):
                     if ex in self.__sub_q_to_parents[question]:
                         continue
                     self.__sub_q_to_parents[question].append(ex)
+    
+    @property
+    def dataset_id(self) -> str:
+        return "d4nieldev/qpl-completer-ds"
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
@@ -53,8 +53,8 @@ class QPLCompleterPrompter(QPLPrompter):
             + "Below is the formal specification for each operation in valid QPL:\n"
             + "<qpl> ::= <line>+\n"
             + "<line> ::= #<integer> = <operator>\n"
-            + "<operator> ::= <scan> | <aggregate> | <filter> | <top> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
-            
+            + "<operator> ::= <scan> | <aggregate> | <filter> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
+
             + "-- Leaf operator\n"
             + "<scan> ::= Scan Table [ <table-name> ] <pred>? <distinct>? <output-non-qualif>\n\n"
             
@@ -62,7 +62,6 @@ class QPLCompleterPrompter(QPLPrompter):
             + "<aggregate> ::= Aggregate [ <input> ] <group-by>? <output-non-qualif>\n"
             + "<filter> ::= Filter [ <input> ] <pred> <distinct>? <output-non-qualif>\n"
             + "<sort> ::= Sort [ <input> ] <order-by> <withTie>? <output-non-qualif>\n"
-            + "<top> ::= Top [ <input> ] Rows [ <number> ] <output-non-qualif>\n"
             + "<topsort> ::= TopSort [ <input> ] Rows [ <number> ] <order-by> <withTies>? <output-non-qualif>\n\n"
             
             + "-- Binary operators\n"
@@ -87,10 +86,11 @@ class QPLCompleterPrompter(QPLPrompter):
             prefix_qpl_str += " ;\n"
 
         line_num = example.get('line_num', None)
-        if line_num is None:
+        children_str = example.get('children_str', None)
+        if line_num is None or children_str is None:
             line_num = example['qpl_line'].split('=')[0].strip()[1:]
         
-        line_start = f"#{line_num} = {example['op']} "
+        line_start = f"#{line_num} = {example['op']} {children_str} "
 
         user = (
             f"Database Name: {db_id}\n\n"

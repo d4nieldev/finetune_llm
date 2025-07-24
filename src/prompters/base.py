@@ -3,10 +3,20 @@ from typing import Any, Dict, Type, Mapping
 
 from src.utils.chat_types import ChatTemplate
 
+from datasets import load_dataset, Dataset, DatasetDict
+
 
 class BasePrompter(ABC):
     def __init__(self, with_assistant: bool = False) -> None:
         self.with_assistant = with_assistant
+
+    @property
+    @abstractmethod
+    def dataset_id(self) -> str:
+        pass
+    
+    def load_dataset(self):
+        return load_dataset(self.dataset_id, split="train")
 
     @abstractmethod
     def to_chat_template(self, example: Mapping[str, Any]) -> ChatTemplate:

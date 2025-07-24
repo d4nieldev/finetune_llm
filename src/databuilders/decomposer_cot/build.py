@@ -99,4 +99,4 @@ if __name__ == "__main__":
         split: Dataset.from_list(data)
         for split, data in dataset.items()
     })
-    ds.push_to_hub("d4nieldev/qpl-decomposer-cot-ds")
+    ds.push_to_hub("d4nieldev/qpl-decomposer-cot-ds", "original")
