@@ -40,6 +40,7 @@ class CompleterExample(TypedDict):
     prefix_qpl: str
     line_num: int
     op: str
+    children_str: str
     parent_question: Optional[str]
 
 
@@ -281,6 +282,7 @@ def complete(
                 prefix_qpl=tree.prefix_qpl,
                 line_num=tree.line_num,
                 op=tree.op.value,
+                children_str="Table" if tree.op == Operator.SCAN else f"[ {','.join([f'#{child.line_num}' for child in tree.children])} ]",
                 parent_question=tree.parent.question if tree.parent else None,
             )
             for tree in trees

@@ -86,10 +86,11 @@ class QPLCompleterPrompter(QPLPrompter):
             prefix_qpl_str += " ;\n"
 
         line_num = example.get('line_num', None)
-        if line_num is None:
+        children_str = example.get('children_str', None)
+        if line_num is None or children_str is None:
             line_num = example['qpl_line'].split('=')[0].strip()[1:]
         
-        line_start = f"#{line_num} = {example['op']} "
+        line_start = f"#{line_num} = {example['op']} {children_str} "
 
         user = (
             f"Database Name: {db_id}\n\n"
