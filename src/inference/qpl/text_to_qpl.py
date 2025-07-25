@@ -218,7 +218,10 @@ def decompose(
                 children_examples.append([])
                 continue
             tree.decomposition_cot = cot if (cot := m.group('reasoning')) else None
-            tree.op = Operator(lines[0].strip())
+            try:
+                tree.op = Operator(lines[0].strip())
+            except ValueError as e:
+                tree.op = lines[0].strip()
             children_examples.append([DecomposerExample(question=sub_question, db_id=example['db_id'], cot=None) for sub_question in sub_questions])
 
         # Generate the trees of the children questions
@@ -281,8 +284,8 @@ def complete(
                 db_id=tree.db_id,
                 prefix_qpl=tree.prefix_qpl,
                 line_num=tree.line_num,
-                op=tree.op.value,
-                children_str="Table" if tree.op == Operator.SCAN else f"[ {','.join([f'#{child.line_num}' for child in tree.children])} ]",
+                op=str(tree.op),
+                children_str="Table" if tree.op == Operator.SCAN else f"[ {', '.join([f'#{child.line_num}' for child in tree.children])} ]",
                 parent_question=tree.parent.question if tree.parent else None,
             )
             for tree in trees
@@ -305,7 +308,8 @@ def complete(
                 log.warning(f"Tree for question '{tree.question}' could not be completed. Skipping this tree.")
                 continue
             completion = output.split('\n')[0].strip()
-            tree.qpl_line = f"#{tree.line_num} = {tree.op.value} {completion}"
+            children_str="Table" if tree.op == Operator.SCAN else f"[ {', '.join([f'#{child.line_num}' for child in tree.children])} ]"
+            tree.qpl_line = f"#{tree.line_num} = {tree.op.value} {children_str} {completion}"
 
     return rec(trees)
 
