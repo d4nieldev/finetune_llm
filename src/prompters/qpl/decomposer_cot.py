@@ -39,7 +39,7 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
             + "**Union** - Compute the set union between two streams of tuples (2 sub-questions)\n\n"
 
             + "Before providing the final answer, you must first reason step by step about the question and the database schema.\n"
-            + "First, determine the operator, then formulate the sub-questions if needed, and finally justify the decomposition."
+            + "First, determine the operator, then formulate the sub-questions (unless the operator is \"Scan\", in which case no sub-questions are needed), and finally justify the decomposition."
         )
 
         user = (
@@ -50,9 +50,7 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
 
             + f"""Question: {example["question"].strip()}\n\n"""
 
-            + "Guidelines:\n\n"
-
-            + "- Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format: the first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
+            + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format: the first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
         if self.with_assistant:
@@ -75,8 +73,9 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
                 ]
             )
         else:
-            user += "\n\n- **The decomposition must adhere to the schema** - for example, if the relevant information to answer the question is spread across diffrent tables, the \"Scan\" operator is not a good fit for this question."
-            user += "\n\n- **DO NOT omit columns in the decomposition.** - combining the sub questions (if any) with the operator must result in all the columns requested by the question"
+            # user += "\n- **The decomposition must adhere to the schema** - for example, if the relevant information to answer the question is spread across diffrent tables, the \"Scan\" operator is not a good fit for this question."
+            # user += "\n- **DO NOT omit columns in the sub-questions** - combining the sub questions (if any) with the operator must result in all the columns requested by the question. While formulating the sub-questions, you must ensure that the exact columns requested by the question are present in the final result."
+            # user += "\n- **Carefully evaluate your decomposition** - if the sub-questions require adjustments to fully align with the schema, the original question, and complement each other, reflect on your decomposition and present the revised sub-questions to be in your final answer."
             return ChatTemplate(
                 messages=[
                     ChatMessage(role="system", content=system),
