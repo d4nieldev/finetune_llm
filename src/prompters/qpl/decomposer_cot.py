@@ -17,7 +17,7 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
         return "d4nieldev/qpl-decomposer-cot-ds"
 
     def load_dataset(self):
-        load_dataset(self.dataset_id, 'balanced')
+        return load_dataset(self.dataset_id, 'balanced')
 
     def to_chat_template(self, example) -> ChatTemplate:
         db_id = example['db_id']
@@ -50,8 +50,9 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
 
             + f"""Question: {example["question"].strip()}\n\n"""
 
-            + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format:\n"
-            + "The first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
+            + "Guidelines:\n\n"
+
+            + "- Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format: the first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
         if self.with_assistant:
@@ -74,6 +75,8 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
                 ]
             )
         else:
+            user += "\n\n- **The decomposition must adhere to the schema** - for example, if the relevant information to answer the question is spread across diffrent tables, the \"Scan\" operator is not a good fit for this question."
+            user += "\n\n- **DO NOT omit columns in the decomposition.** - combining the sub questions (if any) with the operator must result in all the columns requested by the question"
             return ChatTemplate(
                 messages=[
                     ChatMessage(role="system", content=system),

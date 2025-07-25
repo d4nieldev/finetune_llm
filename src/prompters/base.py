@@ -16,7 +16,7 @@ class BasePrompter(ABC):
         pass
     
     def load_dataset(self):
-        return load_dataset(self.dataset_id, split="train")
+        return load_dataset(self.dataset_id)
 
     @abstractmethod
     def to_chat_template(self, example: Mapping[str, Any]) -> ChatTemplate:
@@ -37,7 +37,7 @@ class PrompterRegistry:
 
     @classmethod
     def register(cls, prompter_cls: Type[BasePrompter]) -> Type[BasePrompter]:
-        dataset_id = getattr(prompter_cls, "dataset_id", None)
+        dataset_id = prompter_cls().dataset_id
         if dataset_id is None:
             raise ValueError(f"Prompter {prompter_cls.__name__} must define a class-level `dataset_id` attribute.")
         if dataset_id in cls._registry:

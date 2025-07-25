@@ -77,6 +77,7 @@ class QPLQDTree:
     qpl_line: str = None  # type: ignore
     parent: Optional["QPLQDTree"] = None
     children: Tuple["QPLQDTree", ...] = ()
+    decomposition_cot: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         output = {
@@ -84,6 +85,7 @@ class QPLQDTree:
             "question": self.question,
             "is_valid": self.is_valid,
             "line_num": self.line_num,
+            "decomposition_cot": self.decomposition_cot
         }
 
         if self.is_valid:

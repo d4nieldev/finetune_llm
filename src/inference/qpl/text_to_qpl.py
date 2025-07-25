@@ -217,7 +217,7 @@ def decompose(
                 log.warning(f"Question '{example['question']}' is decomposed into itself. With greedy decoding, this can lead to an infinite loop - consider using sampling. Skipping this tree.")
                 children_examples.append([])
                 continue
-            example['cot'] = cot if (cot := m.group('reasoning')) else None
+            tree.decomposition_cot = cot if (cot := m.group('reasoning')) else None
             tree.op = Operator(lines[0].strip())
             children_examples.append([DecomposerExample(question=sub_question, db_id=example['db_id'], cot=None) for sub_question in sub_questions])
 
