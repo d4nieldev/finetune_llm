@@ -88,8 +88,21 @@ class QPLCompleterPrompter(QPLPrompter):
         line_num = example.get('line_num', None)
         children_str = example.get('children_str', None)
         if line_num is None or children_str is None:
+            if not 'qpl_line' in example:
+                raise ValueError("Example must contain 'qpl_line' or 'line_num' and 'children_str'")
             line_num = example['qpl_line'].split('=')[0].strip()[1:]
-        
+            if example['op'] == "Scan":
+                children_str = "Table"
+            else:
+                m = re.match(
+                    r"#(?P<idx>\d+) = (?P<op>\w+) \[ (?P<ins>[^\]]+) \] ((?P<opt>\w+) \[ (?P<arg>[^\]]+) \] )*Output \[ (?P<out>[^\]]+) \]",
+                    example['qpl_line']
+                )
+                if m:
+                    children_str = f"[ {m.group('ins')} ]"
+                else:
+                    raise ValueError(f"QPL line does not match expected patterns: {example['qpl_line']}")
+
         line_start = f"#{line_num} = {example['op']} {children_str} "
 
         user = (
