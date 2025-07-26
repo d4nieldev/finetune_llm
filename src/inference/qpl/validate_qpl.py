@@ -48,6 +48,8 @@ def eq_aggregated_cols(s1, s2):
 # custom_in("avg_x", ["avg_a"], {"avg_x": 1}, {"avg_a": 2}) -> "avg_a" (By prefix - no value match and no distractor)
 # custom_in("avg_x", ["avg_a", "avg_b"], {"avg_x": 1, "avg_y": 2}, {"avg_a": 3, "avg_b": 4}) -> "avg_a" (By pos)
 # custom_in("avg_y", ["avg_a", "avg_b"], {"avg_x": 1, "avg_y": 2}, {"avg_a": 3, "avg_b": 4}) -> "avg_b" (By pos)
+# TODO: custom_in("avg_x", ["avg_x"], ["x"], ..., ...) --> "x"
+# TODO: custom_in("k1", "k2", ["k1"], ["k2"], ..., ...) -> k1 (By foreign key relations, with schema)
 def custom_in(pcol, gcols, prow, grow):
     candidates = []
     for c in gcols:
@@ -229,8 +231,8 @@ if __name__ == "__main__":
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
         try:
-            flat_qpl = [line[:line.index('--')] if '--' in line else line for line in model_result["pred_qpl"].split('\n')]
-            gold_cte = model_result["gold_cte"]
+            flat_qpl = [line[:line.index(';')] if ';' in line else line for line in model_result["pred_qpl"].split('\n')]
+            gold_sql = model_result["gold_sql"]
             pred_cte = flat_qpl_to_cte(flat_qpl, model_result['db_id'])
             prs = execute_sql(cursor, pred_cte)
         except Exception as e:
@@ -238,7 +240,7 @@ if __name__ == "__main__":
             same = False
         else:
             err = None
-            grs = execute_sql(cursor, gold_cte)
+            grs = execute_sql(cursor, gold_sql)
             same = same_rs(grs, prs, flat_qpl)
             if same:
                 accuracy += 1
