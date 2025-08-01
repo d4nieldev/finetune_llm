@@ -190,3 +190,6 @@ unsloth_compiled_cache/
 
 # Litellm cache
 .litellm_cache/
+
+# Pipenv lock file
+uv.lock
