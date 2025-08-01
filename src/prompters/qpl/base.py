@@ -15,6 +15,12 @@ class QPLPrompter(BasePrompter):
         self.__db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH, apply_lower=False)
 
     
+    def tokens_to_add(self) -> list[str]:
+        if self.schema_representation == "m_schema":
+            return ["【", "】"]
+        return super().tokens_to_add()
+
+    
     def _get_schema_str(
         self, 
         db_id: str,
