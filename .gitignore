@@ -191,5 +191,8 @@ unsloth_compiled_cache/
 # Litellm cache
 .litellm_cache/
 
+# Mac files
+.DS_Store
+
 # Pipenv lock file
 uv.lock
