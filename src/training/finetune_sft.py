@@ -37,7 +37,7 @@ def parse_args():
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
     train_config_group = parser.add_argument_group("Training config")
-    train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=True, help="Sort data in ascending order before training.")
+    train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=True, help="Sort data in ascending order by prompt length before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
     train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
