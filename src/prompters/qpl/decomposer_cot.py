@@ -1,4 +1,4 @@
-from collections import defaultdict
+from datasets import DatasetDict
 
 from src.utils.chat_types import ChatTemplate, ChatMessage
 from src.prompters.qpl.base import QPLPrompter
@@ -18,11 +18,10 @@ class QPLDecomposerCotPrompter(QPLPrompter):
 
     def load_dataset(self):
         return load_dataset(self.dataset_id, 'balanced')
-
-    def to_chat_template(self, example) -> ChatTemplate:
-        db_id = example['db_id']
-
-        system = (
+    
+    @property
+    def system_prompt(self) -> str:
+        return (
             "Given a database schema and a question in natural language, "
             + "you must predict the toplevel QPL operator and if needed, decompose the input question into one or two "
             + "simpler sub-questions which describe the arguments of the toplevel operator.\n\n"
@@ -38,17 +37,23 @@ class QPLDecomposerCotPrompter(QPLPrompter):
             + "**Intersect** - Compute the set intersection between two streams of tuples (2 sub-questions)\n"
             + "**Union** - Compute the set union between two streams of tuples (2 sub-questions)\n\n"
 
-            + "Before providing the final answer, you must first reason step by step about the question and the database schema.\n"
-            + "First, determine the operator, then formulate the sub-questions (unless the operator is \"Scan\", in which case no sub-questions are needed), and finally justify the decomposition."
+            + "Before providing the final answer, you must first reason step by step about the question and the database schema."
         )
-
-        user = (
+    
+    def user_prompt(self, db_id: str, question: str) -> str:
+        return (
             f"{self._get_schema_str(db_id)}\n\n"
 
-            + f"""Question: {example["question"].strip()}\n\n"""
+            + f"""[Question]: {question.strip()}\n\n"""
 
+            + "First, determine the operator, then formulate the sub-questions (unless the operator is \"Scan\", in which case no sub-questions are needed and this step must be skipped), and finally justify the decomposition.\n"
             + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format: the first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
+
+    def to_chat_template(self, example) -> ChatTemplate:
+        db_id = example['db_id']
+
+        user = self.user_prompt(db_id, example['question'])
 
         if self.with_assistant:
             response = f"<think>\n{example['cot']}\n</think>\n\n"
@@ -64,7 +69,7 @@ class QPLDecomposerCotPrompter(QPLPrompter):
 
             return ChatTemplate(
                 messages=[
-                    ChatMessage(role="system", content=system),
+                    ChatMessage(role="system", content=self.system_prompt),
                     ChatMessage(role="user", content=user),
                     ChatMessage(role="assistant", content=response),
                 ]
@@ -75,7 +80,7 @@ class QPLDecomposerCotPrompter(QPLPrompter):
             # user += "\n- **Carefully evaluate your decomposition** - if the sub-questions require adjustments to fully align with the schema, the original question, and complement each other, reflect on your decomposition and present the revised sub-questions to be in your final answer."
             return ChatTemplate(
                 messages=[
-                    ChatMessage(role="system", content=system),
+                    ChatMessage(role="system", content=self.system_prompt),
                     ChatMessage(role="user", content=user),
                 ]
             )

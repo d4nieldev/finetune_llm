@@ -1,0 +1,122 @@
+import re
+from datasets import load_dataset
+
+from src.utils.chat_types import ChatTemplate, ChatMessage
+from src.prompters.qpl.base import QPLPrompter
+from src.prompters.base import PrompterRegistry
+
+
+@PrompterRegistry.register
+class QPLCompleterCotPrompter(QPLPrompter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    @property
+    def dataset_id(self) -> str:
+        return "d4nieldev/qpl-completer-cot-ds"
+    
+    def load_dataset(self):
+        return load_dataset(self.dataset_id, 'balanced')
+
+    def to_chat_template(self, example) -> ChatTemplate:
+        system = (
+            "Given a database schema, a QPL query prefix, and a natural language question, "
+            + "complete the final line of the query so it completes the user request.\n\n"
+
+            + "QPL is a formalism used to describe data retrieval operations over an SQL schema in a modular manner.\n"
+            + "A QPL plan is a sequence of instructions for querying tabular data to answer a natural language question.\n\n"
+            
+            + "Below is the formal specification for each operation in valid QPL:\n"
+
+            + "<qpl> ::= <line>+\n"
+            + "<line> ::= #<integer> = <operator>\n"
+            + "<operator> ::= <scan> | <aggregate> | <filter> | <sort> | <topsort> | <join> | <except> | <intersect> | <union>\n\n"
+
+            + "-- Leaf operator\n"
+            + "<scan> ::= Scan Table [ <table-name> ] <pred>? <distinct>? <output-non-qualif>\n\n"
+            
+            + "-- Unary operators\n"
+            + "<aggregate> ::= Aggregate [ <input> ] <group-by>? <output-agg>\n"
+            + "<filter> ::= Filter [ <input> ] <pred> <distinct>? <output-non-qualif>\n"
+            + "<sort> ::= Sort [ <input> ] <order-by> <output-non-qualif>\n"
+            + "<topsort> ::= TopSort [ <input> ] Rows [ <number> ] <order-by> <withTies>? <output-non-qualif>\n\n"
+            
+            + "-- Binary operators\n"
+            + "<join> ::= Join [ <input> , <input> ] <pred>? <distinct>? <output-qualif>\n"
+            + "<except> ::= Except [ <input> , <input> ] <pred> <output-qualif>\n"
+            + "<intersect> ::= Intersect [ <input> , <input> ] <pred> <output-qualif>\n"
+            + "<union> ::= Union [ <input> , <input> ] <output-qualif>\n\n"
+
+            + "<group-by> ::= GroupBy [ <column-name> (, <column-name>)* ]\n"
+            + "<order-by> ::= OrderBy [ <column-name> <direction> (, <column-name> <direction>)* ]\n"
+            + "<withTies> ::= WithTies [ true | false ]\n"
+            + "<direction> ::= ASC | DESC\n"
+            + "<pred> ::= Predicate [ <comparison> (AND | OR <comparison)* ]\n"
+            + "<distinct> ::= Distinct [ true | false ]\n"
+            + "<output-non-qualif> ::= Output [ <column-name> (, <column-name>)* ]\n"
+            + "<output-agg> ::= Output [ <agg-column-name> (, <agg-column-name>)* ]\n"
+            + "<output-qualif> ::= Output [ <qualif-column-name> (, <qualif-column-name>)* ]\n"
+            + "<agg-column-name> ::= countstar | <agg-func>(<column-name>) | <agg-func>(DISTINCT <column-name>)\n"
+            + "<agg-func> ::= COUNT | SUM | AVG | MIN | MAX\n"
+            + "<qualif-column-name> ::= #<number>.<column-name>\n\n"
+
+            + "Using valid QPL, complete the last step in order to answer the question for the database schema provided below.\n\n"
+
+            + "Before providing the final answer, you must first reason step by step about the question and the database schema."
+        )
+
+        prefix_qpl_str = ' ;\n'.join(example['prefix_qpl'].split(' ; '))
+        if example['prefix_qpl'] != "":
+            prefix_qpl_str += " ;\n"
+
+        line_num = example.get('line_num', None)
+        children_str = example.get('children_str', None)
+        if line_num is None or children_str is None:
+            if not 'qpl_line' in example:
+                raise ValueError("Example must contain 'qpl_line' or 'line_num' and 'children_str'")
+            line_num = example['qpl_line'].split('=')[0].strip()[1:]
+            if example['op'] == "Scan":
+                children_str = "Table"
+            else:
+                m = re.match(
+                    r"#(?P<idx>\d+) = (?P<op>\w+) \[ (?P<ins>[^\]]+) \] ((?P<opt>\w+) \[ (?P<arg>[^\]]+) \] )*Output \[ (?P<out>[^\]]+) \]",
+                    example['qpl_line']
+                )
+                if m:
+                    children_str = f"[ {m.group('ins')} ]"
+                else:
+                    raise ValueError(f"QPL line does not match expected patterns: {example['qpl_line']}")
+
+        line_start = f"#{line_num} = {example['op']} {children_str} ..."
+
+        user = (
+            f"{self._get_schema_str(example['db_id'])}\n\n"
+
+            + f"[Question]: {example['question'].strip()}\n\n"
+
+            + f"[Prefix QPL]:\n"
+            + f"```QPL\n{prefix_qpl_str}\n```\n\n"
+
+            + f"[Complete]: `{line_start} ...`\n\n"
+
+            + "First, understand the input stream, then determine operator-specific options, and finally select the output columns.\n"
+            + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final line of the QPL query in valid QPL.\n"
+        )
+
+        if self.with_assistant:
+            response = f"<think>\n{example['cot']}\n</think>\n\n"
+            response += f"```QPL\n{example['qpl_line']}\n```"
+            return ChatTemplate(
+                messages=[
+                    ChatMessage(role="system", content=system),
+                    ChatMessage(role="user", content=user),
+                    ChatMessage(role="assistant", content=response),
+                ]
+            )
+        else:
+            return ChatTemplate(
+                messages=[
+                    ChatMessage(role="system", content=system),
+                    ChatMessage(role="user", content=user),
+                ]
+            )

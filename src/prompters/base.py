@@ -14,8 +14,8 @@ class BasePrompter(ABC):
     @abstractmethod
     def dataset_id(self) -> str:
         pass
-    
-    def load_dataset(self):
+
+    def load_dataset(self) -> DatasetDict:
         return load_dataset(self.dataset_id)
     
     def special_tokens_to_add(self) -> dict[str, str]:
