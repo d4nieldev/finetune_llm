@@ -37,6 +37,7 @@ def parse_args():
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
     train_config_group = parser.add_argument_group("Training config")
+    train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=True, help="Sort data in ascending order before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
     train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
@@ -162,7 +163,12 @@ def train(
     
     # Step 3. Data preperation
     train_dataset: Dataset = prompter.load_dataset()['train'] # type: ignore
-    train_dataset = train_dataset.map(lambda ex: prompter.to_chat_template(ex), remove_columns=train_dataset.column_names)
+    train_dataset = train_dataset.map(
+        lambda ex: prompter.to_chat_template(ex) | {'len_text': sum(len(m['content']) for m in ex['messages'] if m['role'] == 'user')}, 
+        remove_columns=train_dataset.column_names
+    )
+    if args.sort_data:
+        train_dataset = train_dataset.sort("len_text", reverse=False)
     eval_dataset: Dataset = prompter.load_dataset()['validation'] # type: ignore
     eval_dataset = eval_dataset.map(lambda ex: prompter.to_chat_template(ex), remove_columns=eval_dataset.column_names)
     # def to_model_prompt(example):
