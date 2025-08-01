@@ -63,11 +63,12 @@ def profile_table(db_id: str, table: Table, cursor: pyodbc.Cursor, prefix_length
                 "std_dev_length": df[colname].apply(lambda x: len(x) if isinstance(x, str) else 0).std(),
             }
         elif col.type == "number":
+            df[colname] = df[colname].apply(lambda x: np.nan if isinstance(x, str) and x == '' else x)
             shape_info = {
-                "min_value": df[colname].min(),
-                "max_value": df[colname].max(),
-                "mean_value": df[colname].mean() if pd.api.types.is_numeric_dtype(df[colname]) else None,
-                "std_dev": df[colname].std() if pd.api.types.is_numeric_dtype(df[colname]) else None,
+                "min_value": df[colname].astype(float).min(),
+                "max_value": df[colname].astype(float).max(),
+                "mean_value": df[colname].astype(float).mean(),
+                "std_dev": df[colname].astype(float).std(),
             }
         elif col.type == "date":
             shape_info = {
@@ -102,7 +103,7 @@ def profile_schema(db_schema: DBSchema, cursor: pyodbc.Cursor) -> dict[str, dict
 def main():
     conn = pyodbc.connect(connection_string, autocommit=True)
     cursor = conn.cursor()
-    db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH)
+    db_schemas = DBSchema.from_db_schemas_file(dbs_metadata_file=None)
     schema_to_table_to_cols_profiles = {}
     for db_id, db_schema in tqdm(db_schemas.items(), desc="Profiling databases"):
         schema_to_table_to_cols_profiles[db_id] = profile_schema(db_schema, cursor)
