@@ -33,14 +33,15 @@ def parse_args():
     )
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
-    hf_ids_group.add_argument("--model_id", type=str, default="google/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="d4nieldev/qpl-composer-ds", help="Dataset ID to use for fine-tuning.")
-    
+    hf_ids_group.add_argument("--model_id", type=str, required=True, help="Model ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
+
     train_config_group = parser.add_argument_group("Training config")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
-    train_config_group.add_argument("--gradient_accumulation_steps", type=int, default=8, help="Gradient accumulation steps.")
-    train_config_group.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate.")
+    train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
+    train_config_group.add_argument("--gradient_accumulation_steps", type=int, default=32, help="Gradient accumulation steps.")
+    train_config_group.add_argument("--learning_rate", type=float, default=4e-5, help="Learning rate.")
     train_config_group.add_argument("--lr_scheduler_type", type=str, default="cosine", help="Learning rate scheduler type.")
     train_config_group.add_argument("--optim", type=str, default="adamw_torch", help="Optimizer to use for training.")
     train_config_group.add_argument("--warmup_ratio", type=float, default=0.15, help="Warmup ratio for learning rate scheduler.")
@@ -48,7 +49,6 @@ def parse_args():
     train_config_group.add_argument("--bf16", action=argparse.BooleanOptionalAction, default=True, help="Use bfloat16 precision (requires PyTorch 1.10+).")
     train_config_group.add_argument("--weight_decay", type=float, default=1, help="Weight decay for optimizer.")
     train_config_group.add_argument("--num_train_epochs", type=int, default=4, help="Number of training epochs.")
-    train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
     train_config_group.add_argument("--max_seq_length", type=int, default=8192, help="Maximum sequence length for training.")
     train_config_group.add_argument("--deepspeed-config", type=Path, default=p.DEEPSPEED_CONFIG, help="Path to the deepspeed config file.")
     
