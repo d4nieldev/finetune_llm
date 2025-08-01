@@ -49,7 +49,7 @@ def parse_args():
     train_config_group.add_argument("--bf16", action=argparse.BooleanOptionalAction, default=True, help="Use bfloat16 precision (requires PyTorch 1.10+).")
     train_config_group.add_argument("--weight_decay", type=float, default=1, help="Weight decay for optimizer.")
     train_config_group.add_argument("--num_train_epochs", type=int, default=4, help="Number of training epochs.")
-    train_config_group.add_argument("--max_seq_length", type=int, default=8192, help="Maximum sequence length for training.")
+    train_config_group.add_argument("--max_seq_length", type=int, default=32768, help="Maximum sequence length for training.")
     train_config_group.add_argument("--deepspeed-config", type=Path, default=p.DEEPSPEED_CONFIG, help="Path to the deepspeed config file.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
