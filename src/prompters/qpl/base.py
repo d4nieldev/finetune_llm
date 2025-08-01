@@ -8,7 +8,7 @@ from src.utils.qpl.schema import DBSchema
 
 
 class QPLPrompter(BasePrompter):
-    def __init__(self, schema_representation: Literal["ddl", "m_schema"], *args, **kwargs):
+    def __init__(self, schema_representation: Literal["ddl", "m_schema"] = 'm_schema', *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.schema_representation = schema_representation
