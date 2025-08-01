@@ -5089,7 +5089,7 @@
         ["DNO", "int", null],
         ["Division", "varchar", null],
         ["DName", "varchar", null],
-        ["Room", "int", null],
+        ["Room", "varchar", null],
         ["Building", "varchar", null],
         ["DPhone", "int", null]
       ],
@@ -5104,7 +5104,7 @@
         ["Credits", "int", null],
         ["Instructor", "int", null],
         ["Days", "varchar", null],
-        ["Hours", "int", null],
+        ["Hours", "varchar", null],
         ["DNO", "int", null]
       ],
       "Minor_in": [
