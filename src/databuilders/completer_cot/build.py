@@ -26,7 +26,7 @@ async def generate_CoT(
         model: str, 
         schemas: dict[str, DBSchema], 
         example: dict,
-        limiter: AsyncLimiter
+        limiter: AsyncLimiter | None
     ) -> dict:
     
     if example['db_id'] == 'car_11':
@@ -62,7 +62,10 @@ async def generate_CoT(
         ChatMessage(role="system", content=system_prompt),
         ChatMessage(role="user", content=user_prompt),
     ]
-    async with limiter:
+    if limiter:
+        async with limiter:
+            resp = await acompletion(model=model, messages=messages, caching=True)
+    else:  
         resp = await acompletion(model=model, messages=messages, caching=True)
     cot = resp.choices[0]['message']['content']
     return {
@@ -88,7 +91,7 @@ def group_by_sample(ds: Dataset, col: str) -> Dataset:
     return shuffled_ds.select(keep_indices)
 
 
-async def get_examples(model: str, split: str, model_rpm: int = 50) -> list[dict]:
+async def get_examples(model: str, split: str, model_rpm: int = 50, no_limiter_i: int | None = None) -> list[dict]:
     schemas = DBSchema.from_db_schemas_file(DB_SCHEMAS_JSON_PATH, apply_lower=False)
     decomposer_completer_ds = load_dataset("d4nieldev/qpl-decomposer-completer-ds", split=split)
     # decomposer_completer_ds = group_by_sample(decomposer_completer_ds, "op")
@@ -103,8 +106,8 @@ async def get_examples(model: str, split: str, model_rpm: int = 50) -> list[dict
         return result
     
     tasks = [
-        update_tqdm(generate_CoT(model=model, schemas=schemas, example=example, limiter=limiter))
-        for example in decomposer_completer_ds
+        update_tqdm(generate_CoT(model=model, schemas=schemas, example=example, limiter=limiter if no_limiter_i is None or i >= no_limiter_i else None))
+        for i, example in enumerate(decomposer_completer_ds)
     ]
 
     return await asyncio.gather(*tasks)
@@ -117,11 +120,11 @@ if __name__ == "__main__":
 
     dataset = {}
     for split in ['train', 'validation']:
-        dataset[split] = asyncio.run(get_examples(model=MODEL, split=split, model_rpm=50))
+        dataset[split] = asyncio.run(get_examples(model=MODEL, split=split, model_rpm=50, no_limiter_i=10808 if split == 'train' else 1620))
     
-    # import json
-    # with open('output/qpl/completer_cot.json', 'w') as f:
-    #     json.dump(dataset["validation"], f, indent=2)
+    import json
+    with open('output/qpl/completer_cot.json', 'w') as f:
+        json.dump(dataset, f, indent=2)
     
     ds = DatasetDict({
         split: Dataset.from_list(data)
