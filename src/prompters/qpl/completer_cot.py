@@ -87,7 +87,7 @@ class QPLCompleterCotPrompter(QPLPrompter):
                 else:
                     raise ValueError(f"QPL line does not match expected patterns: {example['qpl_line']}")
 
-        line_start = f"#{line_num} = {example['op']} {children_str} ..."
+        line_start = f"#{line_num} = {example['op']} {children_str}"
 
         user = (
             f"{self._get_schema_str(example['db_id'])}\n\n"
