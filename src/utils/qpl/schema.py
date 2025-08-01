@@ -173,11 +173,11 @@ class Table:
 
 class DBSchema:
     db_id: str
-    _tables: Dict[str, Table]
+    tables: Dict[str, Table]
 
     def __init__(self, db_id: str, tables: Dict[str, Table], apply_lower: bool = False):
         self.db_id = db_id
-        self._tables = tables if apply_lower else {k.lower(): v for k,v in tables.items()}
+        self.tables = tables if apply_lower else {k.lower(): v for k,v in tables.items()}
         self.apply_lower = apply_lower
     
     @staticmethod
@@ -216,12 +216,14 @@ class DBSchema:
             tables[table_name].pks = [PrimaryKey(pk_col, apply_lower=apply_lower) for pk_col in pk_cols]
         
         for src_table_name, dst_tables_data in db_schema['fk'].items():
+            src_table_fks = []
             src_table = tables[src_table_name]
             for dst_table_name, src_dst_fks in dst_tables_data.items():
                 dst_table = tables[dst_table_name]
                 for src_col, dst_col in src_dst_fks:
                     fk = ForeignKey(from_col=src_col, to_table=dst_table, to_col=dst_col, apply_lower=apply_lower)
-                    src_table.fks.append(fk)
+                    src_table_fks.append(fk)
+            src_table.fks = src_table_fks
 
         return DBSchema(db_id=db_id, tables=tables)
     
@@ -230,27 +232,27 @@ class DBSchema:
         # primary keys that are not foreign keys to other tables distinguish the table as an entity
         return [
             table.name
-            for table in self._tables.values()
+            for table in self.tables.values()
             if set([pk.col_name for pk in table.pks]).difference([fk.from_col for fk in table.fks])
         ]
     
     def get_table(self, table_name: str) -> Table:
         if not self.apply_lower:
             table_name = table_name.lower()
-        if table_name not in self._tables:
+        if table_name not in self.tables:
             raise KeyError(f"Table {table_name!r} does not exist in the schema {self.db_id!r}.")
-        return self._tables[table_name]
+        return self.tables[table_name]
     
     def ddl(self):
-        tables_str = "\n\n".join(table.ddl() for table in self._tables.values())
+        tables_str = "\n\n".join(table.ddl() for table in self.tables.values())
         return f"Database Name: {self.db_id}\n```DDL\n{tables_str}\n```"
     
     def m_schema(self) -> str:
         output = f"【DB_ID】{self.db_id}\n"
         output += f"【Schema】\n"
-        output += "\n".join([table.m_schema() for table in self._tables.values()])
+        output += "\n".join([table.m_schema() for table in self.tables.values()])
         output += "\n【Foreign Keys】\n"
-        for table in self._tables.values():
+        for table in self.tables.values():
             for fk in table.fks:
                 output += f"{table.name}.{fk.from_col}={fk.to_table.name}.{fk.to_col}\n"
         return output
