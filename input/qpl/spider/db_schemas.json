@@ -7172,20 +7172,15 @@
         ["LastName", "varchar", null],
         ["FirstName", "varchar", null],
         ["Classroom", "int", null]
-      ],
-      "classroom": [["Classroom_ID", "int", null]]
+      ]
     },
     "pk": {
       "list": ["FirstName", "LastName"],
-      "teachers": ["FirstName", "LastName"],
-      "classroom": ["Classroom_ID"]
+      "teachers": ["FirstName", "LastName"]
     },
     "fk": {
       "list": {
-        "classroom": [["Classroom", "Classroom_ID"]]
-      },
-      "teachers": {
-        "classroom": [["Classroom", "Classroom_ID"]]
+        "teachers": [["Classroom", "Classroom"]]
       }
     }
   },
