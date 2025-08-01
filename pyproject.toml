@@ -5,20 +5,20 @@ description = "Fine tune any LLM on any dataset"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "aiolimiter>=1.2.1",
-    "datasets==3.5.0",
+    "aiolimiter==1.2.1",
+    "datasets==4.0.0",
     "evaluate==0.4.3",
-    "hf-xet>=1.1.5",
-    "huggingface-hub==0.30.2",
-    "numpy==2.2.4",
-    "pandas==2.2.3",
+    "hf-xet==1.1.5",
+    "huggingface-hub==0.34.3",
+    "numpy==2.3.2",
+    "pandas==2.3.1",
     "peft==0.15.2",
-    "rich-argparse>=1.7.1",
-    "simple-parsing>=0.1.7",
-    "torch==2.6.0",
+    "rich-argparse==1.7.1",
+    "simple-parsing==0.1.7",
+    "torch==2.7.1",
     "tqdm==4.67.1",
-    "transformers==4.51.3",
-    "trl==0.16.1",
+    "transformers==4.54.1",
+    "trl==0.20.0",
     "wandb==0.19.9",
 ]
 
@@ -26,17 +26,17 @@ dependencies = [
 qpl = [
     "pydash==8.0.5",
     "pyodbc==5.2.0",
-    "sqlalchemy>=2.0.41",
-    "sentence-transformers>=4.1.0",
-    "dspy>=2.6.24",
+    "sqlalchemy==2.0.41",
+    "sentence-transformers==4.1.0",
+    "dspy==2.6.24",
 ]
 notebook = [
-    "ipykernel>=6.29.5",
-    "matplotlib>=3.10.3",
+    "ipykernel==6.29.5",
+    "matplotlib==3.10.3",
 ]
 viz = [
-    "graphviz>=0.21",
+    "graphviz==0.21",
 ]
 error-analysis = [
-    "openpyxl>=3.1.5",
+    "openpyxl==3.1.5",
 ]
