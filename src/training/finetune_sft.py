@@ -75,18 +75,7 @@ def train(
         print(f"{k}={v}")
     
 
-    # Step 1. Load tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model_id)
-    
-    original_vocab_size = len(tokenizer)
-    if not tokenizer.pad_token or tokenizer.pad_token == tokenizer.eos_token:
-        # Make sure that pad_token is different from eos_token, because it requires a special treatment in the collator
-        # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#5-when-pad_token-equals-eos_token
-        tokenizer.add_special_tokens({'pad_token': '<|pad|>'})
-    logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
-    
-    
-    # Step 2. Load model
+    # Step 1. Load model
     if 'gemma' in args.model_id:
         model = AutoModelForCausalLM.from_pretrained(args.model_id, attn_implementation="eager")
     else:
@@ -106,6 +95,19 @@ def train(
         # https://huggingface.co/docs/peft/en/developer_guides/torch_compile?utm_source=chatgpt.com
         model = model.compile(model)
     
+    # Step 2. Load and adjust tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(args.model_id)
+
+    original_vocab_size = len(tokenizer)
+    if not tokenizer.pad_token or tokenizer.pad_token == tokenizer.eos_token:
+        # Make sure that pad_token is different from eos_token, because it requires a special treatment in the collator
+        # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#5-when-pad_token-equals-eos_token
+        tokenizer.add_special_tokens({'pad_token': '<|pad|>'})
+
+    prompter = PrompterRegistry.get(args.dataset_id)(with_assistant=True)
+    tokenizer.add_special_tokens(prompter.special_tokens_to_add())
+    logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
+
     # Resize token embeddings after adding special <|pad|> token
     if len(tokenizer) != original_vocab_size:
         print("Tokenizer size was changed from {} to {}".format(original_vocab_size, len(tokenizer)))
@@ -114,7 +116,6 @@ def train(
     
     
     # Step 3. Data preperation
-    prompter = PrompterRegistry.get(args.dataset_id)(with_assistant=True)
     train_dataset: Dataset = prompter.load_dataset()['train'] # type: ignore
     train_dataset = train_dataset.map(lambda ex: prompter.to_chat_template(ex), remove_columns=train_dataset.column_names)
     def to_model_prompt(example):

@@ -18,12 +18,12 @@ class BasePrompter(ABC):
     def load_dataset(self):
         return load_dataset(self.dataset_id)
     
-    def tokens_to_add(self) -> list[str]:
+    def special_tokens_to_add(self) -> dict[str, str]:
         """
         Returns a list of tokens to add to the tokenizer.
         This can be used to ensure that the tokenizer can handle special tokens used in the prompts.
         """
-        return []
+        return {}
 
     @abstractmethod
     def to_chat_template(self, example: Mapping[str, Any]) -> ChatTemplate:
