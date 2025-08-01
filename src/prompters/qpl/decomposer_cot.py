@@ -1,14 +1,14 @@
 from collections import defaultdict
 
 from src.utils.chat_types import ChatTemplate, ChatMessage
-from src.prompters.qpl.decomposer import QPLDecomposerPrompter
+from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
 from datasets import load_dataset
 
 
 @PrompterRegistry.register
-class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
+class QPLDecomposerCotPrompter(QPLPrompter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
     
@@ -43,10 +43,7 @@ class QPLDecomposerCotPrompter(QPLDecomposerPrompter):
         )
 
         user = (
-            f"Database Name: {db_id}\n\n"
-
-            + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.with_assistant)}\n```\n\n"
+            f"{self._get_schema_str(db_id)}\n\n"
 
             + f"""Question: {example["question"].strip()}\n\n"""
 

@@ -1,7 +1,7 @@
 import re
 import json
 from collections import defaultdict
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 
 from src.utils.chat_types import ChatTemplate, ChatMessage
 from src.prompters.qpl.base import QPLPrompter
@@ -12,37 +12,12 @@ from src.prompters.base import PrompterRegistry
 class QPLCompleterPrompter(QPLPrompter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        q_to_id = {}
-        for id, content in self._db_content.items():
-            question = content["question"]
-            q_to_id[question] = id
-        
-        self.__q_to_id = q_to_id
-        dataset = self.load_dataset()
-        question_to_examples = defaultdict(list)
-        for split in dataset:
-            for example in dataset[split]:
-                question_to_examples[example['question']].append(example)
-        self.__sub_q_to_parents = defaultdict(list)
-        for split in dataset:
-            for example in dataset[split]:
-                parent_question = example['parent_question']
-                question = example['question']
-                if parent_question is None:
-                    continue
-                for ex in question_to_examples[parent_question]:
-                    if ex in self.__sub_q_to_parents[question]:
-                        continue
-                    self.__sub_q_to_parents[question].append(ex)
     
     @property
     def dataset_id(self) -> str:
         return "d4nieldev/qpl-completer-ds"
 
     def to_chat_template(self, example) -> ChatTemplate:
-        db_id = example['db_id']
-
         system = (
             "Given a database schema, a QPL query prefix, and a natural language question, "
             + "complete the final line of the query so it completes the user request.\n\n"
@@ -106,10 +81,7 @@ class QPLCompleterPrompter(QPLPrompter):
         line_start = f"#{line_num} = {example['op']} {children_str} "
 
         user = (
-            f"Database Name: {db_id}\n\n"
-
-            + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.with_assistant)}```\n\n"
+            f"{self._get_schema_str(example['db_id'])}\n\n"
 
             + f"Question: {example['question'].strip()}\n\n"
 
@@ -134,23 +106,3 @@ class QPLCompleterPrompter(QPLPrompter):
                     ChatMessage(role="user", content=user),
                 ]
             )
-    
-    def _example_to_id(self, example: Dict[str, Any]) -> str:
-        # get id
-        if self.with_assistant:
-            id = self.__q_to_id.get(example['question'])
-            if id is None:
-                # return id of parent
-                potential_parents = self.__sub_q_to_parents.get(example['question'], [])
-                ids = set()
-                for parent in {frozenset(p.items()) for p in potential_parents}:
-                    try:
-                        ids.add(self._example_to_id(dict(parent)))
-                    except ValueError:
-                        continue
-                if ids:
-                    return ids.pop()
-                # parent not found
-                raise ValueError(f"Parent not found for question: {example['question']}")
-            return id
-        raise ValueError("Cannot get id in test mode")

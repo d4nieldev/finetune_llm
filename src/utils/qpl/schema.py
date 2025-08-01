@@ -243,11 +243,11 @@ class DBSchema:
     
     def ddl(self):
         tables_str = "\n\n".join(table.ddl() for table in self._tables.values())
-        return f"```DDL\n{tables_str}\n```"
+        return f"Database Name: {self.db_id}\n```DDL\n{tables_str}\n```"
     
     def m_schema(self) -> str:
-        output = f"【DB_ID】{self.db_id}"
-        output += f"\n【Schema】\n"
+        output = f"【DB_ID】{self.db_id}\n"
+        output += f"【Schema】\n"
         output += "\n".join([table.m_schema() for table in self._tables.values()])
         output += "\n【Foreign Keys】\n"
         for table in self._tables.values():

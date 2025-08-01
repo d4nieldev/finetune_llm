@@ -10,24 +10,6 @@ class QPLDecomposerPrompter(QPLPrompter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        q_to_id = {}
-        for id, content in self._db_content.items():
-            question = content["question"]
-            q_to_id[question] = id
-        
-        self.__q_to_id = q_to_id
-        dataset = self.load_dataset()
-        self.__q_to_parent = {}
-        for split in dataset:
-            for example in dataset[split]:
-                for sub_question in [example['sub_question_1'], example['sub_question_2']]:
-                    if not sub_question:
-                        continue
-                    if sub_question not in self.__q_to_parent:
-                        self.__q_to_parent[sub_question] = []
-                    if example not in self.__q_to_parent[sub_question]:
-                        self.__q_to_parent[sub_question].append(example)
-
     @property
     def dataset_id(self) -> str:
         return "bgunlp/question_decomposer_ds"
@@ -54,10 +36,7 @@ class QPLDecomposerPrompter(QPLPrompter):
         )
 
         user = (
-            f"Database Name: {db_id}\n\n"
-
-            + "Database Schema:\n"
-            + f"```DDL\n{self._create_table_prompt(example, log_when_parent_not_found=self.with_assistant)}\n```\n\n"
+            f"{self._get_schema_str(db_id)}\n\n"
 
             + f"""Question: {example["question"].strip()}\n\n"""
 
@@ -85,24 +64,3 @@ class QPLDecomposerPrompter(QPLPrompter):
                     ChatMessage(role="user", content=user),
                 ]
             )
-    
-    def _example_to_id(self, example: Dict[str, Any]) -> str:
-        def rec(example: Dict[str, Any], prev: List[str] = []) -> str:
-            id = self.__q_to_id.get(example['question'])
-            if id is not None:
-                return id
-            if example['question'] in prev:
-                raise ValueError(f"Circular reference detected for question: {example['question']}")
-            prev.append(example['question'])
-            parents = self.__q_to_parent.get(example['question'], [])
-            # recursively get id of the parent
-            for parent in parents:
-                try:
-                    return rec(dict(parent), prev)
-                except ValueError:
-                    continue
-            raise ValueError(f"No valid parent found for question: {example['question']}")
-
-        if self.with_assistant:
-            return rec(example)
-        raise ValueError("Cannot get id in test mode")
