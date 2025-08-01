@@ -15,9 +15,6 @@ class PrimaryKey:
     def __post_init__(self):
         if self.apply_lower:
             self.col_name = self.col_name.lower()
-
-    def __str__(self):
-        return f"{self.col_name}"
     
 
 @dataclass
@@ -38,7 +35,7 @@ class ForeignKey:
     def __repr__(self):
         return f"ForeignKey( {self.from_col!r} -> {self.to_table.name!r}.{self.to_col!r} )"
     
-    def __str__(self):
+    def ddl(self):
         return f"FOREIGN KEY ({self.from_col}) REFERENCES {self.to_table.name}({self.to_col})"
     
 
@@ -85,7 +82,7 @@ class Column:
         else:
             return "others"
 
-    def __str__(self):
+    def ddl(self):
         if self.constraint:
             return f"{self.name} {self.type} {self.constraint}"
         return f"{self.name} {self.type}"
@@ -160,10 +157,10 @@ class Table:
         if fk := next((fk for fk in self.fks if fk.from_col == colname and fk.to_table != self), None):
             return fk.to_table.src_colname_table(fk.from_col)
         return colname, self
-    
-    def __str__(self):
+
+    def ddl(self):
         pk_str = ["PRIMARY KEY (" + ", ".join(pk.col_name for pk in self.pks) + ")"]
-        cols_str = ",\n".join(f"    {col}" for col in self.columns + pk_str + self.fks)
+        cols_str = ",\n".join(f"    {col}" for col in [col.ddl() for col in self.columns] + pk_str + [fk.ddl() for fk in self.fks])
         return f"CREATE TABLE {self.name} (\n{cols_str}\n);"
     
     def m_schema(self) -> str:
@@ -244,8 +241,8 @@ class DBSchema:
             raise KeyError(f"Table {table_name!r} does not exist in the schema {self.db_id!r}.")
         return self._tables[table_name]
     
-    def __str__(self):
-        tables_str = "\n\n".join(str(table) for table in self._tables.values())
+    def ddl(self):
+        tables_str = "\n\n".join(table.ddl() for table in self._tables.values())
         return f"```DDL\n{tables_str}\n```"
     
     def m_schema(self) -> str:
@@ -265,7 +262,7 @@ if __name__ == "__main__":
     representation = sys.argv[2]
 
     if representation == "ddl":
-        print(schema)
+        print(schema.ddl())
     elif representation == "m_schema":
         print(schema.m_schema())
     else:
