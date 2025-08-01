@@ -1,8 +1,10 @@
 import sys
 import os
 import json
+import random
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
+from math import sqrt
 
 import src.utils.qpl.paths as p
 
@@ -46,10 +48,12 @@ class Column:
     is_pk: bool
     maps_to: str | None = None
     description: str | None = None
-    examples: list[str] = field(default_factory=list)
+    examples_freq: dict[str, int] = field(default_factory=dict)
     constraint: Optional[str] = None
     apply_lower: bool = False
     simple_type: bool = True
+    metadata: dict[str, Any] = field(default_factory=dict)
+    num_rows: int | None = None
 
     def __post_init__(self):
         if self.apply_lower:
@@ -62,8 +66,8 @@ class Column:
 
     def _simplify_type(self):
         t = self.type.lower()
-        if "char" in t or self.type == "" or "text" in t or "var" in t:
-            return "text"
+        if "char" in t or t == "" or "text" in t or "var" in t:
+            self.type = "text"
         elif (
             "int" in t
             or "numeric" in t
@@ -74,29 +78,87 @@ class Column:
             or "double" in t
             or "float" in t
         ):
-            return "number"
+            self.type = "number"
         elif "date" in t or "time" in t:
-            return "date"
+            self.type = "date"
         elif "boolean" in t or t == "bit":
-            return "boolean"
+            self.type = "boolean"
         else:
-            return "others"
+            self.type = "others"
 
     def ddl(self):
         if self.constraint:
             return f"{self.name} {self.type} {self.constraint}"
         return f"{self.name} {self.type}"
     
-    def m_schema(self) -> str:
+    def metadata_desc(self, max_examples: int) -> str:
+        output = f"This column has {self.metadata['num_nulls']} null values and {self.metadata['num_unique']} distinct values. "
+
+        # values info
+        values_general_info = ""
+        if self.metadata['all_numeric']:
+            values_general_info = "All of them are numeric"
+        elif self.metadata['all_alphabetic']:
+            values_general_info = "All of them are alphabetic"
+            if self.metadata['all_lower']:
+                values_general_info += " (lower case)"
+            elif self.metadata['all_upper']:
+                values_general_info += " (upper case)"
+        elif self.metadata['all_alphanumeric']:
+            values_general_info += "All of them are alpha-numeric"
+        if values_general_info:
+            output += values_general_info + ". "
+
+        # distribution info
+        if 'min_length' in self.metadata:
+            if self.metadata['min_length'] == self.metadata['max_length']:
+                output += f"The values are always {self.metadata['min_length']} characters long. "
+            else:
+                output += f"The values are between {self.metadata['min_length']} and {self.metadata['max_length']} characters long, with a mean of {self.metadata['mean_length']:.2f} and a standard deviation of {self.metadata['std_dev_length']:.2f}. "
+        if 'min_value' in self.metadata:
+            if self.metadata['min_value'] != self.metadata['max_value']:
+                output += f"The values are between {self.metadata['min_value']} and {self.metadata['max_value']}, with a mean of {self.metadata['mean_value']:.2f} and a standard deviation of {self.metadata['std_dev']:.2f}. "
+        if 'min_date' in self.metadata:
+            output += f"The dates range from {self.metadata['min_date']} to {self.metadata['max_date']}. "
+
+        # common prefixes and suffixes
+        def wilson_lower_confidence_bound(freq: int) -> bool:
+            # https://projecteuclid.org/journals/statistical-science/volume-16/issue-2/Interval-Estimation-for-a-Binomial-Proportion/10.1214/ss/1009213286.full
+            if not self.num_rows:
+                raise ValueError("num_rows must be set to calculate frequency thresholds.")
+            z = 1.96
+            tau = 0.05
+            x = (freq/self.num_rows + z*z/(2*self.num_rows) - z * sqrt((freq/self.num_rows)*(1 - freq/self.num_rows)/self.num_rows + z*z/(4*self.num_rows*self.num_rows))) / (1 + z*z/self.num_rows)
+            return x >= tau
+        
+        prefixes = {p:f for p,f in self.metadata['common_prefixes'].items() if wilson_lower_confidence_bound(f)}
+        suffixes = {s:f for s,f in self.metadata['common_suffixes'].items() if wilson_lower_confidence_bound(f)}
+
+        if prefixes and len(set(prefixes.keys()).intersection(set(self.examples_freq.keys()))) <= 1 and len(self.examples_freq) > 1:
+            pref_str = ', '.join([f"{p} ({f} occurrences)" for p, f in prefixes.items()][:max_examples])
+            output += f"Common prefixes: {pref_str}. "
+        if suffixes and len(set(suffixes.keys()).intersection(set(self.examples_freq.keys()))) <= 1 and len(self.examples_freq) > 1:
+            suff_str = ', '.join([f"{s} ({f} occurrences)" for s, f in suffixes.items()][:max_examples])
+            output += f"Common suffixes: {suff_str}. "
+        
+        return output.strip()
+    
+    def m_schema(self, examples_random_order: bool, max_examples: int) -> str:
         output = f"{self.name}: {self.type.upper() if not self.apply_lower else self.type.lower()}"
         if self.is_pk:
-            output += ", Primary Key"
+            output += " | Primary Key"
         if self.description:
-            output += f", {self.description}"
+            output += f" | {self.description}"
+        if self.metadata:
+            output += f" | {self.metadata_desc(max_examples=max_examples)}"
         if self.maps_to:
-            output += f", Maps to {self.maps_to}"
-        if self.examples:
-            output += f", Examples: [{', '.join(self.examples)}]"
+            output += f" | Maps to {self.maps_to}"
+        if self.examples_freq:
+            examples_freq_items = list(self.examples_freq.items())[:max_examples]
+            if examples_random_order:
+                random.shuffle(examples_freq_items)
+            examples_str = ', '.join([f"{e}" for e, f in examples_freq_items])  # optional: add frequency
+            output += f" | Values Examples: [{examples_str}]"
         return output
 
 
@@ -105,8 +167,9 @@ class Table:
     columns: List[Column]
     _pks: List[PrimaryKey]
     _fks: List[ForeignKey]
+    num_rows: int | None = None
 
-    def __init__(self, name: str, columns: List[Column], pks: List[PrimaryKey], fks: List[ForeignKey], apply_lower: bool = False):
+    def __init__(self, name: str, columns: List[Column], pks: List[PrimaryKey], fks: List[ForeignKey], apply_lower: bool = False, num_rows: int | None = None):
         self.name = name
         if apply_lower:
             self.name = self.name.lower()
@@ -114,6 +177,7 @@ class Table:
         self.pks = pks
         self.fks = fks
         self.apply_lower = apply_lower
+        self.num_rows = num_rows
 
         assert all(col.apply_lower == apply_lower for col in columns), f"All columns must have the same case sensitivity as the table {self.name!r}."
         assert all(pk.apply_lower == apply_lower for pk in pks), f"All primary keys must have the same case sensitivity as the table {self.name!r}."
@@ -163,10 +227,13 @@ class Table:
         cols_str = ",\n".join(f"    {col}" for col in [col.ddl() for col in self.columns] + pk_str + [fk.ddl() for fk in self.fks])
         return f"CREATE TABLE {self.name} (\n{cols_str}\n);"
     
-    def m_schema(self) -> str:
-        output = f"# Table: {self.name}\n"
+    def m_schema(self, examples_random_order: bool, max_examples: int) -> str:
+        output = f"# Table: {self.name}"
+        if self.num_rows is not None:
+            output += f" ({self.num_rows} rows)"
+        output += "\n## Columns (name:type | pk? | description? | metadata? | fk? | examples?)\n"
         output += "[\n"
-        output += ",\n".join([f"({col.m_schema()})" for col in self.columns])
+        output += ",\n".join([f"({col.m_schema(examples_random_order=examples_random_order, max_examples=max_examples)})" for col in self.columns])
         output += "\n]\n"
         return output
 
@@ -177,24 +244,31 @@ class DBSchema:
 
     def __init__(self, db_id: str, tables: Dict[str, Table], apply_lower: bool = False):
         self.db_id = db_id
-        self.tables = tables if apply_lower else {k.lower(): v for k,v in tables.items()}
+        self.tables = tables if not apply_lower else {k.lower(): v for k,v in tables.items()}
         self.apply_lower = apply_lower
     
     @staticmethod
-    def from_db_schemas_file(db_schemas_file: os.PathLike, apply_lower: bool = False) -> Dict[str, "DBSchema"]:
+    def from_db_schemas_file(
+        db_schemas_file: os.PathLike = p.DB_SCHEMAS_JSON_PATH,
+        dbs_metadata_file: os.PathLike | None = p.DB_PROFILES_PATH, 
+        apply_lower: bool = False
+    ) -> Dict[str, "DBSchema"]:
         with open(db_schemas_file, "r") as f:
             db_schemas = json.load(f)
-        return DBSchema.from_db_schemas(db_schemas, apply_lower)
-    
+        if dbs_metadata_file:
+            with open(dbs_metadata_file, "r") as f:
+                dbs_metadata = json.load(f)
+        return DBSchema.from_db_schemas(db_schemas, dbs_metadata if dbs_metadata_file else None, apply_lower)
+
     @staticmethod
-    def from_db_schemas(db_schemas: Dict, apply_lower: bool = False) -> Dict[str, "DBSchema"]:
+    def from_db_schemas(db_schemas: Dict, dbs_metadata: dict | None = None, apply_lower: bool = False) -> Dict[str, "DBSchema"]:
         return {
-            db_id: DBSchema.from_db_schema(db_id, tables_data, apply_lower) 
+            db_id: DBSchema.from_db_schema(db_id, tables_data, dbs_metadata[db_id] if dbs_metadata else None, apply_lower)
             for db_id, tables_data in db_schemas.items()
         }
     
     @staticmethod
-    def from_db_schema(db_id: str, db_schema: Dict, apply_lower: bool = False) -> "DBSchema":
+    def from_db_schema(db_id: str, db_schema: Dict, db_metadata: Dict[str, Any] | None, apply_lower: bool = False) -> "DBSchema":
         tables: Dict[str, Table] = {}
         
         for table_name, cols_data in db_schema['tables'].items():
@@ -204,12 +278,22 @@ class DBSchema:
             tables[table_name] = Table(
                 name=table_name,
                 columns=[
-                    Column(name=col_name, type=col_type, is_pk=False, maps_to=None, constraint=col_constraint, apply_lower=apply_lower) 
-                    for col_name, col_type, col_constraint in cols_data
+                    Column(
+                        name=col_name, 
+                        type=col_type, 
+                        is_pk=False, 
+                        maps_to=None, 
+                        constraint=col_constraint, 
+                        apply_lower=apply_lower, 
+                        examples_freq=db_metadata[table_name].get(col_name, {}).get('most_common_values', {}) if db_metadata else {},
+                        metadata=db_metadata[table_name].get(col_name, {}) if db_metadata else {},
+                        num_rows=db_metadata[table_name].get('num_rows', 0) if db_metadata else None,
+                    ) for col_name, col_type, col_constraint in cols_data
                 ],
                 pks=[],
                 fks=[],
-                apply_lower=apply_lower
+                apply_lower=apply_lower,
+                num_rows=db_metadata[table_name].get('num_rows', 0) if db_metadata else None,
             )
 
         for table_name, pk_cols in db_schema['pk'].items():
@@ -247,10 +331,10 @@ class DBSchema:
         tables_str = "\n\n".join(table.ddl() for table in self.tables.values())
         return f"Database Name: {self.db_id}\n```DDL\n{tables_str}\n```"
     
-    def m_schema(self) -> str:
+    def m_schema(self, examples_random_order: bool = True, max_examples: int = 5) -> str:
         output = f"【DB_ID】{self.db_id}\n"
         output += f"【Schema】\n"
-        output += "\n".join([table.m_schema() for table in self.tables.values()])
+        output += "\n".join([table.m_schema(examples_random_order=examples_random_order, max_examples=max_examples) for table in self.tables.values()])
         output += "\n【Foreign Keys】\n"
         for table in self.tables.values():
             for fk in table.fks:
@@ -259,7 +343,11 @@ class DBSchema:
 
 
 if __name__ == "__main__":
-    db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH, apply_lower=False)
+    db_schemas = DBSchema.from_db_schemas_file()
+
+    lens = []
+    for schema in db_schemas.values():
+        lens.append(len(schema.m_schema()))
     schema = db_schemas[sys.argv[1]]
     representation = sys.argv[2]
 
