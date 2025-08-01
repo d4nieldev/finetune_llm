@@ -1,7 +1,7 @@
 import sys
 import os
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
 import src.utils.qpl.paths as p
@@ -46,6 +46,10 @@ class ForeignKey:
 class Column:
     name: str
     type: str
+    is_pk: bool
+    maps_to: str | None = None
+    description: str | None = None
+    examples: list[str] = field(default_factory=list)
     constraint: Optional[str] = None
     apply_lower: bool = False
     simple_type: bool = True
@@ -85,6 +89,18 @@ class Column:
         if self.constraint:
             return f"{self.name} {self.type} {self.constraint}"
         return f"{self.name} {self.type}"
+    
+    def m_schema(self) -> str:
+        output = f"{self.name}: {self.type.upper() if not self.apply_lower else self.type.lower()}"
+        if self.is_pk:
+            output += ", Primary Key"
+        if self.description:
+            output += f", {self.description}"
+        if self.maps_to:
+            output += f", Maps to {self.maps_to}"
+        if self.examples:
+            output += f", Examples: [{', '.join(self.examples)}]"
+        return output
 
 
 class Table:
@@ -113,6 +129,11 @@ class Table:
     @pks.setter
     def pks(self, pks: List[PrimaryKey]):
         assert all(pk.col_name in self.column_names for pk in pks), f"Primary keys {pks} must be a subset of columns of table {self.name!r}: {self.columns}"
+        for column in self.columns:
+            column.is_pk = False
+            for pk in pks:
+                if pk.col_name == column.name:
+                    column.is_pk = True
         self._pks = pks
     
     @property
@@ -122,6 +143,11 @@ class Table:
     @fks.setter
     def fks(self, fks: List[ForeignKey]):
         assert all(fk.from_col in self.column_names for fk in fks), f"Foreign keys {fks} must be a subset of columns of table {self.name!r}: {self.columns}"
+        for column in self.columns:
+            column.is_pk = False
+            for fk in fks:
+                if fk.from_col == column.name:
+                    column.maps_to = f"{fk.to_table.name}({fk.to_col})"
         self._fks = fks
 
     @property
@@ -139,6 +165,13 @@ class Table:
         pk_str = ["PRIMARY KEY (" + ", ".join(pk.col_name for pk in self.pks) + ")"]
         cols_str = ",\n".join(f"    {col}" for col in self.columns + pk_str + self.fks)
         return f"CREATE TABLE {self.name} (\n{cols_str}\n);"
+    
+    def m_schema(self) -> str:
+        output = f"# Table: {self.name}\n"
+        output += "[\n"
+        output += ",\n".join([f"({col.m_schema()})" for col in self.columns])
+        output += "\n]\n"
+        return output
 
 
 class DBSchema:
@@ -174,7 +207,7 @@ class DBSchema:
             tables[table_name] = Table(
                 name=table_name,
                 columns=[
-                    Column(name=col_name, type=col_type, constraint=col_constraint, apply_lower=apply_lower) 
+                    Column(name=col_name, type=col_type, is_pk=False, maps_to=None, constraint=col_constraint, apply_lower=apply_lower) 
                     for col_name, col_type, col_constraint in cols_data
                 ],
                 pks=[],
@@ -214,9 +247,26 @@ class DBSchema:
     def __str__(self):
         tables_str = "\n\n".join(str(table) for table in self._tables.values())
         return f"```DDL\n{tables_str}\n```"
+    
+    def m_schema(self) -> str:
+        output = f"【DB_ID】{self.db_id}"
+        output += f"\n【Schema】\n"
+        output += "\n".join([table.m_schema() for table in self._tables.values()])
+        output += "\n【Foreign Keys】\n"
+        for table in self._tables.values():
+            for fk in table.fks:
+                output += f"{table.name}.{fk.from_col}={fk.to_table.name}.{fk.to_col}\n"
+        return output
 
 
 if __name__ == "__main__":
     db_schemas = DBSchema.from_db_schemas_file(p.DB_SCHEMAS_JSON_PATH, apply_lower=False)
     schema = db_schemas[sys.argv[1]]
-    print(schema)
+    representation = sys.argv[2]
+
+    if representation == "ddl":
+        print(schema)
+    elif representation == "m_schema":
+        print(schema.m_schema())
+    else:
+        raise ValueError(f"Unknown representation: {representation}. Use 'ddl' or 'm_schema'.")
