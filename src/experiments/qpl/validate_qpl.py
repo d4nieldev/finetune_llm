@@ -9,7 +9,7 @@ import pandas as pd
 import pyodbc
 from tqdm import tqdm
 
-from src.inference.qpl.qpl_to_cte import flat_qpl_to_cte
+from src.experiments.qpl.qpl_to_cte import flat_qpl_to_cte
 
 connection_string = (
     'Driver={ODBC Driver 18 for SQL Server};'
