@@ -1,4 +1,4 @@
-from datasets import interleave_datasets, DatasetDict
+from datasets import concatenate_datasets, interleave_datasets, DatasetDict
 
 from src.utils.chat_types import ChatTemplate
 from src.prompters.qpl.base import QPLPrompter
@@ -23,12 +23,12 @@ class QPLMergedCotPrompter(QPLPrompter):
 
     def load_dataset(self):
         decomposer_ds = self.decomposer_cot_prompter.load_dataset()
-        decomposer_ds.map(lambda _: {"task": "decomposer"})
+        decomposer_ds = decomposer_ds.map(lambda _: {"task": "decomposer"})
         completer_ds = self.completer_cot_prompter.load_dataset()
-        completer_ds.map(lambda _: {"task": "completer"})
+        completer_ds = completer_ds.map(lambda _: {"task": "completer"})
         return DatasetDict({
-            'train': interleave_datasets([decomposer_ds['train'], completer_ds['train']]),
-            'validation': interleave_datasets([decomposer_ds['validation'], completer_ds['validation']])
+            'train': interleave_datasets([decomposer_ds['train'], completer_ds['train']], stopping_strategy="all_exhausted"), # will oversample the smaller dataset (decomposer)
+            'validation': concatenate_datasets([decomposer_ds['validation'], completer_ds['validation']])
         })
 
     def to_chat_template(self, example) -> ChatTemplate:
