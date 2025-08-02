@@ -29,6 +29,7 @@ os.environ["LOCAL_RANK"] = "0"
 os.environ["MASTER_ADDR"] = "localhost"
 os.environ["MASTER_PORT"] = "12355"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 # os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"  # for LoRA: https://github.com/pytorch/pytorch/issues/93661
 logger = logging.getLogger(__name__)
 
@@ -59,12 +60,12 @@ def parse_args():
     train_config_group.add_argument("--bf16", action=argparse.BooleanOptionalAction, default=True, help="Use bfloat16 precision (requires PyTorch 1.10+).")
     train_config_group.add_argument("--num_train_epochs", type=int, default=4, help="Number of training epochs.")
     train_config_group.add_argument("--max_seq_length", type=int, default=32768, help="Maximum sequence length for training.")
-    train_config_group.add_argument("--deepspeed-config", type=Path, required=False, default=None, help="Path to the deepspeed config file.")
+    train_config_group.add_argument("--deepspeed_config", type=Path, default=p.DEEPSPEED_CONFIG_DIR / "stage-2-offloading-warmup-cosine-lr.json", help="Path to the deepspeed config file.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
     monitoring_group.add_argument("--logging_steps", type=int, default=1, help="Log every N steps. If between 0 to 1, part of total_steps.")
     monitoring_group.add_argument("--eval_batch_size", type=int, default=1, help="Evaluation batch size (per GPU).")
-    monitoring_group.add_argument("--eval_steps", type=int, default=0.25, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
+    monitoring_group.add_argument("--eval_steps", type=int, default=0.125, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
     monitoring_group.add_argument("--save_steps", type=int, default=0.25, help="Save checkpoint every N steps. If between 0 to 1, part of total steps.")
     monitoring_group.add_argument("--save_total_limit", type=int, default=3, help="Maximum number of checkpoints to keep.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
@@ -117,7 +118,9 @@ def args_str(args, run_id):
         })
     other_args = "_".join([
         f"{shortname[k]}={v.replace('/', '-')}" if isinstance(v, str) else 
-        (shortname[k] if isinstance(v, bool) else f"{shortname[k]}={v}")
+        (shortname[k] if isinstance(v, bool) else (
+            f"{shortname[k]}={v.stem}" if isinstance(v, Path) else f"{shortname[k]}={v}"
+        ))
         for k, v in vars(args).items() 
         if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
     ])

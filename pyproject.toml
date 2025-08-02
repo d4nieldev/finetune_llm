@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "aiolimiter==1.2.1",
     "datasets==4.0.0",
+    "deepspeed==0.17.4",
     "evaluate==0.4.3",
     "hf-xet==1.1.5",
     "huggingface-hub==0.34.3",
@@ -21,7 +22,12 @@ dependencies = [
     "transformers==4.54.1",
     "trl==0.20.0",
     "wandb==0.19.9",
+    "flash-attn==2.8.2",
+    "python-dotenv>=1.1.1",
 ]
+
+[tool.uv]
+no-build-isolation-package = ["flash-attn"]
 
 [project.optional-dependencies]
 qpl = [
