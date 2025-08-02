@@ -1,0 +1,43 @@
+{
+    "bf16": {
+        "enabled": "auto"
+    },
+
+    "optimizer": {
+        "type": "AdamW",
+        "params": {
+            "lr": "auto",
+            "betas": "auto",
+            "eps": "auto",
+            "weight_decay": "auto"
+        }
+    },
+    "scheduler": {
+         "type": "WarmupCosineLR",
+         "params": {
+             "last_batch_iteration": -1,
+             "cos_min_ratio": 0.05,
+             "warmup_min_ratio": 0.01,
+             "warmup_type": "log",
+             "total_num_steps": "auto",
+             "warmup_num_steps": "auto"
+         }
+     },
+
+    "zero_optimization": {
+        "stage": 1,
+        "reduce_bucket_size": 500000000,
+        "contiguous_gradients": false,
+        "stage3_gather_16bit_weights_on_model_save": true
+    },
+    "checkpoint": {
+        "save_optimizer_states": false,
+        "max_shard_size": "2GB"
+    },
+    "gradient_accumulation_steps": "auto",
+    "gradient_clipping": "auto",
+    "steps_per_print": 100,
+    "train_batch_size": "auto",
+    "train_micro_batch_size_per_gpu": "auto",
+    "wall_clock_breakdown": false
+}
