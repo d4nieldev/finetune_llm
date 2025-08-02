@@ -13,6 +13,7 @@ from trl import SFTTrainer, SFTConfig
 from datasets import load_dataset, Dataset
 from peft import LoraConfig, TaskType
 import wandb
+from dotenv import load_dotenv
 
 from src.callbacks import MemoryLoggingCallback
 from src.prompters import PrompterRegistry
@@ -20,9 +21,15 @@ from src.utils.chat_types import ChatMessage, ChatTemplate
 from src.utils.lists import find_sublist
 import src.utils.paths as p
 
+load_dotenv()
 
+os.environ["RANK"] = "0"
+os.environ["WORLD_SIZE"] = "1"
+os.environ["LOCAL_RANK"] = "0"
+os.environ["MASTER_ADDR"] = "localhost"
+os.environ["MASTER_PORT"] = "12355"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"  # for LoRA: https://github.com/pytorch/pytorch/issues/93661
+# os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"  # for LoRA: https://github.com/pytorch/pytorch/issues/93661
 logger = logging.getLogger(__name__)
 
 
@@ -34,6 +41,7 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, required=True, help="Model ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--model_revision", type=str, default="main", help="Model revision to use for fine-tuning.")
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
     train_config_group = parser.add_argument_group("Training config")
@@ -46,12 +54,12 @@ def parse_args():
     train_config_group.add_argument("--lr_scheduler_type", type=str, default="cosine", help="Learning rate scheduler type.")
     train_config_group.add_argument("--optim", type=str, default="adamw_torch", help="Optimizer to use for training.")
     train_config_group.add_argument("--warmup_ratio", type=float, default=0.15, help="Warmup ratio for learning rate scheduler.")
+    train_config_group.add_argument("--weight_decay", type=float, default=1, help="Weight decay for optimizer.")
     train_config_group.add_argument("--fp16", action=argparse.BooleanOptionalAction, default=False, help="Use 16-bit floating point precision.")
     train_config_group.add_argument("--bf16", action=argparse.BooleanOptionalAction, default=True, help="Use bfloat16 precision (requires PyTorch 1.10+).")
-    train_config_group.add_argument("--weight_decay", type=float, default=1, help="Weight decay for optimizer.")
     train_config_group.add_argument("--num_train_epochs", type=int, default=4, help="Number of training epochs.")
     train_config_group.add_argument("--max_seq_length", type=int, default=32768, help="Maximum sequence length for training.")
-    train_config_group.add_argument("--deepspeed-config", type=Path, default=p.DEEPSPEED_CONFIG, help="Path to the deepspeed config file.")
+    train_config_group.add_argument("--deepspeed-config", type=Path, required=False, default=None, help="Path to the deepspeed config file.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
     monitoring_group.add_argument("--logging_steps", type=int, default=1, help="Log every N steps. If between 0 to 1, part of total_steps.")
@@ -71,14 +79,9 @@ def parse_args():
     lora_config_group.add_argument("--r", type=int, default=16, help="LoRA rank.")
     lora_config_group.add_argument("--alpha", type=int, default=32, help="LoRA alpha.")
     lora_config_group.add_argument("--dropout", type=float, default=0.05, help="LoRA dropout.")
-    lora_config_group.add_argument("--neftune_noise_alpha", type=float, default=None, help="Neftune noise alpha for LoRA.")
+    lora_config_group.add_argument("--neftune_noise_alpha", type=float, default=0, help="Neftune noise alpha for LoRA.")
     
     args = parser.parse_args()
-
-    if 0 < args.logging_steps < 1:
-        args.logging_steps /= args.gradient_accumulation_steps * args.train_batch_size
-    if 0 < args.save_steps < 1:
-        args.save_steps /= args.gradient_accumulation_steps * args.train_batch_size
 
     return args
 
@@ -86,7 +89,38 @@ def parse_args():
 def args_str(args, run_id):
     model_id = args.model_id.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
-    other_args = "_".join([f"{k}={v}" for k, v in vars(args).items() if k not in ["model_id", "dataset_id"]])
+    shortname = {
+        'model_revision': 'rev',
+        'sort_data': 'sort',
+        'train_batch_size': 'bsz',
+        'gradient_checkpointing': 'gc',
+        'gradient_accumulation_steps': 'gacc',
+        'learning_rate': 'lr',
+        'lr_scheduler_type': 'lrs',
+        'optim': 'opt',
+        'warmup_ratio': 'wr',
+        'weight_decay': 'wd',
+        'fp16': 'fp16',
+        'bf16': 'bf16',
+        'num_train_epochs': 'epochs',
+        'max_seq_length': 'maxlen',
+        'deepspeed_config': 'ds',
+        'random_seed': 'seed',
+    }
+    if args.lora:
+        shortname.update({
+            'lora': 'lora',
+            'r': 'r',
+            'alpha': 'alpha',
+            'dropout': 'dropout',
+            'neftune_noise_alpha': 'neftune',
+        })
+    other_args = "_".join([
+        f"{shortname[k]}={v.replace('/', '-')}" if isinstance(v, str) else 
+        (shortname[k] if isinstance(v, bool) else f"{shortname[k]}={v}")
+        for k, v in vars(args).items() 
+        if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
+    ])
     return f"{run_id}_{model_id}-{dataset_id}_{other_args}"
 
 
@@ -107,7 +141,7 @@ def train(
     if 'gemma' in args.model_id:
         model_kwargs["attn_implementation"] = "eager"
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, **model_kwargs)
+    model = AutoModelForCausalLM.from_pretrained(args.model_id, **model_kwargs, revision=args.model_revision)
     
     peft_kwargs = {}
     if args.lora:
@@ -131,7 +165,8 @@ def train(
     tokenizer = AutoTokenizer.from_pretrained(
         args.model_id,
         padding_side="right", 
-        model_max_length=args.max_seq_length
+        model_max_length=args.max_seq_length,
+        revision=args.model_revision,
     )
     logger.info(f"==== Tokenizer Max Length: {tokenizer.model_max_length} ====")
 
@@ -142,16 +177,14 @@ def train(
         logger.info("==== Adding Special pad token: <|pad|> ====")
         tokenizer.add_special_tokens({'pad_token': '<|pad|>'})
     
+    deepspeed_config_dict = None
     if args.deepspeed_config:
         with open(args.deepspeed_config, 'r') as f:
             deepspeed_config_dict = json.load(f)
             print(f"Using deepspeed config: {deepspeed_config_dict}")
-            scheduler_name = deepspeed_config_dict['scheduler']['type']
-    else:
-        raise FileNotFoundError('Deepspeed Config file must be supplied in order to run the job.')
 
     prompter = PrompterRegistry.get(args.dataset_id)(with_assistant=True)
-    tokenizer.add_special_tokens(prompter.special_tokens_to_add())
+    tokenizer.add_special_tokens({"additional_special_tokens": list(prompter.special_tokens_to_add().values())})
     logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
 
     # Resize token embeddings after adding special <|pad|> token
@@ -164,8 +197,11 @@ def train(
     # Step 3. Data preperation
     train_dataset: Dataset = prompter.load_dataset()['train'] # type: ignore
     train_dataset = train_dataset.map(
-        lambda ex: prompter.to_chat_template(ex) | {'len_text': sum(len(m['content']) for m in ex['messages'] if m['role'] == 'user')}, 
+        lambda ex: prompter.to_chat_template(ex), 
         remove_columns=train_dataset.column_names
+    )
+    train_dataset = train_dataset.map(
+        lambda ex: {'len_text': sum(len(m['content']) for m in ex['messages'] if m['role'] == 'user')}, 
     )
     if args.sort_data:
         train_dataset = train_dataset.sort("len_text", reverse=False)
@@ -221,7 +257,7 @@ def train(
     dirname = args_str(args, run_id)
     local_output_dir = str(p.TRAINED_MODELS_DIR / f"{dirname}")
     training_args = SFTConfig(
-        local_rank                    = args.local_rank,
+        # local_rank                    = args.local_rank,
         output_dir                    = local_output_dir,
         per_device_train_batch_size   = args.train_batch_size,
         per_device_eval_batch_size    = args.eval_batch_size,
@@ -251,13 +287,13 @@ def train(
         logging_steps=args.logging_steps,
         log_on_each_node=False,
         push_to_hub=False,
-        disable_tqdm=True,
-        ddp_backend='nccl',
-        ddp_find_unused_parameters=False,
-        ddp_timeout=43200,  # 12 hours
+        disable_tqdm=False,
+        # ddp_backend='nccl',
+        # ddp_find_unused_parameters=False,
+        # ddp_timeout=43200,  # 12 hours
         neftune_noise_alpha=args.neftune_noise_alpha if args.neftune_noise_alpha > 0 else None,
         save_total_limit=args.save_total_limit,
-        max_length=args.max_seq_len,
+        max_length=args.max_seq_length,
         pad_token=tokenizer.pad_token,
         assistant_only_loss=True,
         packing=False,
