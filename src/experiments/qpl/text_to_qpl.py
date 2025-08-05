@@ -8,7 +8,7 @@ from pathlib import Path
 import argparse
 
 import torch
-from peft import AutoPeftModelForCausalLM
+from transformers import AutoModelForCausalLM
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils_base import PreTrainedTokenizerBase
@@ -75,7 +75,7 @@ def text_to_qpl(
             decomposer_prompter = QPLDecomposerCotPrompter(with_assistant=False)
         else:
             decomposer_prompter = QPLDecomposerPrompter(with_assistant=False)
-        decomposer_model = AutoPeftModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
+        decomposer_model = AutoModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="eager").to("cuda")
         decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
         decomposer_model.eval()
 
@@ -106,7 +106,7 @@ def text_to_qpl(
     # complete QPL for trees
     torch.cuda.empty_cache()
     completer_prompter = QPLCompleterPrompter()
-    completer_model = AutoPeftModelForCausalLM.from_pretrained(completer_model_path, attn_implementation="eager").to("cuda")
+    completer_model = AutoModelForCausalLM.from_pretrained(completer_model_path, attn_implementation="eager").to("cuda")
     completer_tokenizer = AutoTokenizer.from_pretrained(completer_model_path)
     completer_model.eval()
     complete(
