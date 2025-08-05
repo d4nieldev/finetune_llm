@@ -10,15 +10,13 @@ import torch.distributed as dist
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 from trl import SFTTrainer, SFTConfig
-from datasets import load_dataset, Dataset
+from datasets import Dataset
 from peft import LoraConfig, TaskType
 import wandb
 from dotenv import load_dotenv
 
 from src.callbacks import MemoryLoggingCallback
 from src.prompters import PrompterRegistry
-from src.utils.chat_types import ChatMessage, ChatTemplate
-from src.utils.lists import find_sublist
 import src.utils.paths as p
 
 load_dotenv()
@@ -42,6 +40,7 @@ def parse_args():
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
     hf_ids_group.add_argument("--model_id", type=str, required=True, help="Model ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--resume_from_checkpoint", type=Path, default=None, help="Path to a checkpoint to resume training from.")
     hf_ids_group.add_argument("--model_revision", type=str, default="main", help="Model revision to use for fine-tuning.")
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
@@ -60,12 +59,12 @@ def parse_args():
     train_config_group.add_argument("--bf16", action=argparse.BooleanOptionalAction, default=True, help="Use bfloat16 precision (requires PyTorch 1.10+).")
     train_config_group.add_argument("--num_train_epochs", type=int, default=4, help="Number of training epochs.")
     train_config_group.add_argument("--max_seq_length", type=int, default=32768, help="Maximum sequence length for training.")
-    train_config_group.add_argument("--deepspeed_config", type=Path, default=p.DEEPSPEED_CONFIG_DIR / "stage-2-offloading-warmup-cosine-lr.json", help="Path to the deepspeed config file.")
+    train_config_group.add_argument("--deepspeed_config", type=Path, required=False, default=None, help="Path to the deepspeed config file.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
     monitoring_group.add_argument("--logging_steps", type=int, default=1, help="Log every N steps. If between 0 to 1, part of total_steps.")
     monitoring_group.add_argument("--eval_batch_size", type=int, default=1, help="Evaluation batch size (per GPU).")
-    monitoring_group.add_argument("--eval_steps", type=int, default=0.125, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
+    monitoring_group.add_argument("--eval_steps", type=int, default=0.25, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
     monitoring_group.add_argument("--save_steps", type=int, default=0.25, help="Save checkpoint every N steps. If between 0 to 1, part of total steps.")
     monitoring_group.add_argument("--save_total_limit", type=int, default=3, help="Maximum number of checkpoints to keep.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
@@ -329,7 +328,7 @@ def train(
         **peft_kwargs,
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
 
     # All ranks must call save_model() for DeepSpeed
     # See Model Checkpointing in https://www.deepspeed.ai/getting-started/
