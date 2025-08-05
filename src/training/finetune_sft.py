@@ -21,14 +21,16 @@ import src.utils.paths as p
 
 load_dotenv()
 
-os.environ["RANK"] = "0"
-os.environ["WORLD_SIZE"] = "1"
-os.environ["LOCAL_RANK"] = "0"
-os.environ["MASTER_ADDR"] = "localhost"
-os.environ["MASTER_PORT"] = "12355"
+# run with:
+# deepspeed --no_ssh --node_rank $RANK --master_addr $MASTER_ADDR --master_port $MASTER_PORT --num_nodes=$NUM_NODES --num_gpus=$NUM_GPUS \
+#           src/training/finetune_sft.py --model_id $MODEL_ID --dataset_id $DATASET_ID ...
+# os.environ["RANK"] = "0"
+# os.environ["WORLD_SIZE"] = "1"
+# os.environ["LOCAL_RANK"] = "0"
+# os.environ["MASTER_ADDR"] = "localhost"
+# os.environ["MASTER_PORT"] = "12355"
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-# os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"  # for LoRA: https://github.com/pytorch/pytorch/issues/93661
 logger = logging.getLogger(__name__)
 
 
@@ -154,6 +156,8 @@ def train(
             lora_dropout=args.dropout,
             target_modules="all-linear",
         )
+        # for LoRA: https://github.com/pytorch/pytorch/issues/93661
+        os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"
     else:
         # torch.compile is not compatible with LoRA
         # https://huggingface.co/docs/peft/en/developer_guides/torch_compile?utm_source=chatgpt.com
@@ -290,8 +294,8 @@ def train(
         log_on_each_node=False,
         push_to_hub=False,
         disable_tqdm=False,
-        # ddp_backend='nccl',
-        # ddp_find_unused_parameters=False,
+        ddp_backend='nccl' if int(os.environ.get("WORLD_SIZE", 1)) > 1 else None,
+        ddp_find_unused_parameters=False,  # Enable for MoE
         # ddp_timeout=43200,  # 12 hours
         neftune_noise_alpha=args.neftune_noise_alpha if args.neftune_noise_alpha > 0 else None,
         save_total_limit=args.save_total_limit,
@@ -301,9 +305,9 @@ def train(
         packing=False,
         padding_free=False,
         # fsdp=["full_shard", "offload"],
-        # adam_beta1=all_args.adam_beta1,
-        # adam_beta2=all_args.adam_beta2,
-        # adam_epsilon=all_args.adam_epsilon,
+        # adam_beta1=args.adam_beta1,
+        # adam_beta2=args.adam_beta2,
+        # adam_epsilon=args.adam_epsilon,
 
         run_name                      = dirname,
         seed                          = args.random_seed,
