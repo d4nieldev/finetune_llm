@@ -155,14 +155,14 @@ def get_generation_params(mode: GenerationMode) -> Dict[str, Any]:
         return {
             'do_sample': True,
             'top_p': 0.95,
-            'top_k': 50,
+            'top_k': 20,
             'temperature': 0.6,
         }
     elif mode == GenerationMode.FIRST_GREEDY:
         return {
             'do_sample': True,
             'top_p': 0.95,
-            'top_k': 50,
+            'top_k': 20,
             'temperature': 0.6,
             'first_greedy': True,
         }
