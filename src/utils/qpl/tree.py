@@ -111,6 +111,8 @@ class QPLQDTree:
             op=Operator(tree_dict["op"]) if tree_dict['is_valid'] else None,  # type: ignore
             line_num=tree_dict["line_num"],
             qpl_line=tree_dict.get("qpl_line"),  # type: ignore
+            decomposition_cot=tree_dict.get("decomposition_cot"),
+            completion_cot=tree_dict.get("completion_cot"),
         )
         if tree_dict.get("children"):
             tree.children = tuple(QPLQDTree.from_dict(child) for child in tree_dict["children"])
