@@ -14,4 +14,8 @@ DB_CREATION_TABLES_SORTED_PATH = SPIDER_DB_CREATION_DIR / "tables-sorted.json"
 MANUALLY_LABLED_TYPES_DATASETS = Path("input/qpl/types/manually_labled")
 AUTOMATICALLY_LABLED_TYPES_DATASETS = Path("input/qpl/types/automatically_labled")
 
-TYPES_OUTPUT_DIR = Path("output/qpl/types")
+OUTPUT_DIR = Path("output/qpl")
+TYPES_OUTPUT_DIR = OUTPUT_DIR / "types"
+ABLATION_OUTPUT_DIR = OUTPUT_DIR / "ablation"
+ABLATION_DECOMPOSER_OUTPUT_DIR = ABLATION_OUTPUT_DIR / "decomposer"
+ABLATION_COMPLETER_OUTPUT_DIR = ABLATION_OUTPUT_DIR / "completer"
