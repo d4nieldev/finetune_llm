@@ -14,9 +14,9 @@ class QPLCompleterCotPrompter(QPLPrompter):
     @property
     def dataset_id(self) -> str:
         return "d4nieldev/qpl-completer-cot-ds"
-    
-    def load_dataset(self):
-        return load_dataset(self.dataset_id, 'balanced')
+
+    def load_dataset(self, subset: str = "balanced"):
+        return load_dataset(self.dataset_id, subset)
 
     def to_chat_template(self, example) -> ChatTemplate:
         system = (

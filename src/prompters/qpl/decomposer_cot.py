@@ -16,9 +16,9 @@ class QPLDecomposerCotPrompter(QPLPrompter):
     def dataset_id(self) -> str:
         return "d4nieldev/qpl-decomposer-cot-ds"
 
-    def load_dataset(self):
-        return load_dataset(self.dataset_id, 'balanced')
-    
+    def load_dataset(self, subset: str = "balanced"):
+        return load_dataset(self.dataset_id, subset)
+
     @property
     def system_prompt(self) -> str:
         return (
