@@ -213,43 +213,6 @@ def train(
         train_dataset = train_dataset.sort("len_text", reverse=False)
     eval_dataset: Dataset = prompter.load_dataset()['validation'] # type: ignore
     eval_dataset = eval_dataset.map(lambda ex: prompter.to_chat_template(ex), remove_columns=eval_dataset.column_names)
-    # def to_model_prompt(example):
-    #     # example["messages"] is a list of {"role": "...", "content": "..."}
-    #     # https://huggingface.co/blog/qgallouedec/gotchas-in-tokenizer-behavior#6-applying-the-chat-template-is-not-a-homomorphism-with-respect-to-concatenation
-    #     input_ids = tokenizer.apply_chat_template(
-    #         example["messages"],
-    #         tokenize=True,
-    #         return_tensors="pt",
-    #         add_generation_prompt=False,   # generation is included in the messages
-    #         continue_final_message=False,  # put eos token at the end of the last message
-    #     )[0]                               # remove batch dim
-    #     return {"input_ids": input_ids}
-    # train_dataset = train_dataset.map(to_model_prompt, remove_columns=train_dataset.column_names)
-    
-    # # Find instruction and response prefixes
-    # user_message = "!"
-    # assistant_message = "<think>\n?\n</think>"
-    # ids = tokenizer.apply_chat_template(
-    #     conversation=[
-    #         ChatMessage(role="user", content=user_message),
-    #         ChatMessage(role="assistant", content=assistant_message)
-    #     ],
-    #     tokenize=True,
-    #     add_generation_prompt=False,
-    #     continue_final_message=False,
-    # )
-
-    # inst_ids = tokenizer.encode(user_message)
-    # resp_ids = tokenizer.encode(assistant_message)
-
-    # instruction_template = ids[:find_sublist(ids, inst_ids)]
-    # response_template = ids[find_sublist(ids, inst_ids)+len(inst_ids):find_sublist(ids, resp_ids)]
-
-    # data_collator = DataCollatorForCompletionOnlyLM(
-    #     instruction_template=instruction_template,  # can be None for single-turn conversations
-    #     response_template=response_template,
-    #     tokenizer=tokenizer,
-    # )
     
 
     # Step 4. Training
