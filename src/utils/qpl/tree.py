@@ -78,6 +78,7 @@ class QPLQDTree:
     parent: Optional["QPLQDTree"] = None
     children: Tuple["QPLQDTree", ...] = ()
     decomposition_cot: Optional[str] = None
+    completion_cot: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         output = {
@@ -85,13 +86,14 @@ class QPLQDTree:
             "question": self.question,
             "is_valid": self.is_valid,
             "line_num": self.line_num,
-            "decomposition_cot": self.decomposition_cot
+            "decomposition_cot": self.decomposition_cot,
+            "completion_cot": self.completion_cot,
         }
 
         if self.is_valid:
             output = {
                 **output,
-                "op": self.op.value,
+                "op": self.op.value if isinstance(self.op, Operator) else str(self.op),
                 "qpl": self.qpl,
                 "prefix_qpl": self.prefix_qpl,
                 "qpl_line": self.qpl_line,
@@ -109,6 +111,8 @@ class QPLQDTree:
             op=Operator(tree_dict["op"]) if tree_dict['is_valid'] else None,  # type: ignore
             line_num=tree_dict["line_num"],
             qpl_line=tree_dict.get("qpl_line"),  # type: ignore
+            decomposition_cot=tree_dict.get("decomposition_cot"),
+            completion_cot=tree_dict.get("completion_cot"),
         )
         if tree_dict.get("children"):
             tree.children = tuple(QPLQDTree.from_dict(child) for child in tree_dict["children"])
