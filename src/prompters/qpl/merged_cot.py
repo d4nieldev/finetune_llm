@@ -1,4 +1,6 @@
-from datasets import concatenate_datasets, interleave_datasets, DatasetDict
+from typing import Callable
+from datasets import interleave_datasets, DatasetDict
+import numpy as np
 
 from src.utils.chat_types import ChatTemplate
 from src.prompters.qpl.base import QPLPrompter
@@ -13,6 +15,8 @@ from datasets import load_dataset
 class QPLMergedCotPrompter(QPLPrompter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if not self.with_assistant:
+            raise ValueError("Merged dataset requires with_assistant=True")
         self.decomposer_cot_prompter = QPLDecomposerCotPrompter(*args, **kwargs)
         self.completer_cot_prompter = QPLCompleterCotPrompter(*args, **kwargs)
 
@@ -22,13 +26,13 @@ class QPLMergedCotPrompter(QPLPrompter):
         return "d4nieldev/qpl-merged-cot-ds"
 
     def load_dataset(self):
-        decomposer_ds = self.decomposer_cot_prompter.load_dataset()
+        decomposer_ds = self.decomposer_cot_prompter.load_dataset("balanced")
         decomposer_ds = decomposer_ds.map(lambda _: {"task": "decomposer"})
-        completer_ds = self.completer_cot_prompter.load_dataset()
+        completer_ds = self.completer_cot_prompter.load_dataset("balanced")
         completer_ds = completer_ds.map(lambda _: {"task": "completer"})
         return DatasetDict({
             'train': interleave_datasets([decomposer_ds['train'], completer_ds['train']], stopping_strategy="all_exhausted"), # will oversample the smaller dataset (decomposer)
-            'validation': concatenate_datasets([decomposer_ds['validation'], completer_ds['validation']])
+            'validation': load_dataset('d4nieldev/nl2qpl-ds', split='development') # type: ignore
         })
 
     def to_chat_template(self, example) -> ChatTemplate:
