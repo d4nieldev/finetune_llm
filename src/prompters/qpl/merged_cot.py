@@ -13,17 +13,14 @@ from datasets import load_dataset
 
 @PrompterRegistry.register
 class QPLMergedCotPrompter(QPLPrompter):
+    dataset_id = "d4nieldev/qpl-merged-cot-ds"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.with_assistant:
             raise ValueError("Merged dataset requires with_assistant=True")
         self.decomposer_cot_prompter = QPLDecomposerCotPrompter(*args, **kwargs)
         self.completer_cot_prompter = QPLCompleterCotPrompter(*args, **kwargs)
-
-    @property
-    def dataset_id(self) -> str:
-        # this dataset does not actually exist
-        return "d4nieldev/qpl-merged-cot-ds"
 
     def load_dataset(self):
         decomposer_ds = self.decomposer_cot_prompter.load_dataset("balanced")

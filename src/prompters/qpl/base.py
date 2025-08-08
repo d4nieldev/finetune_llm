@@ -8,6 +8,8 @@ from src.utils.qpl.schema import DBSchema
 
 
 class QPLPrompter(BasePrompter):
+    dataset_id = None
+    
     def __init__(self, schema_representation: Literal["ddl", "m_schema"] = 'm_schema', *args, **kwargs):
         super().__init__(*args, **kwargs)
 

@@ -7,13 +7,10 @@ from datasets import load_dataset, Dataset, DatasetDict
 
 
 class BasePrompter(ABC):
+    dataset_id = None
+
     def __init__(self, with_assistant: bool = False) -> None:
         self.with_assistant = with_assistant
-
-    @property
-    @abstractmethod
-    def dataset_id(self) -> str:
-        pass
 
     def load_dataset(self) -> DatasetDict:
         return load_dataset(self.dataset_id)
@@ -44,7 +41,7 @@ class PrompterRegistry:
 
     @classmethod
     def register(cls, prompter_cls: Type[BasePrompter]) -> Type[BasePrompter]:
-        dataset_id = prompter_cls().dataset_id
+        dataset_id = prompter_cls.dataset_id
         if dataset_id is None:
             raise ValueError(f"Prompter {prompter_cls.__name__} must define a class-level `dataset_id` attribute.")
         if dataset_id in cls._registry:

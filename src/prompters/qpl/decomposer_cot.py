@@ -9,12 +9,10 @@ from datasets import load_dataset
 
 @PrompterRegistry.register
 class QPLDecomposerCotPrompter(QPLPrompter):
+    dataset_id = "d4nieldev/qpl-decomposer-cot-ds"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-    
-    @property
-    def dataset_id(self) -> str:
-        return "d4nieldev/qpl-decomposer-cot-ds"
 
     def load_dataset(self, subset: str = "balanced"):
         return load_dataset(self.dataset_id, subset)
