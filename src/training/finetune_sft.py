@@ -42,7 +42,7 @@ def parse_args():
     )
     
     hf_ids_group = parser.add_argument_group("Hugging Face IDs")
-    hf_ids_group.add_argument("--model_id", type=str, required=True, help="Model ID to use for fine-tuning.")
+    hf_ids_group.add_argument("--model_id_or_path", type=str, required=True, help="Model ID to use for fine-tuning.")
     hf_ids_group.add_argument("--resume_from_checkpoint", type=Path, default=None, help="Path to a checkpoint to resume training from.")
     hf_ids_group.add_argument("--model_revision", type=str, default="main", help="Model revision to use for fine-tuning.")
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
@@ -90,7 +90,7 @@ def parse_args():
 
 
 def args_str(args, run_id):
-    model_id = args.model_id.split("/")[-1]
+    model_id = args.model_id_or_path.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     shortname = {
         'model_revision': 'rev',
@@ -143,11 +143,11 @@ def train(
         "attn_implementation": "flash_attention_2",
         "trust_remote_code": True,
     }
-    if 'gemma' in args.model_id:
+    if 'gemma' in args.model_id_or_path:
         model_kwargs["attn_implementation"] = "eager"
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_id, **model_kwargs, revision=args.model_revision)
-    
+    model = AutoModelForCausalLM.from_pretrained(args.model_id_or_path, **model_kwargs, revision=args.model_revision)
+
     peft_kwargs = {}
     if args.lora:
         peft_kwargs['peft_config'] = LoraConfig(
@@ -170,7 +170,7 @@ def train(
     # Padding side should be right for training and left for inference:
     # https://github.com/huggingface/transformers/issues/34842
     tokenizer = AutoTokenizer.from_pretrained(
-        args.model_id,
+        args.model_id_or_path,
         padding_side="right", 
         model_max_length=args.max_seq_length,
         revision=args.model_revision,
@@ -218,7 +218,7 @@ def train(
 
     # Step 4. Training
     run = wandb.init(
-        project=f"{args.model_id.replace('/', '-')}_{args.dataset_id.replace('/', '-')}",
+        project=f"{args.model_id_or_path.replace('/', '-')}_{args.dataset_id.replace('/', '-')}",
         config=vars(args),
         resume="allow"
     )
