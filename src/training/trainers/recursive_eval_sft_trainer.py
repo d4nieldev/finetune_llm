@@ -1,12 +1,15 @@
 import re
+from typing import Optional, Union
 
 import torch
 import pyodbc
 from trl import SFTTrainer
+from datasets import Dataset
 
 from src.experiments.qpl.text_to_qpl import text_to_qpl, GenerationMode
 from src.experiments.qpl.validate_qpl import compare_qpl_sql
 from src.prompters import QPLDecomposerPrompter, QPLCompleterPrompter, QPLDecomposerCotPrompter, QPLCompleterCotPrompter
+
 
 class RecursiveEvalSFTTrainer(SFTTrainer):
     def __init__(self, cot: bool = True, *args, **kwargs):
@@ -15,6 +18,16 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
 
         self._evaluation_metrics = {}
         self.args.per_device_eval_batch_size = len(self.eval_dataset)
+        self._conn = pyodbc.connect((
+            'Driver={ODBC Driver 18 for SQL Server};'
+            'Server=tcp:spider-sql.database.windows.net,1433;'
+            'Database=test;'
+            'Uid=iloveqpl;'
+            'Pwd=P4$$w0rd!;'
+            'Encrypt=yes;'
+            'TrustServerCertificate=no;'
+            'Connection Timeout=30;'
+        ), autocommit=True)
     
 
     @torch.no_grad()
@@ -25,7 +38,7 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
 
         # Step 1. Extract db_id and question from input texts
         input_regex = re.compile(r'【DB_ID】 ([^\n]+).*\[Question\]\: ([^\n]+)', re.DOTALL)
-        input_texts = self.processing_class.batch_decode([inp[:len([tid for tid in inputs['labels'][i] if tid == -100])] for i, inp in enumerate(inputs['input_ids'])])
+        input_texts = self.processing_class.batch_decode([inp[torch.where((inputs['labels'][i] == -100) & (inp != self.processing_class.pad_token_id))[0]] for i, inp in enumerate(inputs['input_ids'])])
         matches = [re.search(input_regex, input_text) for input_text in input_texts]
         if not all(matches):
             raise ValueError("Input text does not match expected format")
@@ -51,21 +64,11 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
 
         # Step 3. Extract gold SQL queries
         gold_sql_regex = re.compile(r'</think>\n(.*)', re.DOTALL)
-        labels_texts = self.processing_class.batch_decode([lbl[len([tid for tid in lbl if tid == -100]):] for lbl in inputs['labels']], skip_special_tokens=True)
+        labels_texts= self.processing_class.batch_decode([lbl[torch.where(lbl != -100)[0]] for lbl in inputs['labels']], skip_special_tokens=True)
         gold_sqls = [re.search(gold_sql_regex, labels_text).group(1).strip() for labels_text in labels_texts]
 
         # Step 4. Connect to database
-        conn = pyodbc.connect((
-            'Driver={ODBC Driver 18 for SQL Server};'
-            'Server=tcp:spider-sql.database.windows.net,1433;'
-            'Database=test;'
-            'Uid=iloveqpl;'
-            'Pwd=P4$$w0rd!;'
-            'Encrypt=yes;'
-            'TrustServerCertificate=no;'
-            'Connection Timeout=30;'
-        ), autocommit=True)
-        cursor = conn.cursor()
+        cursor = self._conn.cursor()
 
         # Step 5. Compute statistics
         acc = 0
@@ -83,8 +86,8 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
         return (None, None, None)
     
 
-    def evaluate(self, eval_dataset = None, **kwargs):
-        metrics = super().evaluate(eval_dataset=eval_dataset, **kwargs)
+    def evaluate(self, *args, **kwargs):
+        metrics = super().evaluate(*args, **kwargs)
 
         if self._evaluation_metrics:
             metrics.update(self._evaluation_metrics)
