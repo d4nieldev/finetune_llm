@@ -27,9 +27,21 @@ class QPLMergedCotPrompter(QPLPrompter):
         decomposer_ds = decomposer_ds.map(lambda _: {"task": "decomposer"})
         completer_ds = self.completer_cot_prompter.load_dataset("balanced")
         completer_ds = completer_ds.map(lambda _: {"task": "completer"})
+        
+        # convert to decomposer dataset format for evaluation during training
+        development_ds = load_dataset('d4nieldev/nl2qpl-ds', split='development')
+        development_ds = development_ds.map(lambda x: {
+            "task": "development", 
+            "db_id": x['qpl'].split(' | ')[0], 
+            "cot": "", 
+            "sub_question_1": None,
+            "sub_question_2": None,
+            "op": x['query'] # gold sql
+        })
+
         return DatasetDict({
             'train': interleave_datasets([decomposer_ds['train'], completer_ds['train']], stopping_strategy="all_exhausted"), # will oversample the smaller dataset (decomposer)
-            'validation': load_dataset('d4nieldev/nl2qpl-ds', split='development') # type: ignore
+            'validation': development_ds 
         })
 
     def to_chat_template(self, example) -> ChatTemplate:
@@ -37,5 +49,7 @@ class QPLMergedCotPrompter(QPLPrompter):
             return self.decomposer_cot_prompter.to_chat_template(example)
         elif example['task'] == 'completer':
             return self.completer_cot_prompter.to_chat_template(example)
+        elif example['task'] == 'development':
+            return self.decomposer_cot_prompter.to_chat_template(example)
         else:
             raise ValueError(f"Unknown task type: {example['task']}")

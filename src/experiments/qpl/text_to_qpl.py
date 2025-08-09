@@ -56,30 +56,27 @@ class Result(TypedDict):
 
 
 def text_to_qpl(
-        examples: List[DecomposerExample], 
-        decomposer_model_path: str, 
-        completer_model_path: str,
+        examples: List[DecomposerExample],
+        decomposer_model: PreTrainedModel,
+        decomposer_tokenizer: PreTrainedTokenizerBase,
+        completer_model: PreTrainedModel,
+        completer_tokenizer: PreTrainedTokenizerBase,
+        decomposer_prompter: QPLDecomposerPrompter,
+        completer_prompter: QPLCompleterPrompter,
+        # decomposer_model_path: str, 
+        # completer_model_path: str,
         mode: GenerationMode,
-        decomposer_trees_path: Path,
-        completed_trees_path: Path,
-        decomposer_bsz: int = 8,
-        decomposer_max_new_tokens: int = 256,
-        completer_bsz: int = 8,
-        completer_max_new_tokens: int = 256,
+        decomposer_trees_path: Path | None = None,
+        completed_trees_path: Path | None = None,
+        decomposer_bsz: int = 4,
+        decomposer_max_new_tokens: int = 8192,
+        completer_bsz: int = 4,
+        completer_max_new_tokens: int = 8192,
         is_load_decomposer_trees: bool = False,
     ) -> List[Result]:
     # Decompose input questions
     if not is_load_decomposer_trees:
-        if '-cot' in decomposer_model_path:
-            log.info("Using COT decomposer prompter")
-            decomposer_prompter = QPLDecomposerCotPrompter(with_assistant=False)
-        else:
-            log.info("Using standard decomposer prompter")
-            decomposer_prompter = QPLDecomposerPrompter(with_assistant=False)
-        decomposer_model = AutoModelForCausalLM.from_pretrained(decomposer_model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16).to("cuda")
-        decomposer_tokenizer = AutoTokenizer.from_pretrained(decomposer_model_path)
-        decomposer_model.eval()
-
+        decomposer_model = decomposer_model.to("cuda")
         trees = decompose(
             examples=examples,
             prompter=decomposer_prompter,
@@ -95,26 +92,22 @@ def text_to_qpl(
         for tree in trees:
             post_order_index_tree(tree)
 
-        # Save checkpoint (natural language query decomposition)    
-        decomposer_trees_path.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
-        log.info(f"Saved natural language queries decomposition trees (no code) to '{decomposer_trees_path}'")
+        # Save checkpoint (natural language query decomposition)
+        if decomposer_trees_path:
+            decomposer_trees_path.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
+            log.info(f"Saved natural language queries decomposition trees (no code) to '{decomposer_trees_path}'")
     else:
-        trees = load_decomposer_trees(decomposer_trees_path)
+        if decomposer_trees_path:
+            trees = load_decomposer_trees(decomposer_trees_path)
+        else:
+            raise ValueError("Decomposer trees path is not specified")
 
     valid_trees = [tree for tree in trees if tree.is_valid]
     log.info(f"Filtered out {len(trees) - len(valid_trees)} invalid trees from {len(trees)} trees")
 
     # complete QPL for trees
     torch.cuda.empty_cache()
-    if '-cot' in completer_model_path:
-        log.info("Using COT completer prompter")
-        completer_prompter = QPLCompleterCotPrompter(with_assistant=False)
-    else:
-        log.info("Using standard completer prompter")
-        completer_prompter = QPLCompleterPrompter(with_assistant=False)
-    completer_model = AutoModelForCausalLM.from_pretrained(completer_model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16).to("cuda")
-    completer_tokenizer = AutoTokenizer.from_pretrained(completer_model_path)
-    completer_model.eval()
+    completer_model = completer_model.to("cuda")
     complete(
         trees=valid_trees,
         prompter=completer_prompter,
@@ -126,8 +119,9 @@ def text_to_qpl(
     )
 
     # Save checkpoint (QPL generation for each node)
-    completed_trees_path.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
-    log.info(f"Saved QPL generation trees to  '{completed_trees_path}'")
+    if completed_trees_path:
+        completed_trees_path.write_text(json.dumps([tree.to_dict() for tree in trees], indent=2))
+        log.info(f"Saved QPL generation trees to  '{completed_trees_path}'")
 
     return [Result(db_id=tree.db_id, question=tree.question, pred_qpl=tree.qpl) for tree in trees]
 
@@ -386,10 +380,34 @@ if __name__ == "__main__":
     nl2sql_dataset = list(load_dataset("d4nieldev/nl2qpl-ds", split="validation"))
     examples = [DecomposerExample(question=ex['question'], db_id=ex['qpl'].split('|')[0].strip()) for ex in nl2sql_dataset]
 
+    if '-cot' in args.decomposer_model_path:
+            log.info("Using COT decomposer prompter")
+            decomposer_prompter = QPLDecomposerCotPrompter(with_assistant=False)
+    else:
+        log.info("Using standard decomposer prompter")
+        decomposer_prompter = QPLDecomposerPrompter(with_assistant=False)
+    decomposer_model = AutoModelForCausalLM.from_pretrained(args.decomposer_model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16)
+    decomposer_tokenizer = AutoTokenizer.from_pretrained(args.decomposer_model_path)
+    decomposer_model.eval()
+
+    if '-cot' in args.completer_model_path:
+        log.info("Using COT completer prompter")
+        completer_prompter = QPLCompleterCotPrompter(with_assistant=False)
+    else:
+        log.info("Using standard completer prompter")
+        completer_prompter = QPLCompleterPrompter(with_assistant=False)
+    completer_model = AutoModelForCausalLM.from_pretrained(args.completer_model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16)
+    completer_tokenizer = AutoTokenizer.from_pretrained(args.completer_model_path)
+    completer_model.eval()
+
     results = text_to_qpl(
         examples=examples,
-        decomposer_model_path=args.decomposer_model_path,
-        completer_model_path=args.completer_model_path,
+        decomposer_model=decomposer_model,
+        decomposer_tokenizer=decomposer_tokenizer,
+        completer_model=completer_model,
+        completer_tokenizer=completer_tokenizer,
+        decomposer_prompter=decomposer_prompter,
+        completer_prompter=completer_prompter,
         mode=args.generation_mode,
         decomposer_trees_path=args.decomposer_trees_path,
         completed_trees_path=args.completed_trees_path,

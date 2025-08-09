@@ -202,6 +202,23 @@ def execute_sql(cursor, sql):
     return results
 
 
+def compare_qpl_sql(qpl: str, sql: str, db_id: str, cursor) -> tuple[bool, str | None]:
+    same = False
+    err = None
+    try:
+        flat_qpl = [line[:line.index(';')] if ';' in line else line for line in qpl.split('\n')]
+        gold_sql = sql
+        pred_cte = flat_qpl_to_cte(flat_qpl, db_id)
+        prs = execute_sql(cursor, pred_cte)
+    except Exception as e:
+        err = str(e)
+    else:
+        grs = execute_sql(cursor, gold_sql)
+        same = same_rs(grs, prs, flat_qpl)
+        
+    return same, err
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Validate QPL resultset against gold resultset")
     parser.add_argument("--input", type=Path, required=True, help="Path to the input QPL file")
@@ -230,20 +247,7 @@ if __name__ == "__main__":
     accuracy = 0
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
-        try:
-            flat_qpl = [line[:line.index(';')] if ';' in line else line for line in model_result["pred_qpl"].split('\n')]
-            gold_sql = model_result["gold_sql"]
-            pred_cte = flat_qpl_to_cte(flat_qpl, model_result['db_id'])
-            prs = execute_sql(cursor, pred_cte)
-        except Exception as e:
-            err = str(e)
-            same = False
-        else:
-            err = None
-            grs = execute_sql(cursor, gold_sql)
-            same = same_rs(grs, prs, flat_qpl)
-            if same:
-                accuracy += 1
+        same, err = compare_qpl_sql(model_result["pred_qpl"], model_result["gold_sql"], model_result['db_id'], cursor)
         results.append({**model_result, "is_correct": same, "error": err})
     
     accuracy = accuracy / len(model_results) * 100

@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from src.callbacks import MemoryLoggingCallback
 from src.prompters import PrompterRegistry
 import src.utils.paths as p
+from src.training import trainers as t
 
 load_dotenv()
 
@@ -47,6 +48,7 @@ def parse_args():
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
     train_config_group = parser.add_argument_group("Training config")
+    train_config_group.add_argument("--custom_trainer", type=str, default=None, help="Custom trainer class to use for fine-tuning. If None, uses SFTTrainer.")
     train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=True, help="Sort data in ascending order by prompt length before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
@@ -68,7 +70,7 @@ def parse_args():
     monitoring_group.add_argument("--eval_batch_size", type=int, default=1, help="Evaluation batch size (per GPU).")
     monitoring_group.add_argument("--eval_steps", type=int, default=0.25, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
     monitoring_group.add_argument("--save_steps", type=int, default=0.25, help="Save checkpoint every N steps. If between 0 to 1, part of total steps.")
-    monitoring_group.add_argument("--save_total_limit", type=int, default=3, help="Maximum number of checkpoints to keep.")
+    monitoring_group.add_argument("--save_total_limit", type=int, default=1, help="Maximum number of checkpoints to keep.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
     
     best_model_group = parser.add_argument_group("Best model logic")
@@ -236,6 +238,7 @@ def train(
         learning_rate                 = args.learning_rate,
         optim                         = args.optim,
         num_train_epochs              = args.num_train_epochs,
+        # max_steps                     = 2,  # TODO: remove this, just for debugging
         lr_scheduler_type             = args.lr_scheduler_type,
         warmup_ratio                  = args.warmup_ratio,
         weight_decay                  = args.weight_decay,
@@ -284,7 +287,12 @@ def train(
         # https://github.com/unslothai/unsloth/issues/1788#issuecomment-2772497747
         training_args.label_names = ["labels"]
 
-    trainer = SFTTrainer(
+    if args.custom_trainer is not None:
+        trainer_cls = getattr(t, args.custom_trainer)
+    else:
+        trainer_cls = SFTTrainer
+    
+    trainer = trainer_cls(
         model            = model,
         processing_class = tokenizer,
         args             = training_args,

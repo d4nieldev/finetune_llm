@@ -332,7 +332,7 @@ class DBSchema:
         return f"Database Name: {self.db_id}\n```DDL\n{tables_str}\n```"
     
     def m_schema(self, examples_random_order: bool = True, max_examples: int = 5) -> str:
-        output = f"【DB_ID】{self.db_id}\n"
+        output = f"【DB_ID】 {self.db_id}\n"
         output += f"【Schema】\n"
         output += "\n".join([table.m_schema(examples_random_order=examples_random_order, max_examples=max_examples) for table in self.tables.values()])
         output += "\n【Foreign Keys】\n"
