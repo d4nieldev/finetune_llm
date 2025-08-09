@@ -86,8 +86,9 @@ def text_to_qpl(
             batch_size=decomposer_bsz,
             max_new_tokens=decomposer_max_new_tokens,
         )
-        decomposer_model = decomposer_model.to("cpu")
-        
+        if decomposer_model != completer_model:
+            decomposer_model = decomposer_model.to("cpu")
+
         # Post-order index the trees
         for tree in trees:
             post_order_index_tree(tree)
