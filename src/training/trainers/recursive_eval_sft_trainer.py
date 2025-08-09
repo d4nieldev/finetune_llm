@@ -4,7 +4,8 @@ from typing import Optional, Union
 import torch
 import pyodbc
 from trl import SFTTrainer
-from datasets import Dataset
+from transformers.tokenization_utils import PreTrainedTokenizer
+from transformers.models import PreTrainedModel
 
 from src.experiments.qpl.text_to_qpl import text_to_qpl, GenerationMode
 from src.experiments.qpl.validate_qpl import compare_qpl_sql
@@ -31,14 +32,15 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
     
 
     @torch.no_grad()
-    def prediction_step(self, model, inputs, prediction_loss_only, ignore_keys=None):
+    def prediction_step(self, model: PreTrainedModel, inputs: dict[str, torch.Tensor], *args, **kwargs):
         model.eval()
         if self.processing_class is None:
             raise ValueError("Tokenizer is not initialized")
+        tokenizer: PreTrainedTokenizer = self.processing_class  # type: ignore
 
         # Step 1. Extract db_id and question from input texts
         input_regex = re.compile(r'【DB_ID】 ([^\n]+).*\[Question\]\: ([^\n]+)', re.DOTALL)
-        input_texts = self.processing_class.batch_decode([inp[torch.where((inputs['labels'][i] == -100) & (inp != self.processing_class.pad_token_id))[0]] for i, inp in enumerate(inputs['input_ids'])])
+        input_texts = tokenizer.batch_decode([inp[torch.where((inputs['labels'][i] == -100) & (inp != tokenizer.pad_token_id))[0]] for i, inp in enumerate(inputs['input_ids'])])
         matches = [re.search(input_regex, input_text) for input_text in input_texts]
         if not all(matches):
             raise ValueError("Input text does not match expected format")
@@ -54,9 +56,9 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
         results = text_to_qpl(
             examples=examples,
             decomposer_model=model,
-            decomposer_tokenizer=self.processing_class,
+            decomposer_tokenizer=tokenizer,
             completer_model=model,
-            completer_tokenizer=self.processing_class,
+            completer_tokenizer=tokenizer,
             decomposer_prompter=QPLDecomposerPrompter(with_assistant=False) if not self.cot else QPLDecomposerCotPrompter(with_assistant=False),
             completer_prompter=QPLCompleterPrompter(with_assistant=False) if not self.cot else QPLCompleterCotPrompter(with_assistant=False),
             mode=GenerationMode.SAMPLING
@@ -64,7 +66,7 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
 
         # Step 3. Extract gold SQL queries
         gold_sql_regex = re.compile(r'</think>\n(.*)', re.DOTALL)
-        labels_texts= self.processing_class.batch_decode([lbl[torch.where(lbl != -100)[0]] for lbl in inputs['labels']], skip_special_tokens=True)
+        labels_texts= tokenizer.batch_decode([lbl[torch.where(lbl != -100)[0]] for lbl in inputs['labels']], skip_special_tokens=True)
         gold_sqls = [re.search(gold_sql_regex, labels_text).group(1).strip() for labels_text in labels_texts]
 
         # Step 4. Connect to database

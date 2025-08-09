@@ -22,6 +22,10 @@ class QPLMergedCotPrompter(QPLPrompter):
         self.decomposer_cot_prompter = QPLDecomposerCotPrompter(*args, **kwargs)
         self.completer_cot_prompter = QPLCompleterCotPrompter(*args, **kwargs)
 
+    @property
+    def trainer_cls_name(self) -> str:
+        return "RecursiveEvalSFTTrainer"
+
     def load_dataset(self):
         decomposer_ds = self.decomposer_cot_prompter.load_dataset("balanced")
         decomposer_ds = decomposer_ds.map(lambda _: {"task": "decomposer"})

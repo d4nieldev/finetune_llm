@@ -15,6 +15,10 @@ class BasePrompter(ABC):
     def load_dataset(self) -> DatasetDict:
         return load_dataset(self.dataset_id)
     
+    @property
+    def trainer_cls_name(self) -> str:
+        return "SFTTrainer"
+    
     def special_tokens_to_add(self) -> dict[str, str]:
         """
         Returns a list of tokens to add to the tokenizer.

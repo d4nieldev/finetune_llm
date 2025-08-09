@@ -48,7 +48,6 @@ def parse_args():
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
     train_config_group = parser.add_argument_group("Training config")
-    train_config_group.add_argument("--custom_trainer", type=str, default=None, help="Custom trainer class to use for fine-tuning. If None, uses SFTTrainer.")
     train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=True, help="Sort data in ascending order by prompt length before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
@@ -287,11 +286,7 @@ def train(
         # https://github.com/unslothai/unsloth/issues/1788#issuecomment-2772497747
         training_args.label_names = ["labels"]
 
-    if args.custom_trainer is not None:
-        trainer_cls = getattr(t, args.custom_trainer)
-    else:
-        trainer_cls = SFTTrainer
-    
+    trainer_cls = getattr(t, prompter.trainer_cls_name)
     trainer = trainer_cls(
         model            = model,
         processing_class = tokenizer,
