@@ -22,12 +22,12 @@ dependencies = [
     "transformers==4.54.1",
     "trl==0.20.0",
     "wandb==0.19.9",
-    "flash-attn==2.8.2",
+    # "flash-attn==2.8.2",
     "python-dotenv>=1.1.1",
 ]
 
-[tool.uv]
-no-build-isolation-package = ["flash-attn"]
+# [tool.uv]
+# no-build-isolation-package = ["flash-attn"]
 
 [project.optional-dependencies]
 qpl = [
