@@ -5,7 +5,7 @@ import torch
 import pyodbc
 from trl import SFTTrainer
 from transformers.tokenization_utils import PreTrainedTokenizer
-from transformers.models import PreTrainedModel
+from transformers.modeling_utils import PreTrainedModel
 
 from src.experiments.qpl.text_to_qpl import text_to_qpl, GenerationMode
 from src.experiments.qpl.validate_qpl import compare_qpl_sql
