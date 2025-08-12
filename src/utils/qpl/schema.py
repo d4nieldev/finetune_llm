@@ -221,6 +221,17 @@ class Table:
         if fk := next((fk for fk in self.fks if fk.from_col == colname and fk.to_table != self), None):
             return fk.to_table.src_colname_table(fk.from_col)
         return colname, self
+    
+    def link(self, columns: set[str]) -> "Table":
+        columns = {col.lower() for col in columns}
+        return Table(
+            name=self.name,
+            columns=[col for col in self.columns if col.name.lower() in columns],
+            pks=[pk for pk in self.pks if pk.col_name.lower() in columns],
+            fks=[fk for fk in self.fks if fk.from_col.lower() in columns],
+            apply_lower=self.apply_lower,
+            num_rows=self.num_rows
+        )
 
     def ddl(self):
         pk_str = ["PRIMARY KEY (" + ", ".join(pk.col_name for pk in self.pks) + ")"]
@@ -327,6 +338,18 @@ class DBSchema:
             raise KeyError(f"Table {table_name!r} does not exist in the schema {self.db_id!r}.")
         return self.tables[table_name]
     
+    def link(self, schema_items: dict[str, set[str]]) -> "DBSchema":
+        schema_items = {k.lower(): {col.lower() for col in v} for k, v in schema_items.items()}
+        lower_to_original_tbname = {k.lower(): k for k in self.tables.keys()}
+        return DBSchema(
+            db_id=self.db_id,
+            tables={
+                lower_to_original_tbname[tb_name]: self.tables[lower_to_original_tbname[tb_name]].link(columns) 
+                for tb_name, columns in schema_items.items()
+            },
+            apply_lower=self.apply_lower
+        )
+    
     def ddl(self):
         tables_str = "\n\n".join(table.ddl() for table in self.tables.values())
         return f"Database Name: {self.db_id}\n```DDL\n{tables_str}\n```"
@@ -347,7 +370,7 @@ if __name__ == "__main__":
 
     lens = []
     for schema in db_schemas.values():
-        lens.append(len(schema.m_schema()))
+        lens.append((schema.db_id, len(schema.m_schema())))
     schema = db_schemas[sys.argv[1]]
     representation = sys.argv[2]
 

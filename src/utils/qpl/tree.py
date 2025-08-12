@@ -65,6 +65,26 @@ class QPLTree:
             "qpl": self.qpl,
             "children": [child.to_dict() for child in self.children],
         }
+    
+    def get_schema_items(self) -> dict[str, set[str]]:
+        """Return the columns used in all Scan nodes"""
+        flat_qpl_scan_pattern = re.compile(
+            r"#(?P<idx>\d+) = Scan Table \[ (?P<table>\w+) \]( Predicate \[ (?P<pred>[^\]]+) \])?( Distinct \[ (?P<distinct>true) \])? Output \[ (?P<out>[^\]]+) \]"
+        )
+        if len(self.children) == 0:
+            if not (m := flat_qpl_scan_pattern.match(self.qpl_line)):
+                raise ValueError(f"QPL line does not match expected Scan format: {self.qpl_line}")
+            return {
+                m.group("table"): {col.strip() for col in m.group("out").split(",")}
+            }
+        elif len(self.children) == 1:
+            return self.children[0].get_schema_items()
+        elif len(self.children) == 2:
+            left = self.children[0].get_schema_items()
+            right = self.children[1].get_schema_items()
+            return {k: left.get(k, set()) | right.get(k, set()) for k in left.keys() | right.keys()}
+        else:
+            raise ValueError(f"Unexpected number of children in QPL tree: {len(self.children)}")
 
 
 @dataclass
