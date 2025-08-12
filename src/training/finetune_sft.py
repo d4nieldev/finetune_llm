@@ -65,10 +65,10 @@ def parse_args():
     train_config_group.add_argument("--deepspeed_config", type=Path, required=False, default=None, help="Path to the deepspeed config file.")
     
     monitoring_group = parser.add_argument_group("Monitoring")
-    monitoring_group.add_argument("--logging_steps", type=int, default=1, help="Log every N steps. If between 0 to 1, part of total_steps.")
+    monitoring_group.add_argument("--logging_steps", type=float, default=1, help="Log every N steps. If between 0 to 1, part of total_steps.")
     monitoring_group.add_argument("--eval_batch_size", type=int, default=1, help="Evaluation batch size (per GPU).")
-    monitoring_group.add_argument("--eval_steps", type=int, default=0.25, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
-    monitoring_group.add_argument("--save_steps", type=int, default=0.25, help="Save checkpoint every N steps. If between 0 to 1, part of total steps.")
+    monitoring_group.add_argument("--eval_steps", type=float, default=0.25, help="Evaluate every N steps. If between 0 to 1, part of total steps.")
+    monitoring_group.add_argument("--save_steps", type=float, default=0.25, help="Save checkpoint every N steps. If between 0 to 1, part of total steps.")
     monitoring_group.add_argument("--save_total_limit", type=int, default=1, help="Maximum number of checkpoints to keep.")
     monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
     
