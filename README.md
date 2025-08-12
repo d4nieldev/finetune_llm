@@ -15,30 +15,17 @@ The recommended option for installing all dependencies is `uv`:
 
 ### Prerequisites
 
-1. Make sure your python is configured to the project directory by executing: `export PYTHONPATH=/path/to/project/dir`.
-2. Login to HuggingFace Hub by executing: `huggingface-cli login` and insert your huggingface token (for pulling models and datasets).
-3. Login to Weights & Biases by executing: `wandb login` and insert your W&B api key (for reporting training statistics to W&B).
-4. Define a **processor** for your dataset (more on processors [here](src/processors/README.md)).
+1. Set up a `.env` file with your weights & biases and huggingface api keys (`WANDB_API_KEY` and `HF_TOKEN` respectively)
+2. Make sure your python is configured to the project directory by executing: `export PYTHONPATH=/path/to/project/dir`.
+3. Install microsoft odbc driver: `./install_odbc_driver_ubuntu.sh`
+4. Install flash attention 2: `uv pip install "flash-attn==2.8.2" --no-build-isolation`
 
 
 To run the fine tuning:
 
 ```bash
-accelerate launch src/training/finetune_sft.py \
-  --model_id=google/gemma-3-4b-it \
-  --dataset_id=d4nieldev/qpl-composer-ds \
-  --train_batch_size=1 \
-  --gradient_accumulation_steps=8 \
-  --learning_rate=2e-4 \
-  --num_train_epochs=4 \
-  --gradient_checkpointing=True \
-  --logging_steps=0.01 \
-  --save_steps=0.5 \
-  --random_seed=1 \
-  --lora \
-  --r=16 \
-  --alpha=32 \
-  --dropout=0.05
+nohup uv run deepspeed --no_ssh --node_rank 0 --master_addr localhost --master_port 12355 --num_nodes=1 --num_gpus=1 src/training/finetune_sft.py --model_id "d4nieldev/Qwen3-4B-QPL-AIO" --dataset_id "d4nieldev/qpl-merged-cot-ds" --warmup_ratio 0.05 --num_train_epochs 12 --deepspeed_config "src/training/deepspeed_configs/stage-2-offloading-warmup-cosine-lr.json" --eval_steps 0.08333333 --save_steps 0.08333333 --load_best_model_at_end --metric_for_best_model eval_execution_accuracy --greater_is_better > output.log 2>&1 &
 ```
 
 To see information about the different arguments run: `python src/training/finetune_sft.py --help`.
+
