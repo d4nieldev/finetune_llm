@@ -15,10 +15,10 @@ class CTE:
 
 def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
     flat_qpl_scan_pattern = re.compile(
-        r"#(?P<idx>\d+) = Scan Table \[ (?P<table>\w+) \]( Predicate \[ (?P<pred>[^\]]+) \])?( Distinct \[ (?P<distinct>true) \])? Output \[ (?P<out>[^\]]+) \]"
+        r"#(?P<idx>\d+) = Scan Table \[\s*(?P<table>\w+)\s*\]( Predicate \[\s*(?P<pred>[^\]]+)\s*\])?( Distinct \[\s*(?P<distinct>true)\s*\])? Output \[\s*(?P<out>[^\]]+)\s*\]"
     )
     flat_qpl_line_pattern = re.compile(
-        r"#(?P<idx>\d+) = (?P<op>\w+) \[ (?P<ins>[^\]]+) \] ((?P<opt>\w+) \[ (?P<arg>[^\]]+) \] )*Output \[ (?P<out>[^\]]+) \]"
+        r"#(?P<idx>\d+) = (?P<op>\w+) \[\s*(?P<ins>[^\]]+)\s*\] ((?P<opt>\w+) \[\s*(?P<arg>[^\]]+)\s*\] )*Output \[\s*(?P<out>[^\]]+)\s*\]"
     )
 
     ctes = []
