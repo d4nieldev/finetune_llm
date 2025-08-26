@@ -245,13 +245,18 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     accuracy = 0
+    errs = 0
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
         same, err = compare_qpl_sql(model_result["pred_qpl"], model_result["gold_sql"], model_result['db_id'], cursor)
         results.append({**model_result, "is_correct": same, "error": err})
+        accuracy += 1 if same else 0
+        errs += 1 if err else 0
     
     accuracy = accuracy / len(model_results) * 100
+    error_rate = errs / len(model_results) * 100
     print(f"Accuracy: {accuracy:.2f}%")
+    print(f"Error Rate: {error_rate:.2f}%")
 
     with open(args.output, "w") as f:
         json.dump(results, f, indent=2)
