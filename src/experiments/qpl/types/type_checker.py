@@ -53,7 +53,7 @@ def check_and_resolve(op: Operator, type_1: Dict[QPLType, int], type_2: Optional
             for candidates in powerset(type_1.keys(), include_empty=False)
             for agg_type in powerset({t for c in candidates for t in {c, QPLType(c.entity, aggregated=True), QPLType(NUMBER)}}, include_empty=False)
         ]
-    elif op in [Operator.FILTER, Operator.TOP, Operator.SORT, Operator.TOPSORT]:
+    elif op in [Operator.FILTER, Operator.SORT, Operator.TOPSORT]:
         types_sets = [frozenset(sub_t) for sub_t in powerset(type_1.keys(), include_empty=False)]  # any subset of type_1 is valid, except empty set
     elif op == Operator.JOIN:
         if not type_2:
