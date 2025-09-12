@@ -181,15 +181,15 @@ interactive.sh
 .nfs*
 *.sbatch
 
-# Output models
+# Output models and files
 output/
 
-# Output logs
+# Python packages
+.litellm_cache/
+mlartifacts
 wandb/
 unsloth_compiled_cache/
-
-# Litellm cache
-.litellm_cache/
+*.sqlite
 
 # Mac files
 .DS_Store
