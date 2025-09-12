@@ -166,7 +166,7 @@ def eq_resultset(rs1, rs2, order_by):
 #     sorting keys are present in sql and in qpl - Check order for the sorting keys
 #     sorting keys are not present in sql - Check set equality (ignore order of rows)
 def same_rs(grs, prs, qpl):
-    # Geţ the orderBy list of fields in the QPL
+    # Get the orderBy list of fields in the QPL
     order_by = get_order_by(qpl)
 
     # Same number of rows
@@ -205,17 +205,23 @@ def execute_sql(cursor, sql):
 def compare_qpl_sql(qpl: str, sql: str, db_id: str, cursor) -> tuple[bool, str | None]:
     same = False
     err = None
+    
     try:
         flat_qpl = [line[:line.index(';')] if ';' in line else line for line in qpl.split('\n')]
         gold_sql = sql
         pred_cte = flat_qpl_to_cte(flat_qpl, db_id)
-        prs = execute_sql(cursor, pred_cte)
     except Exception as e:
-        err = str(e)
+        err = "Could not convert QPL to CTE - " + str(e)
     else:
-        grs = execute_sql(cursor, gold_sql)
-        same = same_rs(grs, prs, flat_qpl)
-        
+        try:
+            prs = execute_sql(cursor, pred_cte)
+        except Exception as e:
+            err = f"Converted QPL to CTE: {pred_cte}. "
+            err += "Could not execute predicted SQL: " + str(e)
+        else:
+            grs = execute_sql(cursor, gold_sql)
+            same = same_rs(grs, prs, flat_qpl)
+    
     return same, err
 
 

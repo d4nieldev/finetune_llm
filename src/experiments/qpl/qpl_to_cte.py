@@ -111,7 +111,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                         elif out == "1 AS One":
                             replaced_output_list.append(out)
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Except_{idx}",
                         f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} WHERE {lhs_pred_col} NOT IN (SELECT {rhs_pred_col} FROM {i2c[rhs]})",
@@ -134,7 +134,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                             col = g["col"]
                             replaced_output_list.append(f"{i2c[i]}.{col}")
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Except_{idx}",
                         f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} WHERE {lhs_pred_col} NOT IN (SELECT {rhs_pred_col} FROM {i2c[rhs]})",
@@ -156,7 +156,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                             c = g["col"]
                             replaced_output_list.append(f"{i2c[i]}.{c}")
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Except_{idx}",
                         f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} WHERE {col} NOT IN (SELECT {col} FROM {i2c[rhs]})",
@@ -171,13 +171,13 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                             c = g["col"]
                             replaced_output_list.append(f"{i2c[i]}.{c}")
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Except_{idx}",
                         f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} WHERE NOT EXISTS (SELECT {ec} FROM {i2c[rhs]} WHERE {i2c[lhs]}.{ec} = {i2c[rhs]}.{ec})",
                     )
                 else:
-                    raise AssertionError("Unknown Except variant")
+                    raise AssertionError(f"#{idx}: Unknown Except variant")
             elif op == "Filter":
                 i = ins[0]
                 predicate = opts["Predicate"]
@@ -217,7 +217,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                         elif out == "1 AS One":
                             replaced_output_list.append(out)
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Intersect_{idx}",
                         f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} WHERE {rhs_pred_col} IN (SELECT {lhs_pred_col} FROM {i2c[rhs]})",
@@ -233,7 +233,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                         elif out == "1 AS One":
                             replaced_output_list.append(out)
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Intersect_{idx}",
                         f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} INTERSECT SELECT {', '.join(replaced_output_list)} FROM {i2c[rhs]}",
@@ -285,7 +285,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                                 replaced_output_list.append(out)
                             else:
                                 raise AssertionError(
-                                    f"Don't know how to handle {out = }"
+                                    f"#{idx}: Don't know how to handle {out = }"
                                 )
                         if pred_op == "=":
                             cte = CTE(
@@ -311,7 +311,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                                     replaced_output_list.append(out)
                                 else:
                                     raise AssertionError(
-                                        f"Don't know how to handle {out = }"
+                                        f"#{idx}: Don't know how to handle {out = }"
                                     )
                             cte = CTE(
                                 f"Join_{idx}",
@@ -336,7 +336,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                         elif out == "1 AS One":
                             replaced_output_list.append(out)
                         else:
-                            raise AssertionError(f"Don't know how to handle {out = }")
+                            raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                     cte = CTE(
                         f"Join_{idx}",
                         f"SELECT {distinct}{', '.join(replaced_output_list)} FROM {i2c[lhs]} CROSS JOIN {i2c[rhs]}",
@@ -384,18 +384,18 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                     elif out == "1 AS One":
                         replaced_output_list.append(out)
                     else:
-                        raise AssertionError(f"Don't know how to handle {out = }")
+                        raise AssertionError(f"#{idx}: Don't know how to handle {out = }")
                 cte = CTE(
                     f"Union_{idx}",
                     f"SELECT {', '.join(replaced_output_list)} FROM {i2c[lhs]} UNION SELECT {', '.join(replaced_output_list)} FROM {i2c[rhs]}",
                 )
             else:
-                raise ValueError(f"Unrecognized op: {op}")
+                raise ValueError(f"#{idx}: Unrecognized operator {op!r}")
 
             i2c[idx] = cte.name
             ctes.append(cte)
         else:
-            raise ValueError(f"Invalid Flat QPL Line: {line = }")
+            raise ValueError(f"Invalid QPL Line: {line = }")
     if ctes[-1].name.startswith("Sort"):
         return "WITH {ctes} {sort_query}".format(
             ctes=", ".join([f"{cte.name} AS ( {cte.query} )" for cte in ctes[:-1]]),
