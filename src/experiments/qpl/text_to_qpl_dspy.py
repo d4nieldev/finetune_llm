@@ -1,11 +1,22 @@
-import json
-import asyncio
-
+from src.experiments.qpl.validate_qpl import compare_qpl_sql
 from src.utils.qpl.tree import Operator
 from src.utils.qpl.schema import DBSchema, SchemaRepresentation
 from src.utils.qpl.tree import QPLQDTree
 
 import dspy
+import pyodbc
+
+
+connection_string = (
+    'Driver={ODBC Driver 18 for SQL Server};'
+    'Server=tcp:spider-sql.database.windows.net,1433;'
+    'Database=test;'
+    'Uid=iloveqpl;'
+    'Pwd=P4$$w0rd!;'
+    'Encrypt=yes;'
+    'TrustServerCertificate=no;'
+    'Connection Timeout=30;'
+)
 
 class Decompose(dspy.Signature):
     """
@@ -26,8 +37,9 @@ The toplevel QPL operators are:
     db_schema: str = dspy.InputField(desc="The schema of the database the question is being asked about")
     question: str = dspy.InputField(desc="The question to be decomposed")
 
+    reasoning: str = dspy.OutputField(desc="Reason step-by step. First, identify the operator, then decompose the question into sub-questions.")
     operator: Operator = dspy.OutputField(desc="The top-level operator of the question")
-    sub_questions: list[str] = dspy.OutputField(desc="The sub-questions that, when combined with the operator, form the given question")
+    sub_questions: list[str] = dspy.OutputField(desc="The natural language sub-questions that, when combined with the operator, form the given question")
 
 
 class Complete(dspy.Signature):
@@ -62,7 +74,7 @@ Below is the formal specification for each operation in valid QPL:
 <order-by> ::= OrderBy [ <column-name> <direction> (, <column-name> <direction>)* ]
 <withTies> ::= WithTies [ true | false ]
 <direction> ::= ASC | DESC
-<pred-non-qualif> ::= Predicate [ <comparison> (AND | OR <comparison>)* ]
+<pred-non-qualif> ::= Predicate [ <<comparison-non-qualif> (AND | OR <comparison-non-qualif>)* ]
 <comparison-non-qualif> ::= <column-name> <operator> <value>
 <pred-qualif> ::= Predicate [ <comparison-qualif> (AND | OR <comparison-qualif>)* ]
 <comparison-qualif> ::= <qualif-column-name> <operator> (<value> | <qualif-column-name>)
@@ -81,6 +93,7 @@ Using valid QPL, complete the last line in order to answer the question for the 
     question: str = dspy.InputField(desc="The question to be answered by a QPL query")
     prefix_qpl: str = dspy.InputField(desc="The prefix of the QPL query that needs to be completed")
 
+    reasoning: str = dspy.OutputField(desc="Reason step by step. First, understand the question and the provided QPL prefix (especially the inputs), then decide how to use (or not use) operator-specific options, finally decide what columns to output.")
     last_line: str = dspy.OutputField(desc="The completed last line of the QPL query")
 
 
@@ -93,15 +106,17 @@ def post_order_index_tree(tree: QPLQDTree, counter: int = 1) -> int:
 
 
 class RecursiveDecomposer(dspy.Module):
-    def __init__(self, cot: bool = True, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
-        self.model = dspy.ChainOfThought(Decompose) if cot else dspy.Predict(Decompose)
-        self.cot = cot
+    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
+        self.model = dspy.Predict(Decompose)
         self.schema_repr = schema_repr
 
-    async def aforward(self, db_schema: DBSchema, question: str) -> QPLQDTree:
-        async def rec(q: str, _parent: QPLQDTree | None = None) -> QPLQDTree:
+    def compile(self, optimizer, trainset: list[dspy.Example], valset: list[dspy.Example]):
+        self.model = optimizer.compile(student=self.model, trainset=trainset, valset=valset)
+
+    def forward(self, db_schema: DBSchema, question: str) -> dict:
+        def rec(q: str, _parent: QPLQDTree | None = None) -> QPLQDTree:
             # 1) predict operator + sub_questions for this node
-            output = await self.model.acall(
+            output = self.model(
                 db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.m_schema(),
                 question=q
             )
@@ -111,34 +126,33 @@ class RecursiveDecomposer(dspy.Module):
                 question=q,
                 db_id=db_schema.db_id,
                 op=output.operator,
-                decomposition_cot=getattr(output, "reasoning", None) if self.cot else None,
+                decomposition_cot=output.reasoning,
                 parent=_parent
             )
 
             # 3) kick off child decompositions concurrently
-            tasks = [rec(sq, tree) for sq in output.sub_questions]
-            children = await asyncio.gather(*tasks) if tasks else []
+            children = [rec(sq, tree) for sq in output.sub_questions]
             tree.children = tuple(children)
             return tree
 
-        root = await rec(question)
+        root = rec(question)
         post_order_index_tree(root)
-        return root
-
-    def forward(self, db_schema: DBSchema, question: str) -> QPLQDTree:
-        return asyncio.run(self.aforward(db_schema=db_schema, question=question))
+        return root.to_dict()
 
 
 class RecursiveCompleter(dspy.Module):
-    def __init__(self, cot: bool = True, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
-        self.model = dspy.ChainOfThought(Complete) if cot else dspy.Predict(Complete)
+    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
+        self.model = dspy.Predict(Complete)
         self.schema_repr = schema_repr
 
-    async def aforward(self, tree: QPLQDTree, db_schema: DBSchema) -> None:
-        async def rec(node: QPLQDTree) -> None:
+    def compile(self, optimizer, trainset: list[dspy.Example], valset: list[dspy.Example]):
+        self.model = optimizer.compile(student=self.model, trainset=trainset, valset=valset)
+
+    def forward(self, tree_dict: dict, db_schema: DBSchema) -> dict:
+        def rec(node: QPLQDTree) -> None:
             # 1) complete all children concurrently
-            if node.children:
-                await asyncio.gather(*(rec(c) for c in node.children))
+            for c in node.children:
+                rec(c)
 
             # 2) build prefix from (now completed) children
             prefix_qpl = "\n".join(child.qpl for child in node.children)
@@ -148,49 +162,31 @@ class RecursiveCompleter(dspy.Module):
                 children_str = "Table"
             else:
                 children_str = f"[ {', '.join(f'#{c.line_num}' for c in node.children)} ]"
-            prefix_qpl += f"#{node.line_num} = {node.op} {children_str} ..."
+            prefix_qpl += f"\n#{node.line_num} = {node.op} {children_str} ..."
 
             # 4) complete current node’s line
-            output = await self.model.acall(
+            output = self.model(
                 db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.m_schema(),
                 question=node.question,
                 prefix_qpl=prefix_qpl
             )
             node.qpl_line = output.last_line
+            node.completion_cot = output.reasoning
 
-        await rec(tree)
-
-    def forward(self, tree: QPLQDTree, db_schema: DBSchema) -> None:
-        return asyncio.run(self.aforward(tree=tree, db_schema=db_schema))
+        tree = QPLQDTree.from_dict(tree_dict)
+        rec(tree)
+        return tree.to_dict()
 
 
 class TextToQPL(dspy.Module):
-    def __init__(self, cot: bool = True, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
-        self.decomposer = RecursiveDecomposer(cot=cot, schema_repr=schema_repr)
-        self.completer = RecursiveCompleter(cot=cot, schema_repr=schema_repr)
+    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
+        self.decomposer = RecursiveDecomposer(schema_repr=schema_repr)
+        self.completer = RecursiveCompleter(schema_repr=schema_repr)
+        
         self.db_schemas = DBSchema.from_db_schemas_file()
 
-    async def aforward(self, db_id: str, question: str) -> QPLQDTree:
+    def forward(self, db_id: str, question: str) -> dict:
         db_schema = self.db_schemas[db_id]
-        tree = await self.decomposer.acall(db_schema=db_schema, question=question)
-        await self.completer.acall(tree=tree, db_schema=db_schema)
-        return tree
-
-    # keep a sync wrapper if you like
-    def forward(self, db_id: str, question: str) -> QPLQDTree:
-        return asyncio.run(self.aforward(db_id=db_id, question=question))
-
-
-if __name__ == "__main__":
-    dspy.settings.configure(lm=dspy.LM("ollama_chat/gpt-oss"))
-    text_to_qpl = TextToQPL()
-
-    async def main():
-        tree = await text_to_qpl.acall(
-            db_id="car_1",
-            question="Which models are lighter than 3500 but not built by the 'Ford Motor Company'?"
-        )
-        with open('out.json', 'w') as f:
-            json.dump(tree.to_dict(), f, indent=2)
-
-    asyncio.run(main())
+        tree_dict = self.decomposer(db_schema=db_schema, question=question)
+        tree_dict = self.completer(tree_dict=tree_dict, db_schema=db_schema)
+        return tree_dict
