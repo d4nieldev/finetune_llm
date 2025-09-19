@@ -21,6 +21,7 @@ connection_string = (
 class Decompose(dspy.Signature):
     """
     Given a database schema and a question in natural language, you must predict the toplevel QPL operator and if needed, decompose the input question into one or two simpler sub-questions which describe the arguments of the toplevel operator.
+DO NOT write the entire decomposition plan in the sub-questions, rather a simple question, that will later be decomposed in the same way.
 
 The toplevel QPL operators are:
 - **Scan** - Scan all rows in a table with optional filtering predicate (no decomposition needed - the question is atomic)
@@ -120,6 +121,11 @@ class RecursiveDecomposer(dspy.Module):
                 db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.m_schema(),
                 question=q
             )
+            
+            # sq_str = ""
+            # for sq in output.sub_questions:
+            #     sq_str += "\n\t"+sq
+            # print(f"{q}\n{output.operator}{sq_str}")
 
             # 2) create node
             tree = QPLQDTree(
