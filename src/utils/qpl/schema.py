@@ -2,11 +2,17 @@ import sys
 import os
 import json
 import random
+from enum import StrEnum
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 from math import sqrt
 
 import src.utils.qpl.paths as p
+
+
+class SchemaRepresentation(StrEnum):
+    DDL = "ddl"
+    M_SCHEMA = "m_schema"
 
 
 @dataclass

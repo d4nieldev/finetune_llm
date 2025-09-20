@@ -314,8 +314,6 @@ def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema, strict: bool = True) -
                 return aggregate_type(node, captures, schema, strict)
             elif op == Operator.FILTER:
                 return filter_type(node, captures, schema, strict)
-            elif op == Operator.TOP:
-                return top_type(node, captures, schema, strict)
             elif op == Operator.SORT:
                 return sort_type(node, captures, schema, strict)
             elif op == Operator.TOPSORT:

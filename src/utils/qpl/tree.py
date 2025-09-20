@@ -1,6 +1,6 @@
 import re
 from enum import StrEnum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 from collections import defaultdict
 
@@ -10,7 +10,6 @@ class Operator(StrEnum):
     AGGREGATE = "Aggregate"
     FILTER = "Filter"
     SORT = "Sort"
-    TOP = "Top"
     TOPSORT = "TopSort"
     JOIN = "Join"
     EXCEPT = "Except"
@@ -96,7 +95,7 @@ class QPLQDTree:
     line_num: int = None  # type: ignore
     qpl_line: str = None  # type: ignore
     parent: Optional["QPLQDTree"] = None
-    children: Tuple["QPLQDTree", ...] = ()
+    children: Tuple["QPLQDTree", ...] = field(default_factory=tuple)
     decomposition_cot: Optional[str] = None
     completion_cot: Optional[str] = None
 

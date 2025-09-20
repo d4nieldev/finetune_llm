@@ -14,7 +14,7 @@ dependencies = [
     "numpy==2.3.2",
     "pandas==2.3.1",
     "peft==0.15.2",
-    "pyodbc>=5.2.0",
+    "pyodbc==5.2.0",
     "rich-argparse==1.7.1",
     "simple-parsing==0.1.7",
     "torch==2.7.1",
@@ -23,27 +23,22 @@ dependencies = [
     "trl==0.20.0",
     "wandb==0.19.9",
     # "flash-attn==2.8.2",
-    "python-dotenv>=1.1.1",
+    "python-dotenv==1.1.1",
+    "dspy==3.0.2",
+    "pydash==8.0.5",
+    "pyodbc==5.2.0",
+    "sqlalchemy==2.0.41",
+    "sentence-transformers==4.1.0",
+    "openpyxl==3.1.5",
+    "graphviz==0.21",
+    "mlflow>=3.3.2",
 ]
 
 # [tool.uv]
 # no-build-isolation-package = ["flash-attn"]
 
 [project.optional-dependencies]
-qpl = [
-    "pydash==8.0.5",
-    "pyodbc==5.2.0",
-    "sqlalchemy==2.0.41",
-    "sentence-transformers==4.1.0",
-    "dspy==2.6.24",
-]
 notebook = [
     "ipykernel==6.29.5",
     "matplotlib==3.10.3",
-]
-viz = [
-    "graphviz==0.21",
-]
-error-analysis = [
-    "openpyxl==3.1.5",
 ]

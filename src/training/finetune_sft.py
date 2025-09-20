@@ -237,7 +237,6 @@ def train(
         learning_rate                 = args.learning_rate,
         optim                         = args.optim,
         num_train_epochs              = args.num_train_epochs,
-        # max_steps                     = 2,  # TODO: remove this, just for debugging
         lr_scheduler_type             = args.lr_scheduler_type,
         warmup_ratio                  = args.warmup_ratio,
         weight_decay                  = args.weight_decay,
