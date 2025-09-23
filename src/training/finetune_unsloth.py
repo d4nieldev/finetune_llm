@@ -1,190 +1,115 @@
-"""
-!! IMPORTANT !!
-This script is currently under development and is not fully functional.
-For now, the training process is not stable, it seems like we have exploding gradients even though we are using gradient clipping.
-The model is not converging and the loss is not decreasing.
-"""
-import os
-import argparse
-import logging
-from datetime import datetime
+### EXPERIMENTAL ###
 
 import torch
-from datasets import load_dataset
-from unsloth import FastModel, is_bfloat16_supported
-from unsloth.chat_templates import get_chat_template, standardize_data_formats, train_on_responses_only
+from unsloth import FastLanguageModel
+from unsloth.chat_templates import train_on_responses_only
 from trl import SFTTrainer, SFTConfig
+from datasets import Dataset
 
-from src.callbacks import MemoryLoggingCallback
 from src.prompters import PrompterRegistry
 
+fourbit_models = [
+    "unsloth/Qwen3-1.7B-unsloth-bnb-4bit", # Qwen 14B 2x faster
+    "unsloth/Qwen3-4B-unsloth-bnb-4bit",
+    "unsloth/Qwen3-8B-unsloth-bnb-4bit",
+    "unsloth/Qwen3-14B-unsloth-bnb-4bit",
+    "unsloth/Qwen3-32B-unsloth-bnb-4bit",
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"  # for LoRA: https://github.com/pytorch/pytorch/issues/93661
-logger = logging.getLogger(__name__)
+    # 4bit dynamic quants for superior accuracy and low memory use
+    "unsloth/gemma-3-12b-it-unsloth-bnb-4bit",
+    "unsloth/Phi-4",
+    "unsloth/Llama-3.1-8B",
+    "unsloth/Llama-3.2-3B",
+    "unsloth/orpheus-3b-0.1-ft-unsloth-bnb-4bit" # [NEW] We support TTS models!
+] # More models at https://huggingface.co/unsloth
 
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Qwen3-14B",
+    max_seq_length = 16*1024,   # Context length - can be longer, but uses more memory
+    load_in_4bit = True,     # 4bit uses much less memory
+    load_in_8bit = False,    # A bit more accurate, uses 2x memory
+    full_finetuning = False, # We have full finetuning now!
+    # token = "hf_...",      # use one if using gated models
+)
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Fine-tune a CausalLM on a dataset.", 
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    
-    hf_ids_group = parser.add_argument_group("Hugging Face IDs")
-    hf_ids_group.add_argument("--model_id", type=str, default="unsloth/gemma-3-4b-it", help="Model ID to use for fine-tuning.")
-    hf_ids_group.add_argument("--dataset_id", type=str, default="dair-ai/emotion", help="Dataset ID to use for fine-tuning.")
-    
-    train_config_group = parser.add_argument_group("Training config")
-    train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
-    train_config_group.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Gradient accumulation steps.")
-    train_config_group.add_argument("--learning_rate", type=float, default=2e-4, help="Learning rate.")
-    train_config_group.add_argument("--num_train_epochs", type=int, default=2, help="Number of training epochs.")
-    train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=False, help="Enable gradient checkpointing.")
-    
-    monitoring_group = parser.add_argument_group("Monitoring")
-    monitoring_group.add_argument("--logging_steps", type=int, default=500, help="Log every N steps. If between 0 to 1, part of the epoch.")
-    monitoring_group.add_argument("--save_steps", type=int, default=5000, help="Save checkpoint every N steps. If between 0 to 1, part of the epoch.")
-    monitoring_group.add_argument("--random_seed", type=int, default=1, help="Random seed for reproduction.")
-    
-    lora_config_group = parser.add_argument_group("LoRA config")
-    lora_config_group.add_argument("--lora", action=argparse.BooleanOptionalAction, default=True, help="Use LoRA for fine-tuning.")
-    lora_config_group.add_argument("--r", type=int, default=16, help="LoRA rank.")
-    lora_config_group.add_argument("--alpha", type=int, default=32, help="LoRA alpha.")
-    lora_config_group.add_argument("--dropout", type=float, default=0.05, help="LoRA dropout.")
-    
-    args = parser.parse_args()
+prompter = PrompterRegistry.get('d4nieldev/qpl-completer-cot-ds')(with_assistant=True)
+train_dataset: Dataset = prompter.load_dataset()['train']
+train_dataset = train_dataset.map(
+    lambda ex: {'text': tokenizer.apply_chat_template(prompter.to_chat_template(ex)['messages'], tokenize=False, add_generation_prompt=False)}, 
+    remove_columns=train_dataset.column_names
+)
+eval_dataset: Dataset = prompter.load_dataset()['validation']
+eval_dataset = eval_dataset.map(
+    lambda ex: {'text': tokenizer.apply_chat_template(prompter.to_chat_template(ex)['messages'], tokenize=False, add_generation_prompt=False)}, 
+    remove_columns=eval_dataset.column_names
+)
 
-    return args
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 32,           # Choose any number > 0! Suggested 8, 16, 32, 64, 128
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj",],
+    lora_alpha = 32,  # Best to choose alpha = rank or rank*2
+    lora_dropout = 0, # Supports any, but = 0 is optimized
+    bias = "none",    # Supports any, but = "none" is optimized
+    # [NEW] "unsloth" uses 30% less VRAM, fits 2x larger batch sizes!
+    use_gradient_checkpointing = "unsloth", # True or "unsloth" for very long context
+    random_state = 3407,
+    use_rslora = False,   # We support rank stabilized LoRA
+    loftq_config = None,  # And LoftQ
+)
 
+trainer = SFTTrainer(
+    model = model,
+    processing_class = tokenizer,
+    train_dataset = train_dataset,
+    eval_dataset = eval_dataset,
+    # formatting_func=lambda d: [tokenizer.apply_chat_template(d['messages'], tokenize=False, add_generation_prompt=False)],
+    args = SFTConfig(
+        dataset_text_field = "text",
+        per_device_train_batch_size = 1,
+        gradient_accumulation_steps = 8, # Use GA to mimic batch size!
+        warmup_ratio = 0.1,
+        num_train_epochs = 2, # Set this for 1 full training run.
+        learning_rate = 2e-5, # Reduce to 2e-5 for long training runs
+        logging_steps = 1,
+        eval_steps=0.9999,
+        optim = "adamw_8bit",
+        weight_decay = 0.1,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        report_to = "wandb", # Use this for WandB etc
+    ),
+)
+trainer = train_on_responses_only(
+    trainer,
+    instruction_part="<|im_start|>user\n",
+    response_part="<|im_start|>assistant\n",
+)
 
-def args_str(args):
-    model_id = args.model_id.split("/")[-1]
-    dataset_id = args.dataset_id.split("/")[-1]
-    other_args = "_".join([f"{k}={v}" for k, v in vars(args).items() if k not in ["model_id", "dataset_id"]])
-    return f"{model_id}-{dataset_id}_{other_args}_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+# Show current memory stats
+gpu_stats = torch.cuda.get_device_properties(0)
+start_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
+print(f"GPU = {gpu_stats.name}. Max memory = {max_memory} GB.")
+print(f"{start_gpu_memory} GB of memory reserved.")
 
+trainer_stats = trainer.train()
 
-def train(
-    args
-):
-    print("Arguments:")
-    for k, v in vars(args).items():
-        print(f"{k}={v}")
-    
-    max_seq_length = 1024
+# Show final memory and time stats
+used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+used_memory_for_lora = round(used_memory - start_gpu_memory, 3)
+used_percentage = round(used_memory / max_memory * 100, 3)
+lora_percentage = round(used_memory_for_lora / max_memory * 100, 3)
+print(f"{trainer_stats.metrics['train_runtime']} seconds used for training.")
+print(
+    f"{round(trainer_stats.metrics['train_runtime']/60, 2)} minutes used for training."
+)
+print(f"Peak reserved memory = {used_memory} GB.")
+print(f"Peak reserved memory for training = {used_memory_for_lora} GB.")
+print(f"Peak reserved memory % of max memory = {used_percentage} %.")
+print(f"Peak reserved memory for training % of max memory = {lora_percentage} %.")
 
-    # Step 1. Load model & tokenizer
-    model, tokenizer = FastModel.from_pretrained(
-        args.model_id,
-        max_seq_length=max_seq_length,
-        load_in_4bit=False,
-        dtype=None,
-    )
-    
-    if args.lora:
-        model = FastModel.get_peft_model(
-            model,
-            finetune_vision_layers = False,
-            finetune_language_layers = True,
-            finetune_attention_modules = True,
-            finetune_mlp_modules = True,
-            r = args.r,
-            lora_alpha=args.alpha,
-            lora_dropout=args.dropout,
-            bias = "none",
-            random_state = args.random_seed,
-        )
-
-    tokenizer = get_chat_template(
-        tokenizer,
-        chat_template="gemma-3"
-    )
-    
-    
-    # Step 3. Data preperation
-    train_dataset = load_dataset(args.dataset_id, split="train")  # type: ignore
-    prompter = PrompterRegistry.get(args.dataset_id)()
-    train_dataset = train_dataset.map(prompter.to_chat_template, remove_columns=train_dataset.column_names)
-    train_dataset = train_dataset.rename_column("messages", "conversations")  # for standardization
-    train_dataset = standardize_data_formats(train_dataset)
-
-    print(f"AFTER STANDARTIZATION:\n\n{train_dataset[0]}\n\n")
-
-    def formatting_prompts_func(examples):
-        convos = examples["conversations"]
-        texts = [
-            tokenizer.apply_chat_template(
-                convo,
-                tokenize = False,
-                add_generation_prompt = False
-            ).removeprefix('<bos>') 
-            for convo in convos
-        ]
-        return { "text" : texts, }
-    
-    train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
-
-    print(f"AFTER FORMATTING:\n\n{train_dataset[0]['text']}\n\n")
-    
-    
-    # Step 4. Training
-    dirname = args_str(args)
-    training_args = SFTConfig(
-        dataset_text_field          = "text",
-        per_device_train_batch_size = args.train_batch_size,
-        gradient_accumulation_steps = args.gradient_accumulation_steps,
-        num_train_epochs            = args.num_train_epochs,
-        warmup_steps                = 5,
-        learning_rate               = args.learning_rate,
-        logging_steps               = args.logging_steps,
-        output_dir                  = f"./output/unsloth/{dirname}",
-        run_name                    = dirname,
-        weight_decay                = 0.01,
-        lr_scheduler_type           = "linear",
-        seed                        = args.random_seed,
-        report_to                   = ["wandb"],
-        dataset_num_proc            = 2,
-        max_seq_length              = max_seq_length,
-        # packing                     = True,
-        # fp16                        = not is_bfloat16_supported(),
-        # bf16                        = is_bfloat16_supported(),
-        # logging_strategy            = "steps",
-        # save_strategy               = "steps",
-        # save_steps                  = args.save_steps,
-        # max_grad_norm               = 1.0
-    )
-
-    trainer = SFTTrainer(
-        model              = model,
-        processing_class   = tokenizer,
-        train_dataset      = train_dataset, 
-        args               = training_args,
-        callbacks          = [MemoryLoggingCallback()],
-    )
-
-    trainer = train_on_responses_only(
-        trainer,
-        instruction_part = "<start_of_turn>user\n",
-        response_part = "<start_of_turn>model\n"
-    )
-
-    print(f"SHOULD HAVE SINGLE <bos> TOKEN:\n\n{tokenizer.decode(trainer.train_dataset[0]['input_ids'])}\n\n")
-    print(f"MASKED EXAMPLE:\n\n{tokenizer.decode([tokenizer.pad_token_id if x == -100 else x for x in trainer.train_dataset[0]['labels']]).replace(tokenizer.pad_token, ' ')}\n\n")
-
-
-    trainer.train()
-    # tokenizer.save_pretrained(training_args.output_dir)
-    
-
-if __name__ == "__main__":
-    args = parse_args()
-        
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-        level=logging.INFO,
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    train(
-        args=args,
-    )
+# Save the model - LoRA weights only by default
+model.save_pretrained("lora_model_completer_chat")  # Local saving
+tokenizer.save_pretrained("lora_model_completer_chat")

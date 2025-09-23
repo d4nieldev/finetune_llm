@@ -10,7 +10,7 @@ from src.prompters import QPLCompleterCotPrompter
 from src.databuilders.completer.build import get_decomposer_roots
 from src.utils.qpl.tree import PartialQDTree, QPLQDTree
 from src.experiments.qpl.text_to_qpl import complete
-import src.utils.qpl.paths as p
+import src.utils.paths as p
 from src.utils.paths import TRAINED_MODELS_DIR
 
 

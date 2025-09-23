@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 from math import sqrt
 
-import src.utils.qpl.paths as p
+import src.utils.paths as p
 
 
 class SchemaRepresentation(StrEnum):

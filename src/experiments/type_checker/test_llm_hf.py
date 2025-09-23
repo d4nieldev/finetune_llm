@@ -12,7 +12,7 @@ from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 from utils.qpl.schema import DBSchema
 from src.inference.qpl.types.test_llm import TypeSystem, TaggedDB, data_path
 from src.utils.chat_types import ChatTemplate, ChatMessage
-import src.utils.qpl.paths as p
+import src.utils.paths as p
 from src.utils.argparse import from_dataclass
 from src.utils.generation import generate_batch, to_model_prompt
 

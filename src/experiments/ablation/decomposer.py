@@ -7,6 +7,7 @@ import torch
 import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from unsloth import FastLanguageModel
 from sentence_transformers import SentenceTransformer
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
@@ -14,7 +15,7 @@ from sklearn.metrics import classification_report, confusion_matrix, ConfusionMa
 
 
 from src.utils.paths import TRAINED_MODELS_DIR
-import src.utils.qpl.paths as p
+import src.utils.paths as p
 from src.prompters import QPLDecomposerCotPrompter, QPLDecomposerPrompter
 from src.utils.generation import to_model_prompt, generate_batch
 from src.experiments.qpl.text_to_qpl import get_generation_params, GenerationMode
@@ -36,7 +37,8 @@ def parse_args():
     
     args = parser.parse_args()
 
-    args.model_path = TRAINED_MODELS_DIR / args.model_dir
+    # args.model_path = TRAINED_MODELS_DIR / args.model_dir # TODO: enable
+    args.model_path = args.model_dir # TODO: disable
     args.output_dir = p.ABLATION_DECOMPOSER_OUTPUT_DIR / args.model_dir
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -56,9 +58,15 @@ if __name__ == "__main__":
     chat_templates = list(map(prompter.to_chat_template, test_dataset))
 
     # Load model & tokenizer
-    model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16).cuda()
-    model = model.eval()
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+    # model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16).cuda()
+    # model = model.eval()
+    # tokenizer = AutoTokenizer.from_pretrained(args.model_path)
+    # TODO: make general
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name = args.model_path,
+        max_seq_length = 16*1024,
+        load_in_4bit = True,
+    )
 
     prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
 

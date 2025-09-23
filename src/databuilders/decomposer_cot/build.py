@@ -9,7 +9,7 @@ from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
 
 from src.utils.chat_types import ChatMessage
-from src.utils.qpl.paths import DB_SCHEMAS_JSON_PATH
+from src.utils.paths import DB_SCHEMAS_JSON_PATH
 from src.utils.qpl.schema import DBSchema
 
 litellm.cache = Cache(type=LiteLLMCacheType.DISK)

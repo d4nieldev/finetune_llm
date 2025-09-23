@@ -3,7 +3,7 @@ from enum import StrEnum
 from collections import defaultdict, Counter
 
 from src.utils.qpl.tree import Operator, QPLTree
-from src.utils.qpl.paths import DB_SCHEMAS_JSON_PATH
+from src.utils.paths import DB_SCHEMAS_JSON_PATH
 from src.inference.qpl.types.qpl_to_type import QPLType, NUMBER, qpl_tree_to_type, types_str
 from utils.qpl.schema import DBSchema
 from src.utils.lists import powerset
