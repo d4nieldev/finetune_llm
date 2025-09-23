@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Type, Mapping
 
-from src.utils.chat_types import ChatTemplate
+from src.utils.chat_types import ChatML
 
 from datasets import load_dataset, Dataset, DatasetDict
 
@@ -27,7 +27,7 @@ class BasePrompter(ABC):
         return {}
 
     @abstractmethod
-    def to_chat_template(self, example: Mapping[str, Any]) -> ChatTemplate:
+    def to_chat_template(self, example: Mapping[str, Any]) -> ChatML:
         """
         Convert an example from the dataset to a chat template.
 

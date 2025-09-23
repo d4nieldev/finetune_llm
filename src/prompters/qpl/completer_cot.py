@@ -1,7 +1,7 @@
 import re
 from datasets import load_dataset
 
-from src.utils.chat_types import ChatTemplate, ChatMessage
+from src.utils.chat_types import ChatML, Message
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
@@ -15,7 +15,7 @@ class QPLCompleterCotPrompter(QPLPrompter):
     def load_dataset(self, subset: str = "balanced"):
         return load_dataset(self.dataset_id, subset)
 
-    def to_chat_template(self, example) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatML:
         system = (
             "Given a database schema, a QPL query prefix, and a natural language question, "
             + "complete the final line of the query so it completes the user request.\n\n"
@@ -103,17 +103,17 @@ class QPLCompleterCotPrompter(QPLPrompter):
         if self.with_assistant:
             response = f"<think>\n{example['cot']}\n</think>\n\n"
             response += f"```QPL\n{example['qpl_line']}\n```"
-            return ChatTemplate(
+            return ChatML(
                 messages=[
-                    ChatMessage(role="system", content=system),
-                    ChatMessage(role="user", content=user),
-                    ChatMessage(role="assistant", content=response),
+                    Message(role="system", content=system),
+                    Message(role="user", content=user),
+                    Message(role="assistant", content=response),
                 ]
             )
         else:
-            return ChatTemplate(
+            return ChatML(
                 messages=[
-                    ChatMessage(role="system", content=system),
-                    ChatMessage(role="user", content=user),
+                    Message(role="system", content=system),
+                    Message(role="user", content=user),
                 ]
             )

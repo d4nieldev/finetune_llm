@@ -10,7 +10,7 @@ from aiolimiter import AsyncLimiter
 from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
 
-from src.utils.chat_types import ChatMessage
+from src.utils.chat_types import Message
 from src.utils.paths import DB_SCHEMAS_JSON_PATH
 from src.utils.qpl.schema import DBSchema
 
@@ -59,8 +59,8 @@ async def generate_CoT(
         highlighted_qpl_line=highlighted_qpl_line,
     )
     messages = [
-        ChatMessage(role="system", content=system_prompt),
-        ChatMessage(role="user", content=user_prompt),
+        Message(role="system", content=system_prompt),
+        Message(role="user", content=user_prompt),
     ]
     if limiter:
         async with limiter:

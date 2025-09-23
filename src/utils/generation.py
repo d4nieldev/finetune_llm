@@ -1,7 +1,7 @@
 from typing import List, Optional, Callable
 from typing_extensions import TypedDict
 
-from src.utils.chat_types import ChatTemplate
+from src.utils.chat_types import ChatML
 
 import torch
 from tqdm import tqdm
@@ -27,7 +27,7 @@ class GreedyFirstStep(LogitsProcessor):
         return scores
 
 
-def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatTemplate, **kwargs) -> ModelPrompt:
+def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatML, **kwargs) -> ModelPrompt:
     prompt = tokenizer.apply_chat_template(
         [msg for msg in chat_template["messages"] if msg['role'] in ['system', 'user']],  # only the system and user
         tokenize=False,

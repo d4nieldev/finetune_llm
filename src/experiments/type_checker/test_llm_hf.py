@@ -11,7 +11,7 @@ from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 
 from utils.qpl.schema import DBSchema
 from src.inference.qpl.types.test_llm import TypeSystem, TaggedDB, data_path
-from src.utils.chat_types import ChatTemplate, ChatMessage
+from src.utils.chat_types import ChatML, Message
 import src.utils.paths as p
 from src.utils.argparse import from_dataclass
 from src.utils.generation import generate_batch, to_model_prompt
@@ -42,7 +42,7 @@ class Config:
         return {k: str(v) if not isinstance(v, Enum) else v.value for k,v in asdict(self).items()}
 
 
-def get_chat_template(db_id: str, question: str) -> ChatTemplate:
+def get_chat_template(db_id: str, question: str) -> ChatML:
     """
     Returns a ChatTemplate for the given database ID and question.
     The template includes a system prompt, user prompt, and an empty assistant response.
@@ -95,10 +95,10 @@ In adhering to this structure, your objective is:
 
 Respond with the corresponding output fields, starting with the field `[[ ## predicted_type ## ]]`, and then ending with the marker for `[[ ## completed ## ]]`."""
     
-    return ChatTemplate(
+    return ChatML(
         messages=[
-            ChatMessage(role="system", content=system_prompt),
-            ChatMessage(role="user", content=user_prompt),
+            Message(role="system", content=system_prompt),
+            Message(role="user", content=user_prompt),
         ]
     )
 
