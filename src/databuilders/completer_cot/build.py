@@ -12,7 +12,7 @@ from datasets import load_dataset, Dataset, DatasetDict
 
 from src.utils.chat_types import Message
 from src.utils.paths import DB_SCHEMAS_JSON_PATH
-from src.utils.qpl.schema import DBSchema
+from src.utils.schema import DBSchema
 
 litellm.cache = Cache(type=LiteLLMCacheType.DISK)
 

@@ -5,8 +5,8 @@ import logging as log
 
 import regex as re
 
-from src.utils.qpl.tree import QPLTree, Operator
-from utils.qpl.schema import DBSchema, Table
+from src.utils.tree import QPLTree, Operator
+from utils.schema import DBSchema, Table
 
 
 NUMBER = "Number"

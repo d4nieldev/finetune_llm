@@ -16,7 +16,7 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 from src.prompters.qpl import QPLDecomposerPrompter, QPLDecomposerCotPrompter, QPLCompleterPrompter, QPLCompleterCotPrompter
-from src.utils.qpl.tree import QPLQDTree, Operator
+from src.utils.tree import QPLQDTree, Operator
 from src.utils.generation import to_model_prompt, generate_batch
 from src.utils.lists import flatten, unflatten
 

@@ -3,7 +3,7 @@ import logging
 
 from datasets import Dataset, DatasetDict
 
-from src.utils.qpl.tree import PartialQDTree, Operator
+from src.utils.tree import PartialQDTree, Operator
 from src.databuilders.completer.build import load_qd_trees
 
 
