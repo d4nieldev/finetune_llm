@@ -8,6 +8,7 @@ from pathlib import Path
 import argparse
 
 import torch
+from unsloth import FastLanguageModel
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.modeling_utils import PreTrainedModel
@@ -387,8 +388,14 @@ if __name__ == "__main__":
     else:
         log.info("Using standard decomposer prompter")
         decomposer_prompter = QPLDecomposerPrompter(with_assistant=False)
-    decomposer_model = AutoModelForCausalLM.from_pretrained(args.decomposer_model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16)
-    decomposer_tokenizer = AutoTokenizer.from_pretrained(args.decomposer_model_path)
+    
+    decomposer_model, decomposer_tokenizer = FastLanguageModel.from_pretrained(
+        model_name = str(args.decomposer_model_path),
+        max_seq_length = 16*1024,
+        load_in_4bit = "q=8" in str(args.decomposer_model_path) or "8bit" in str(args.decomposer_model_path),
+        load_in_8bit = "q=4" in str(args.decomposer_model_path) or "4bit" in str(args.decomposer_model_path),
+        # fast_inference = True, # uses vLLM
+    )
     decomposer_model.eval()
 
     if '-cot' in args.completer_model_path:
@@ -397,8 +404,14 @@ if __name__ == "__main__":
     else:
         log.info("Using standard completer prompter")
         completer_prompter = QPLCompleterPrompter(with_assistant=False)
-    completer_model = AutoModelForCausalLM.from_pretrained(args.completer_model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16)
-    completer_tokenizer = AutoTokenizer.from_pretrained(args.completer_model_path)
+
+    completer_model, completer_tokenizer = FastLanguageModel.from_pretrained(
+        model_name = str(args.completer_model_path),
+        max_seq_length = 16*1024,
+        load_in_4bit = "q=8" in str(args.completer_model_path) or "8bit" in str(args.completer_model_path),
+        load_in_8bit = "q=4" in str(args.completer_model_path) or "4bit" in str(args.completer_model_path),
+        # fast_inference = True, # uses vLLM
+    )
     completer_model.eval()
 
     results = text_to_qpl(
