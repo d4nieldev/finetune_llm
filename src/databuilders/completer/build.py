@@ -7,7 +7,7 @@ from itertools import product
 from tqdm import tqdm
 from datasets import load_dataset, Dataset, DatasetDict
 
-from src.utils.qpl.tree import QPLTree, PartialQDTree, Operator
+from src.utils.tree import QPLTree, PartialQDTree, Operator
 
 
 class CompleterDatasetError(Exception):
@@ -34,7 +34,7 @@ def get_decomposer_roots(decomposer_data: Dataset, root_questions: set[str]) -> 
     def construct_trees(row) -> list[PartialQDTree]:
         question = row["question"]
         db_id = row["db_id"]
-        op = Operator(row['op'])
+        op = Operator(row['op'] if row['op'] != 'Top' else 'TopSort')
         
         # The question and its children might have multiple decompositions, so we need to construct combinations of children
         child_i_options = [[], []]
