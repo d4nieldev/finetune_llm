@@ -1,7 +1,7 @@
 from src.experiments.qpl.validate_qpl import compare_qpl_sql
-from src.utils.qpl.tree import Operator
-from src.utils.qpl.schema import DBSchema, SchemaRepresentation
-from src.utils.qpl.tree import QPLQDTree
+from src.utils.tree import Operator
+from src.utils.schema import DBSchema, SchemaRepresentation
+from src.utils.tree import QPLQDTree
 
 import dspy
 import pyodbc

@@ -3,8 +3,8 @@ from typing import Any, Mapping, Literal
 from abc import abstractmethod
 
 from src.prompters.base import BasePrompter
-import src.utils.qpl.paths as p
-from src.utils.qpl.schema import DBSchema
+import src.utils.paths as p
+from src.utils.schema import DBSchema
 
 
 class QPLPrompter(BasePrompter):

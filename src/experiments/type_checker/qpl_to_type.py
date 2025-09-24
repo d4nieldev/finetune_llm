@@ -5,8 +5,8 @@ import logging as log
 
 import regex as re
 
-from src.utils.qpl.tree import QPLTree, Operator
-from utils.qpl.schema import DBSchema, Table
+from src.utils.tree import QPLTree, Operator
+from utils.schema import DBSchema, Table
 
 
 NUMBER = "Number"
@@ -335,7 +335,7 @@ def qpl_tree_to_type(qpl_tree: QPLTree, schema: DBSchema, strict: bool = True) -
 if __name__ == "__main__":
     import json
     from datasets import load_dataset
-    import src.utils.qpl.paths as p
+    import src.utils.paths as p
 
     DB_ID = 'battle_death'
     SPLIT = 'validation'

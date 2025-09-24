@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Any
 from math import sqrt
 
-import src.utils.qpl.paths as p
+import src.utils.paths as p
 
 
 class SchemaRepresentation(StrEnum):
@@ -150,21 +150,18 @@ class Column:
         return output.strip()
     
     def m_schema(self, examples_random_order: bool, max_examples: int) -> str:
-        output = f"{self.name}: {self.type.upper() if not self.apply_lower else self.type.lower()}"
-        if self.is_pk:
-            output += " | Primary Key"
-        if self.description:
-            output += f" | {self.description}"
-        if self.metadata:
-            output += f" | {self.metadata_desc(max_examples=max_examples)}"
-        if self.maps_to:
-            output += f" | Maps to {self.maps_to}"
+        output = f"| {self.name} | {self.type.upper() if not self.apply_lower else self.type.lower()}"
+        output += " | T" if self.is_pk else " | F"
+        output += " | " + (self.maps_to if self.maps_to else "N/A")
+        output += " | " + (self.description if self.description else "N/A")
+        output += " | " + (self.metadata_desc(max_examples=max_examples) if self.metadata else "N/A")
+        examples_str = "N/A"
         if self.examples_freq:
             examples_freq_items = list(self.examples_freq.items())[:max_examples]
             if examples_random_order:
                 random.shuffle(examples_freq_items)
             examples_str = ', '.join([f"{e}" for e, f in examples_freq_items])  # optional: add frequency
-            output += f" | Values Examples: [{examples_str}]"
+        output += " | " + examples_str + " |"
         return output
 
 
@@ -248,10 +245,10 @@ class Table:
         output = f"# Table: {self.name}"
         if self.num_rows is not None:
             output += f" ({self.num_rows} rows)"
-        output += "\n## Columns (name:type | pk? | description? | metadata? | fk? | examples?)\n"
-        output += "[\n"
-        output += ",\n".join([f"({col.m_schema(examples_random_order=examples_random_order, max_examples=max_examples)})" for col in self.columns])
-        output += "\n]\n"
+        output += "\n## Columns"
+        output += "\n| Name | Type | IS_PK | FK_TO | Description | Metadata | Examples |"
+        output += "\n|---|---|---|---|---|---|---|\n"
+        output += "\n".join([f"{col.m_schema(examples_random_order=examples_random_order, max_examples=max_examples)}" for col in self.columns])
         return output
 
 
@@ -367,16 +364,13 @@ class DBSchema:
         output += "\n【Foreign Keys】\n"
         for table in self.tables.values():
             for fk in table.fks:
-                output += f"{table.name}.{fk.from_col}={fk.to_table.name}.{fk.to_col}\n"
+                output += f"{table.name}.{fk.from_col}->{fk.to_table.name}.{fk.to_col}\n"
         return output
 
 
 if __name__ == "__main__":
     db_schemas = DBSchema.from_db_schemas_file()
 
-    lens = []
-    for schema in db_schemas.values():
-        lens.append((schema.db_id, len(schema.m_schema())))
     schema = db_schemas[sys.argv[1]]
     representation = sys.argv[2]
 

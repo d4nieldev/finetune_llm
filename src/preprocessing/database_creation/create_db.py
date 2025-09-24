@@ -14,7 +14,7 @@ import sqlalchemy
 from sqlalchemy import create_engine
 from tqdm.auto import tqdm
 
-import src.utils.qpl.paths as p
+import src.utils.paths as p
 
 
 connection_string = (

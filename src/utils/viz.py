@@ -1,10 +1,10 @@
 import json
 
-from src.utils.qpl.schema import DBSchema
+from src.utils.schema import DBSchema
 # from src.inference.qpl.types.qpl_to_type import qpl_tree_to_type, types_str
 # from src.inference.qpl.types.type_checker import rec_type_check
-from src.utils.qpl.tree import QPLTree
-from src.utils.qpl import paths as p
+from src.utils.tree import QPLTree
+from src.utils import paths as p
 
 from graphviz import Digraph
 from tqdm import tqdm

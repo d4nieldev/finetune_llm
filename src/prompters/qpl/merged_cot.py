@@ -2,7 +2,7 @@ from typing import Callable
 from datasets import interleave_datasets, DatasetDict
 import numpy as np
 
-from src.utils.chat_types import ChatTemplate
+from src.utils.chat_types import ChatML
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 from src.prompters.qpl.decomposer_cot import QPLDecomposerCotPrompter
@@ -48,7 +48,7 @@ class QPLMergedCotPrompter(QPLPrompter):
             'validation': development_ds 
         })
 
-    def to_chat_template(self, example) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatML:
         if example['task'] == 'decomposer':
             return self.decomposer_cot_prompter.to_chat_template(example)
         elif example['task'] == 'completer':

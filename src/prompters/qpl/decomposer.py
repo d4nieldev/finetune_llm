@@ -1,6 +1,6 @@
 from typing import Dict, Any, List
 
-from src.utils.chat_types import ChatTemplate, ChatMessage
+from src.utils.chat_types import ChatML, Message
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
@@ -12,7 +12,7 @@ class QPLDecomposerPrompter(QPLPrompter):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def to_chat_template(self, example) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatML:
         db_id = example['db_id']
 
         system = (
@@ -48,17 +48,17 @@ class QPLDecomposerPrompter(QPLPrompter):
             if example['sub_question_2']:
                 response += f"\n{example['sub_question_2']}"
 
-            return ChatTemplate(
+            return ChatML(
                 messages=[
-                    ChatMessage(role="system", content=system),
-                    ChatMessage(role="user", content=user),
-                    ChatMessage(role="assistant", content=response),
+                    Message(role="system", content=system),
+                    Message(role="user", content=user),
+                    Message(role="assistant", content=response),
                 ]
             )
         else:
-            return ChatTemplate(
+            return ChatML(
                 messages=[
-                    ChatMessage(role="system", content=system),
-                    ChatMessage(role="user", content=user),
+                    Message(role="system", content=system),
+                    Message(role="user", content=user),
                 ]
             )

@@ -1,6 +1,6 @@
 from datasets import DatasetDict
 
-from src.utils.chat_types import ChatTemplate, ChatMessage
+from src.utils.chat_types import ChatML, Message
 from src.prompters.qpl.base import QPLPrompter
 from src.prompters.base import PrompterRegistry
 
@@ -48,7 +48,7 @@ class QPLDecomposerCotPrompter(QPLPrompter):
             + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final answer in the following format: the first line of the final answer should be the toplevel operator, the following lines should be the predicted sub-questions."
         )
 
-    def to_chat_template(self, example) -> ChatTemplate:
+    def to_chat_template(self, example) -> ChatML:
         db_id = example['db_id']
 
         user = self.user_prompt(db_id, example['question'])
@@ -65,20 +65,20 @@ class QPLDecomposerCotPrompter(QPLPrompter):
             if example['sub_question_2']:
                 response += f"\n{example['sub_question_2']}"
 
-            return ChatTemplate(
+            return ChatML(
                 messages=[
-                    ChatMessage(role="system", content=self.system_prompt),
-                    ChatMessage(role="user", content=user),
-                    ChatMessage(role="assistant", content=response),
+                    Message(role="system", content=self.system_prompt),
+                    Message(role="user", content=user),
+                    Message(role="assistant", content=response),
                 ]
             )
         else:
             # user += "\n- **The decomposition must adhere to the schema** - for example, if the relevant information to answer the question is spread across diffrent tables, the \"Scan\" operator is not a good fit for this question."
             # user += "\n- **DO NOT omit columns in the sub-questions** - combining the sub questions (if any) with the operator must result in all the columns requested by the question. While formulating the sub-questions, you must ensure that the exact columns requested by the question are present in the final result."
             # user += "\n- **Carefully evaluate your decomposition** - if the sub-questions require adjustments to fully align with the schema, the original question, and complement each other, reflect on your decomposition and present the revised sub-questions to be in your final answer."
-            return ChatTemplate(
+            return ChatML(
                 messages=[
-                    ChatMessage(role="system", content=self.system_prompt),
-                    ChatMessage(role="user", content=user),
+                    Message(role="system", content=self.system_prompt),
+                    Message(role="user", content=user),
                 ]
             )
