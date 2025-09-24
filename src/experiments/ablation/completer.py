@@ -2,14 +2,15 @@ import argparse
 import json
 
 import torch
+from unsloth import FastLanguageModel
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers import AutoModelForCausalLM
 from datasets import load_dataset
 
 from src.prompters import QPLCompleterCotPrompter
 from src.databuilders.completer.build import get_decomposer_roots
-from src.utils.qpl.tree import PartialQDTree, QPLQDTree
-from src.experiments.qpl.text_to_qpl import complete
+from src.utils.tree import PartialQDTree, QPLQDTree
+from src.evaluation.text_to_qpl import complete
 import src.utils.paths as p
 from src.utils.paths import TRAINED_MODELS_DIR
 
@@ -17,7 +18,7 @@ from src.utils.paths import TRAINED_MODELS_DIR
 def parse_args():
     parser = argparse.ArgumentParser(description="QPL Completer Ablation")
     parser.add_argument("--model_dir", type=str, required=True, help="Path to the model directory")
-    parser.add_argument("--batch_size", type=int, default=4, help="Batch size for processing")
+    parser.add_argument("--batch_size", type=int, default=12, help="Batch size for processing")
     parser.add_argument("--max_new_tokens", type=int, default=4096, help="Maximum number of new tokens to generate")
     return parser.parse_args()
 
@@ -25,9 +26,16 @@ if __name__ == "__main__":
     args = parse_args()
 
     # Load model & tokenizer
-    model = AutoModelForCausalLM.from_pretrained(TRAINED_MODELS_DIR / args.model_dir, attn_implementation='flash_attention_2', torch_dtype=torch.float16).to('cuda')
+    # model = AutoModelForCausalLM.from_pretrained(TRAINED_MODELS_DIR / args.model_dir, attn_implementation='flash_attention_2', torch_dtype=torch.float16).to('cuda')
+    # tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODELS_DIR / args.model_dir)
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name = str(TRAINED_MODELS_DIR / args.model_dir),
+        max_seq_length = 16*1024,
+        load_in_4bit = True,
+        load_in_8bit = False,
+        # fast_inference = True, # uses vLLM
+    )
     model = model.eval()
-    tokenizer = AutoTokenizer.from_pretrained(TRAINED_MODELS_DIR / args.model_dir)
 
     # Load and process data
     def partial_qd_to_qd(tree: PartialQDTree) -> QPLQDTree:

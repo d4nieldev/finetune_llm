@@ -4,10 +4,11 @@ import argparse
 import logging as log
 
 import torch
+import unsloth
+from unsloth import FastLanguageModel
 import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from unsloth import FastLanguageModel
 from sentence_transformers import SentenceTransformer
 from transformers.models.auto.tokenization_auto import AutoTokenizer
 from transformers.models.auto.modeling_auto import AutoModelForCausalLM
@@ -18,7 +19,7 @@ from src.utils.paths import TRAINED_MODELS_DIR
 import src.utils.paths as p
 from src.prompters import QPLDecomposerCotPrompter, QPLDecomposerPrompter
 from src.utils.generation import to_model_prompt, generate_batch
-from src.experiments.qpl.text_to_qpl import get_generation_params, GenerationMode
+from src.evaluation.text_to_qpl import get_generation_params, GenerationMode
 
 log.basicConfig(
     level=log.INFO,
@@ -29,7 +30,7 @@ log.basicConfig(
 def parse_args():
     parser = argparse.ArgumentParser(description="QPL Decomposer Ablation Experiment")
     parser.add_argument("--model_dir", type=str, required=True, help="Path to the pre-trained model")
-    parser.add_argument("--batch_size", type=int, default=4, help="Batch size for generation")
+    parser.add_argument("--batch_size", type=int, default=12, help="Batch size for generation")
     parser.add_argument("--max_new_tokens", type=int, default=8192, help="Max new tokens to generate")
     parser.add_argument("--no_cot", action='store_true', help="Do not use Chain of Thought prompting")
     parser.add_argument("--generation_mode", type=GenerationMode, default=GenerationMode.SAMPLING, help="Generation mode")
@@ -37,8 +38,7 @@ def parse_args():
     
     args = parser.parse_args()
 
-    # args.model_path = TRAINED_MODELS_DIR / args.model_dir # TODO: enable
-    args.model_path = args.model_dir # TODO: disable
+    args.model_path = TRAINED_MODELS_DIR / args.model_dir
     args.output_dir = p.ABLATION_DECOMPOSER_OUTPUT_DIR / args.model_dir
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -59,14 +59,18 @@ if __name__ == "__main__":
 
     # Load model & tokenizer
     # model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16).cuda()
-    # model = model.eval()
     # tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     # TODO: make general
+    print(args.model_path)
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name = args.model_path,
+        model_name = str(args.model_path),
         max_seq_length = 16*1024,
-        load_in_4bit = True,
+        load_in_4bit = False,
+        load_in_8bit = True,
+        # fast_inference = True, # uses vLLM
     )
+    # model.load_adapter(str(args.model_path))
+    model = model.eval()
 
     prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
 
