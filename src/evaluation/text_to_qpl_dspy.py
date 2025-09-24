@@ -191,8 +191,13 @@ class TextToQPL(dspy.Module):
         
         self.db_schemas = DBSchema.from_db_schemas_file()
 
-    def forward(self, db_id: str, question: str) -> dict:
+    def forward(self, db_id: str, question: str, gold_decomposition: dict | None = None) -> dict:
         db_schema = self.db_schemas[db_id]
-        tree_dict = self.decomposer(db_schema=db_schema, question=question)
+        if gold_decomposition is not None:
+            # ablation test
+            tree_dict = gold_decomposition
+        else:
+            # full model
+            tree_dict = self.decomposer(db_schema=db_schema, question=question)
         tree_dict = self.completer(tree_dict=tree_dict, db_schema=db_schema)
         return tree_dict
