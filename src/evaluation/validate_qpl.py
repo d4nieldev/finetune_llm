@@ -9,7 +9,7 @@ import pandas as pd
 import pyodbc
 from tqdm import tqdm
 
-from src.experiments.qpl.qpl_to_cte import flat_qpl_to_cte
+from src.evaluation.qpl_to_cte import flat_qpl_to_cte
 
 connection_string = (
     'Driver={ODBC Driver 18 for SQL Server};'
@@ -207,7 +207,7 @@ def compare_qpl_sql(qpl: str, sql: str, db_id: str, cursor) -> tuple[bool, str |
     err = None
     
     try:
-        flat_qpl = [line[:line.index(';')] if ';' in line else line for line in qpl.split('\n')]
+        flat_qpl = [(line[:line.index(';')] if ';' in line else line).strip() for line in qpl.split('\n')]
         gold_sql = sql
         pred_cte = flat_qpl_to_cte(flat_qpl, db_id)
     except Exception as e:
@@ -254,7 +254,7 @@ if __name__ == "__main__":
     errs = 0
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
-        same, err = compare_qpl_sql(model_result["pred_qpl"], model_result["gold_sql"], model_result['db_id'], cursor)
+        same, err = compare_qpl_sql(model_result["pred_qpl"], model_result["gold_cte"], model_result['db_id'], cursor)
         results.append({**model_result, "is_correct": same, "error": err})
         accuracy += 1 if same else 0
         errs += 1 if err else 0
@@ -266,8 +266,3 @@ if __name__ == "__main__":
 
     with open(args.output, "w") as f:
         json.dump(results, f, indent=2)
-        
-
-    
-
-    
