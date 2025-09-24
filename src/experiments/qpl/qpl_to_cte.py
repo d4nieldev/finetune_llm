@@ -103,6 +103,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                     ), "Except uses columns in predicate that are not direct inputs"
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -128,6 +129,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                     rhs_pred_col = groups["rhs_col"]
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -150,6 +152,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                     col = g["col"]
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -165,6 +168,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                     ec = re.sub(r"(#\d+|\w+)\.", "", except_columns)
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -209,6 +213,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                     ), "Intersect uses columns in predicate that are not direct inputs"
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -225,6 +230,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                 else:
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -268,6 +274,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                             )
                         replaced_output_list = []
                         for out in output_list:
+                            out = out.strip()
                             if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                                 g = m.groupdict()
                                 i = int(g["i"])
@@ -295,6 +302,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                         else:
                             replaced_output_list = []
                             for out in output_list:
+                                out = out.strip()
                                 if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                                     g = m.groupdict()
                                     col = g["col"]
@@ -320,6 +328,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                 else:
                     replaced_output_list = []
                     for out in output_list:
+                        out = out.strip()
                         if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                             g = m.groupdict()
                             i = int(g["i"])
@@ -369,6 +378,7 @@ def flat_qpl_to_cte(flat_qpl: List[str], db_id: str) -> str:
                 lhs, rhs = ins
                 replaced_output_list = []
                 for out in output_list:
+                    out = out.strip()
                     if m := re.match(r"#(?P<i>\d+)\.(?P<col>\w+)", out):
                         g = m.groupdict()
                         col = g["col"]
