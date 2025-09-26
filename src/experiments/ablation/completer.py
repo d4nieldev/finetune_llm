@@ -3,8 +3,6 @@ import json
 
 import torch
 from unsloth import FastLanguageModel
-from transformers.models.auto.tokenization_auto import AutoTokenizer
-from transformers import AutoModelForCausalLM
 from datasets import load_dataset
 
 from src.prompters import QPLCompleterCotPrompter
@@ -35,6 +33,7 @@ if __name__ == "__main__":
         load_in_8bit = False,
         # fast_inference = True, # uses vLLM
     )
+    # FastLanguageModel.for_inference(model)
     model = model.eval()
 
     # Load and process data
