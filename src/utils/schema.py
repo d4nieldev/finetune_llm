@@ -46,6 +46,13 @@ class ForeignKey:
     def ddl(self):
         return f"FOREIGN KEY ({self.from_col}) REFERENCES {self.to_table.name}({self.to_col})"
     
+    def link(self, table: "Table") -> "ForeignKey":
+        return ForeignKey(
+            from_col=self.from_col,
+            to_table=table,
+            to_col=self.to_col,
+            apply_lower=self.apply_lower
+        )
 
 @dataclass
 class Column:
@@ -226,15 +233,20 @@ class Table:
         return colname, self
     
     def link(self, columns: set[str]) -> "Table":
-        columns = {col.lower() for col in columns}
-        return Table(
+        columns_lower = {col.lower() for col in columns}
+        linked_table = Table(
             name=self.name,
-            columns=[col for col in self.columns if col.name.lower() in columns],
-            pks=[pk for pk in self.pks if pk.col_name.lower() in columns],
-            fks=[fk for fk in self.fks if fk.from_col.lower() in columns],
+            columns=[col for col in self.columns if col.name.lower() in columns_lower],
+            pks=[pk for pk in self.pks if pk.col_name.lower() in columns_lower],
+            fks=[fk for fk in self.fks if fk.from_col.lower() in columns_lower],
             apply_lower=self.apply_lower,
             num_rows=self.num_rows
         )
+
+        # Update foreign keys reference to table instance
+        linked_table.fks = [fk.link(linked_table) for fk in linked_table.fks]
+
+        return linked_table
 
     def ddl(self):
         pk_str = ["PRIMARY KEY (" + ", ".join(pk.col_name for pk in self.pks) + ")"]
@@ -250,6 +262,9 @@ class Table:
         output += "\n|---|---|---|---|---|---|---|\n"
         output += "\n".join([f"{col.m_schema(examples_random_order=examples_random_order, max_examples=max_examples)}" for col in self.columns])
         return output
+    
+    def __len__(self):
+        return len(self.columns)
 
 
 class DBSchema:
@@ -341,17 +356,29 @@ class DBSchema:
             raise KeyError(f"Table {table_name!r} does not exist in the schema {self.db_id!r}.")
         return self.tables[table_name]
     
-    def link(self, schema_items: dict[str, set[str]]) -> "DBSchema":
-        schema_items = {k.lower(): {col.lower() for col in v} for k, v in schema_items.items()}
+    def link(self, table_cols: dict[str, set[str]]) -> "DBSchema":
+        table_cols_lower = {
+            table_name.lower(): {col_name.lower() for col_name in cols_names} 
+            for table_name, cols_names in table_cols.items()
+        }
         lower_to_original_tbname = {k.lower(): k for k in self.tables.keys()}
-        return DBSchema(
+        linked_schema = DBSchema(
             db_id=self.db_id,
             tables={
                 lower_to_original_tbname[tb_name]: self.tables[lower_to_original_tbname[tb_name]].link(columns) 
-                for tb_name, columns in schema_items.items()
+                for tb_name, columns in table_cols_lower.items()
             },
             apply_lower=self.apply_lower
         )
+
+        # Ensure foreign keys are included only if both columns are requested
+        for table in linked_schema.tables.values():
+            table.fks = [
+                fk for fk in table.fks 
+                if fk.from_col in table.column_names and fk.to_col in fk.to_table.column_names
+            ]
+
+        return linked_schema
     
     def ddl(self):
         tables_str = "\n\n".join(table.ddl() for table in self.tables.values())
@@ -366,6 +393,9 @@ class DBSchema:
             for fk in table.fks:
                 output += f"{table.name}.{fk.from_col}->{fk.to_table.name}.{fk.to_col}\n"
         return output
+
+    def __len__(self):
+        return sum(len(t) for t in self.tables.values())
 
 
 if __name__ == "__main__":
