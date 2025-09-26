@@ -45,14 +45,7 @@ class ForeignKey:
     
     def ddl(self):
         return f"FOREIGN KEY ({self.from_col}) REFERENCES {self.to_table.name}({self.to_col})"
-    
-    def link(self, table: "Table") -> "ForeignKey":
-        return ForeignKey(
-            from_col=self.from_col,
-            to_table=table,
-            to_col=self.to_col,
-            apply_lower=self.apply_lower
-        )
+
 
 @dataclass
 class Column:
@@ -215,7 +208,6 @@ class Table:
     def fks(self, fks: List[ForeignKey]):
         assert all(fk.from_col in self.column_names for fk in fks), f"Foreign keys {fks} must be a subset of columns of table {self.name!r}: {self.columns}"
         for column in self.columns:
-            column.is_pk = False
             for fk in fks:
                 if fk.from_col == column.name:
                     column.maps_to = f"{fk.to_table.name}({fk.to_col})"
@@ -236,15 +228,16 @@ class Table:
         columns_lower = {col.lower() for col in columns}
         linked_table = Table(
             name=self.name,
-            columns=[col for col in self.columns if col.name.lower() in columns_lower],
-            pks=[pk for pk in self.pks if pk.col_name.lower() in columns_lower],
+            columns=[col for col in self.columns if col.is_pk or col.name.lower() in columns_lower],
+            pks=self.pks,  # Always include all PKs
             fks=[fk for fk in self.fks if fk.from_col.lower() in columns_lower],
             apply_lower=self.apply_lower,
             num_rows=self.num_rows
         )
 
         # Update foreign keys reference to table instance
-        linked_table.fks = [fk.link(linked_table) for fk in linked_table.fks]
+        for fk in linked_table.fks:
+            fk.to_table = linked_table
 
         return linked_table
 
@@ -374,8 +367,8 @@ class DBSchema:
         # Ensure foreign keys are included only if both columns are requested
         for table in linked_schema.tables.values():
             table.fks = [
-                fk for fk in table.fks 
-                if fk.from_col in table.column_names and fk.to_col in fk.to_table.column_names
+                fk for fk in table.fks
+                if fk.to_col.lower() in table_cols_lower.get(fk.to_table.name.lower(), [])
             ]
 
         return linked_schema

@@ -2568,7 +2568,8 @@
     "pk": {
       "Accounts": ["account_id"],
       "Customers_Cards": ["card_id"],
-      "Customers": ["customer_id"]
+      "Customers": ["customer_id"],
+      "Financial_Transactions": ["transaction_id"]
     },
     "fk": {
       "Accounts": {
@@ -4108,7 +4109,8 @@
       ]
     },
     "pk": {
-      "players": ["player_id"]
+      "players": ["player_id"],
+      "matches": ["tourney_id", "winner_id", "loser_id"]
     },
     "fk": {
       "matches": {
@@ -5619,7 +5621,8 @@
       ]
     },
     "pk": {
-      "Student": ["StuID"]
+      "Student": ["StuID"],
+      "Voting_record": ["StuID", "Election_Cycle"]
     },
     "fk": {
       "Voting_record": {
@@ -6309,7 +6312,9 @@
       "Order_Items": ["order_item_id"],
       "Orders": ["order_id"],
       "Product_Categories": ["production_type_code"],
-      "Products": ["product_id"]
+      "Products": ["product_id"],
+      "Financial_Transactions": ["transaction_id"],
+      "Invoice_Line_Items": ["order_item_id", "invoice_number", "product_id"]
     },
     "fk": {
       "Orders": {
@@ -9531,7 +9536,8 @@
       "Ref_Detention_Type": ["detention_type_code"],
       "Ref_Incident_Type": ["incident_type_code"],
       "Students": ["student_id"],
-      "Teachers": ["teacher_id"]
+      "Teachers": ["teacher_id"],
+      "Assessment_Notes": ["notes_id"]
     },
     "fk": {
       "Detention": {
