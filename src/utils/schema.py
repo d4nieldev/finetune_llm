@@ -8,6 +8,13 @@ from typing import Dict, List, Optional, Tuple, Any
 from math import sqrt
 
 import src.utils.paths as p
+from src.utils.lists import distribute_items
+
+
+class NoiseStrategy(StrEnum):
+    BREADTH = "breadth"  # distribute num_cols_to_add across as many tables as possible
+    DEPTH = "depth"      # add num_cols_to_add to as few tables as possible
+    MIXED = "mixed"
 
 
 class SchemaRepresentation(StrEnum):
@@ -349,11 +356,102 @@ class DBSchema:
             raise KeyError(f"Table {table_name!r} does not exist in the schema {self.db_id!r}.")
         return self.tables[table_name]
     
-    def link(self, table_cols: dict[str, set[str]]) -> "DBSchema":
+    def _process_link_cols(self, table_cols: dict[str, set[str]], noise: float, noise_strategy: NoiseStrategy) -> dict[str, set[str]]:
         table_cols_lower = {
             table_name.lower(): {col_name.lower() for col_name in cols_names} 
             for table_name, cols_names in table_cols.items()
         }
+        lower_to_original_tbname = {k.lower(): k for k in self.tables.keys()}
+
+        # determine number of columns to add
+        min_items = sum(len(cols) for cols in table_cols.values())
+        max_cols = sum(len(t.columns) for t in self.tables.values())
+        num_cols_to_add = round(noise * (max_cols - min_items))
+
+        # map table names to the number of required columns, and the number of maximum columns
+        table_to_req_cap = {
+            table.name.lower(): (len(table_cols_lower.get(table.name.lower(), {})), len(table.columns))
+            for table in self.tables.values()
+        }
+        
+        if noise_strategy == NoiseStrategy.BREADTH or noise_strategy == NoiseStrategy.DEPTH:
+            # Table selection
+            if noise_strategy == NoiseStrategy.BREADTH:
+                # take tables that are required, add tables with the most capacity
+                selected_tables = [t for t in table_cols_lower]
+                selected_tables += [
+                    t for t, _ in sorted(
+                        [(t, (req, cap)) for t, (req, cap) in table_to_req_cap.items() if req == 0],  # non-required tables
+                        key=lambda x: x[1][1], reverse=True
+                    )
+                ][:num_cols_to_add]
+            elif noise_strategy == NoiseStrategy.DEPTH:
+                # take tables that are required, add tables with the most capacity until num_cols_to_add is reached
+                selected_tables = [t for t in table_cols_lower]
+                potential_extra_items = sum(len(self.tables[lower_to_original_tbname[t]].columns) - len(table_cols_lower[t]) for t in selected_tables)
+                nonreq_tables = sorted(
+                    [(t, (req, cap)) for t, (req, cap) in table_to_req_cap.items() if req == 0],  # non-required tables
+                    key=lambda x: x[1][1], reverse=True
+                )
+                for t, _ in nonreq_tables:
+                    if potential_extra_items == num_cols_to_add:
+                        break
+                    selected_tables.append(t)
+                    potential_extra_items += min(len(self.tables[lower_to_original_tbname[t]].columns), num_cols_to_add - potential_extra_items)
+                if potential_extra_items < num_cols_to_add:
+                    raise ValueError(f"Not enough capacity to add {num_cols_to_add} columns. Max possible is {potential_extra_items}.")
+
+            # Distribute columns to add across selected tables
+            table_to_nsample = distribute_items(
+                max_capacity={t: cap for t, (req, cap) in table_to_req_cap.items() if t in selected_tables},
+                n_items=num_cols_to_add,
+                init={t: len(table_cols_lower.get(t, set())) for t in selected_tables},
+            )
+            # adjust table_to_nsample to be the number of columns to add, not the total number of columns
+            table_to_nsample = {t: n - len(table_cols_lower.get(t, set())) for t, n in table_to_nsample.items()}
+
+            # Sample columns to add
+            for table_name, n_sample in table_to_nsample.items():
+                if n_sample > 0:
+                    available_cols = set(
+                        [col.lower() for col in self.tables[lower_to_original_tbname[table_name]].column_names]).difference(
+                        table_cols_lower.get(table_name, set())
+                    )
+                    sampled_cols = random.sample(list(available_cols), n_sample)
+                    if table_name in table_cols_lower:
+                        table_cols_lower[table_name].update(sampled_cols)
+                    else:
+                        table_cols_lower[table_name] = set(sampled_cols)
+        elif noise_strategy == NoiseStrategy.MIXED:
+            # randomly choose between breadth and depth for each column addition
+            flat_nonreq_items = [
+                (table.name.lower(), col_name.lower()) 
+                for table in self.tables.values() 
+                for col_name in table.column_names 
+                if col_name.lower() not in table_cols_lower.get(table.name.lower(), set())
+            ]
+
+            # Sample columns to add
+            items_to_add = random.sample(flat_nonreq_items, num_cols_to_add)
+            for table_name, col_name in items_to_add:
+                if table_name in table_cols_lower:
+                    table_cols_lower[table_name].add(col_name)
+                else:
+                    table_cols_lower[table_name] = {col_name}
+        else:
+            raise ValueError(f"Unknown noise strategy: {noise_strategy}")
+
+        # Add primary keys of selected tables if not already included
+        for table_name, selected_cols in table_cols_lower.items():
+            table = self.tables[lower_to_original_tbname[table_name]]
+            for pk in table.pks:
+                selected_cols.add(pk.col_name.lower())
+
+        return table_cols_lower
+    
+    
+    def link(self, table_cols: dict[str, set[str]], noise: float = 0, noise_strategy: NoiseStrategy = NoiseStrategy.MIXED) -> "DBSchema":
+        table_cols_lower = self._process_link_cols(table_cols=table_cols, noise=noise, noise_strategy=noise_strategy)
         lower_to_original_tbname = {k.lower(): k for k in self.tables.keys()}
         linked_schema = DBSchema(
             db_id=self.db_id,
