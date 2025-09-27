@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from src.callbacks import MemoryLoggingCallback
 from src.processors import processorRegistry
 import src.utils.paths as p
+from src.utils.argparse import smart_cast
 from src.training import trainers
 
 load_dotenv()
@@ -33,9 +34,13 @@ def parse_args():
     hf_ids_group.add_argument("--resume_from_checkpoint", type=Path, default=None, help="Path to a checkpoint to resume training from.")
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
+    data_preprocessing_group = parser.add_argument_group("Data preprocessing")
+    data_preprocessing_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=False, help="Sort data in ascending order by prompt length before training.")
+    data_preprocessing_group.add_argument("--shuffle_data", action=argparse.BooleanOptionalAction, default=True, help="Shuffle data before training.")
+    data_preprocessing_group.add_argument("--processor_kwargs", type=smart_cast, default="{}", help="Additional kwargs to pass to `processor.__init__()`. Should be a dict-like string, e.g. \"{a:b,c:d,...}\"")
+    data_preprocessing_group.add_argument("--data_prep_kwargs", type=smart_cast, default="{}", help="Additional kwargs to pass to `processor.prepare_data()`. Should be a dict-like string, e.g. \"{a:b,c:d,...}\"")
+
     train_config_group = parser.add_argument_group("Training config")
-    train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=False, help="Sort data in ascending order by prompt length before training.")
-    train_config_group.add_argument("--shuffle_data", action=argparse.BooleanOptionalAction, default=True, help="Shuffle data before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
     train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
@@ -117,7 +122,7 @@ def train(
         print(f"{k}={v}")
 
     # Step 1. Load processor
-    processor = processorRegistry.get(args.dataset_id)(with_assistant=True)
+    processor = processorRegistry.get(args.dataset_id)(**args.processor_kwargs, with_assistant=True)
     
     # Step 2. Load model & tokenizer, and configure if needed
     torch.backends.cuda.enable_flash_sdp(True)
@@ -149,6 +154,7 @@ def train(
     
     # Step 3. Data preperation
     train_dataset, eval_dataset = processor.prepare_dataset(
+        **args.data_prep_kwargs,
         tokenizer=tokenizer,
         num_epochs=args.num_train_epochs,
         sort=args.sort_data,
