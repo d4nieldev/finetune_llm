@@ -82,3 +82,19 @@ if __name__ == "__main__":
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'w') as f:
         json.dump([tree.to_dict() for tree in root_qd_trees], f, indent=2)
+
+    q_to_gold = {row['question']: (row['qpl'], row['cte'], row['query']) for row in nl2qpl_data}
+    results = [
+        {
+            'db_id': tree.db_id,
+            'question': tree.question,
+            'pred_qpl': tree.qpl,
+            'gold_qpl': q_to_gold[tree.question][0],
+            'gold_cte': q_to_gold[tree.question][1],
+            'gold_sql': q_to_gold[tree.question][2],
+        }
+        for tree in root_qd_trees
+    ]
+    results_path = p.ABLATION_COMPLETER_OUTPUT_DIR / args.model_dir / "results.json"
+    with open(results_path, 'w') as f:
+        json.dump(results, f, indent=2)
