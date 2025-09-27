@@ -70,11 +70,15 @@ class QPLTree:
         flat_qpl_scan_pattern = re.compile(
             r"#(?P<idx>\d+) = Scan Table \[ (?P<table>\w+) \]( Predicate \[ (?P<pred>[^\]]+) \])?( Distinct \[ (?P<distinct>true) \])? Output \[ (?P<out>[^\]]+) \]"
         )
-        if len(self.children) == 0:
+        if self.op == Operator.SCAN:
             if not (m := flat_qpl_scan_pattern.match(self.qpl_line)):
                 raise ValueError(f"QPL line does not match expected Scan format: {self.qpl_line}")
             return {
-                m.group("table"): {col.strip() for col in m.group("out").split(",")}
+                m.group("table"): {
+                    orig_colname
+                    for col in m.group("out").split(",")
+                    if not (orig_colname := col.lower().split(' as ')[0].strip()).isnumeric() # ignore things like "1 AS One"
+                }
             }
         elif len(self.children) == 1:
             return self.children[0].get_schema_items()
