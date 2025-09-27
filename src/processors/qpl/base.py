@@ -22,7 +22,8 @@ class QPLProcessor(BaseProcessor):
             self, 
             schema_representation: SchemaRepresentation = SchemaRepresentation.M_SCHEMA, 
             schema_noise_strategy: NoiseStrategy = NoiseStrategy.DEPTH,
-            *args, **kwargs):
+            *args, **kwargs
+        ):
         super().__init__(*args, **kwargs)
 
         self.schema_representation = schema_representation
@@ -55,16 +56,16 @@ class QPLProcessor(BaseProcessor):
             min_noise: float = 0.0,
             max_noise: float = 1.0,
             **kwargs
-        ) -> Dataset | None:
+        ) -> Dataset:
         if sort and not shuffle:
-            # complex schemas first, break ties with same database id, then shortest output first
+            # simple schemas first, break ties with same database id, then shortest output first
             train_dataset = train_dataset.map(
                 lambda ex: {
                     'schema_length': len(getattr(self.__db_schemas[ex['db_id']], str(self.schema_representation))()), 
-                    'neg_output_length': -len([msg['content'] for msg in self.to_chat_template(ex)['messages'] if msg['role'] == 'assistant'][0]),
+                    'output_length': -len([msg['content'] for msg in self.to_chat_template(ex)['messages'] if msg['role'] == 'assistant'][0]),
                 },
                 desc="Sorting by schema complexity"
-            ).sort(["schema_length", "db_id", "neg_output_length"], reverse=True)
+            ).sort(["schema_length", "db_id", "output_length"])
         elif sort and shuffle:
             # keep same databases together, but shuffle within each database
             train_dataset = train_dataset.shuffle(seed=random_seed).sort('db_id')
