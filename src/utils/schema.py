@@ -365,7 +365,7 @@ class DBSchema:
 
         # determine number of columns to add
         req_cols = sum(len(cols) for cols in table_cols.values())
-        num_cols_to_add = round(noise * (len(self) - req_cols))
+        num_cols_to_add = round(noise * (len(self) - req_cols)) if 0 <= noise <= 1 else min(len(self) - req_cols, max(round(noise) - req_cols, 0))
 
         # map table names to the number of required columns, and the number of maximum columns
         table_to_req_cap = {
