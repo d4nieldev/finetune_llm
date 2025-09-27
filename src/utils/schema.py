@@ -364,9 +364,8 @@ class DBSchema:
         lower_to_original_tbname = {k.lower(): k for k in self.tables.keys()}
 
         # determine number of columns to add
-        min_items = sum(len(cols) for cols in table_cols.values())
-        max_cols = sum(len(t.columns) for t in self.tables.values())
-        num_cols_to_add = round(noise * (max_cols - min_items))
+        req_cols = sum(len(cols) for cols in table_cols.values())
+        num_cols_to_add = round(noise * (len(self) - req_cols))
 
         # map table names to the number of required columns, and the number of maximum columns
         table_to_req_cap = {
@@ -381,7 +380,7 @@ class DBSchema:
                 selected_tables = [t for t in table_cols_lower]
                 selected_tables += [
                     t for t, _ in sorted(
-                        [(t, (req, cap)) for t, (req, cap) in table_to_req_cap.items() if req == 0],  # non-required tables
+                        [(t, (req, cap)) for t, (req, cap) in table_to_req_cap.items() if t not in table_cols_lower],  # non-required tables
                         key=lambda x: x[1][1], reverse=True
                     )
                 ][:num_cols_to_add]
@@ -390,14 +389,14 @@ class DBSchema:
                 selected_tables = [t for t in table_cols_lower]
                 potential_extra_items = sum(len(self.tables[lower_to_original_tbname[t]].columns) - len(table_cols_lower[t]) for t in selected_tables)
                 nonreq_tables = sorted(
-                    [(t, (req, cap)) for t, (req, cap) in table_to_req_cap.items() if req == 0],  # non-required tables
+                    [(t, (req, cap)) for t, (req, cap) in table_to_req_cap.items() if t not in table_cols_lower],  # non-required tables
                     key=lambda x: x[1][1], reverse=True
                 )
                 for t, _ in nonreq_tables:
-                    if potential_extra_items == num_cols_to_add:
+                    if potential_extra_items >= num_cols_to_add:
                         break
                     selected_tables.append(t)
-                    potential_extra_items += min(len(self.tables[lower_to_original_tbname[t]].columns), num_cols_to_add - potential_extra_items)
+                    potential_extra_items += len(self.tables[lower_to_original_tbname[t]].columns)
                 if potential_extra_items < num_cols_to_add:
                     raise ValueError(f"Not enough capacity to add {num_cols_to_add} columns. Max possible is {potential_extra_items}.")
 
