@@ -47,3 +47,39 @@ def find_sublist(haystack: list[T], needle: list[T]) -> int:
         if haystack[i:i + m] == needle:
             return i
     return -1
+
+
+def distribute_items(max_capacity: dict[str, int], n_items: int, init: dict[str, int] = {}) -> dict[str, int]:
+    bins = init.copy()
+    remaining_items = n_items
+    
+    while remaining_items > 0:
+        # Get bins that have space and their current counts
+        available_bins = []
+        for bin_name in bins:
+            space = max_capacity[bin_name] - bins[bin_name]
+            if space > 0:
+                available_bins.append((bin_name, bins[bin_name], space))
+        
+        if not available_bins:
+            raise ValueError(f"Not enough capacity to distribute all items. Bins: {bins}, Max Capacity: {max_capacity}, Remaining Items: {remaining_items}")
+        
+        # Sort by current count (ascending) to fill emptier bins first
+        available_bins.sort(key=lambda x: x[1])
+        
+        # Calculate how many items each bin should get in this round
+        min_count = available_bins[0][1]  # Current count of emptiest bin
+        
+        # Find how many bins are at the minimum level
+        bins_at_min = sum(1 for _, count, _ in available_bins if count == min_count)
+        
+        # Distribute items to bring all minimum bins up one level
+        items_this_round = min(bins_at_min, remaining_items)
+        
+        for bin_name, current_count, space in available_bins:
+            if current_count == min_count and items_this_round > 0 and space > 0:
+                bins[bin_name] += 1
+                remaining_items -= 1
+                items_this_round -= 1
+    
+    return bins
