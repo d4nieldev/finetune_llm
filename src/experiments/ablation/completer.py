@@ -5,7 +5,7 @@ import torch
 from unsloth import FastLanguageModel
 from datasets import load_dataset
 
-from src.prompters import QPLCompleterCotPrompter
+from src.processors import QPLCompleterCotProcessor
 from src.databuilders.completer.build import get_decomposer_roots
 from src.utils.tree import PartialQDTree, QPLQDTree
 from src.evaluation.text_to_qpl import complete
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         return qd_tree
 
 
-    prompter = QPLCompleterCotPrompter(with_assistant=False, schema_representation="m_schema")
+    processor = QPLCompleterCotProcessor(with_assistant=False, schema_representation="m_schema")
     decomposer_data = load_dataset("bgunlp/question_decomposer_ds", split="validation")
     nl2qpl_data = load_dataset('d4nieldev/nl2qpl-ds', split='validation')
     root_questions = set(row['question'] for row in nl2qpl_data)
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # Complete QPL for each tree
     complete(
         trees=root_qd_trees,
-        prompter=prompter,
+        processor=processor,
         model=model,
         tokenizer=tokenizer,
         batch_size=args.batch_size,

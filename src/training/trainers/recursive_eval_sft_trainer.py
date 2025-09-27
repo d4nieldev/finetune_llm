@@ -9,7 +9,7 @@ from transformers.modeling_utils import PreTrainedModel
 
 from src.experiments.qpl.text_to_qpl import text_to_qpl, GenerationMode
 from src.experiments.qpl.validate_qpl import compare_qpl_sql
-from src.prompters import QPLDecomposerPrompter, QPLCompleterPrompter, QPLDecomposerCotPrompter, QPLCompleterCotPrompter
+from src.processors import QPLDecomposerProcessor, QPLCompleterProcessor, QPLDecomposerCotProcessor, QPLCompleterCotProcessor
 
 
 class RecursiveEvalSFTTrainer(SFTTrainer):
@@ -59,8 +59,8 @@ class RecursiveEvalSFTTrainer(SFTTrainer):
             decomposer_tokenizer=tokenizer,
             completer_model=model,
             completer_tokenizer=tokenizer,
-            decomposer_prompter=QPLDecomposerPrompter(with_assistant=False) if not self.cot else QPLDecomposerCotPrompter(with_assistant=False),
-            completer_prompter=QPLCompleterPrompter(with_assistant=False) if not self.cot else QPLCompleterCotPrompter(with_assistant=False),
+            decomposer_processor=QPLDecomposerProcessor(with_assistant=False) if not self.cot else QPLDecomposerCotProcessor(with_assistant=False),
+            completer_processor=QPLCompleterProcessor(with_assistant=False) if not self.cot else QPLCompleterCotProcessor(with_assistant=False),
             mode=GenerationMode.SAMPLING
         )
 

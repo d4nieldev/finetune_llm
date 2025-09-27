@@ -2,12 +2,13 @@ import re
 from datasets import load_dataset
 
 from src.utils.chat_types import ChatML, Message
-from src.prompters.qpl.base import QPLPrompter
-from src.prompters.base import PrompterRegistry
+from src.processors.qpl.base import QPLProcessor
+from src.processors.base import processorRegistry
+from src.utils.tree import QPLTree
 
 
-@PrompterRegistry.register
-class QPLCompleterCotPrompter(QPLPrompter):
+@processorRegistry.register
+class QPLCompleterCotProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl-completer-cot-ds"
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -15,7 +16,7 @@ class QPLCompleterCotPrompter(QPLPrompter):
     def load_dataset(self, subset: str = "balanced"):
         return load_dataset(self.dataset_id, subset)
 
-    def to_chat_template(self, example) -> ChatML:
+    def to_chat_template(self, example, *, noise: float = 1.0, **kwargs) -> ChatML:
         system = (
             "Given a database schema, a QPL query prefix, and a natural language question, "
             + "complete the final line of the query so it completes the user request.\n\n"
@@ -62,9 +63,7 @@ class QPLCompleterCotPrompter(QPLPrompter):
             + "Before providing the final answer, you must first reason step by step about the question and the database schema."
         )
 
-        prefix_qpl_str = ' ;\n'.join(example['prefix_qpl'].split(' ; '))
-        if example['prefix_qpl'] != "":
-            prefix_qpl_str += " ;\n"
+        prefix_qpl_str = example['prefix_qpl']
 
         line_num = example.get('line_num', None)
         children_str = example.get('children_str', None)
@@ -86,8 +85,16 @@ class QPLCompleterCotPrompter(QPLPrompter):
 
         line_start = f"#{line_num} = {example['op']} {children_str}"
 
+        # inject noise to schema if needed
+        if noise < 1.0:
+            qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str] + [example['qpl_line']]
+            table_cols = QPLTree.from_qpl_lines(qpl_lines).get_schema_items()
+            schema_str = self._get_schema_str(db_id=example['db_id'], link_table_cols=table_cols, noise=noise)
+        else:
+            schema_str = self._get_schema_str(db_id=example['db_id'])
+
         user = (
-            f"{self._get_schema_str(example['db_id'])}\n\n"
+            f"{schema_str}\n\n"
 
             + f"[Question]: {example['question'].strip()}\n\n"
 

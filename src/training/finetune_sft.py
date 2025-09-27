@@ -16,7 +16,7 @@ import wandb
 from dotenv import load_dotenv
 
 from src.callbacks import MemoryLoggingCallback
-from src.prompters import PrompterRegistry
+from src.processors import processorRegistry
 import src.utils.paths as p
 from src.training import trainers as t
 
@@ -190,8 +190,8 @@ def train(
             deepspeed_config_dict = json.load(f)
             print(f"Using deepspeed config: {deepspeed_config_dict}")
 
-    prompter = PrompterRegistry.get(args.dataset_id)(with_assistant=True)
-    tokenizer.add_special_tokens({"additional_special_tokens": list(prompter.special_tokens_to_add().values())})
+    processor = processorRegistry.get(args.dataset_id)(with_assistant=True)
+    tokenizer.add_special_tokens({"additional_special_tokens": list(processor.special_tokens_to_add().values())})
     logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
 
     # Resize token embeddings after adding special <|pad|> token
@@ -202,9 +202,9 @@ def train(
     
     
     # Step 3. Data preperation
-    train_dataset: Dataset = prompter.load_dataset()['train'] # type: ignore
+    train_dataset: Dataset = processor.load_dataset()['train'] # type: ignore
     train_dataset = train_dataset.map(
-        lambda ex: prompter.to_chat_template(ex), 
+        lambda ex: processor.to_chat_template(ex), 
         remove_columns=train_dataset.column_names
     )
     train_dataset = train_dataset.map(
@@ -212,8 +212,8 @@ def train(
     )
     if args.sort_data:
         train_dataset = train_dataset.sort("len_text", reverse=False)
-    eval_dataset: Dataset = prompter.load_dataset()['validation'] # type: ignore
-    eval_dataset = eval_dataset.map(lambda ex: prompter.to_chat_template(ex), remove_columns=eval_dataset.column_names)
+    eval_dataset: Dataset = processor.load_dataset()['validation'] # type: ignore
+    eval_dataset = eval_dataset.map(lambda ex: processor.to_chat_template(ex), remove_columns=eval_dataset.column_names)
     
 
     # Step 4. Training
@@ -285,7 +285,7 @@ def train(
         # https://github.com/unslothai/unsloth/issues/1788#issuecomment-2772497747
         training_args.label_names = ["labels"]
 
-    trainer_cls = getattr(t, prompter.trainer_cls_name)
+    trainer_cls = getattr(t, processor.trainer_cls_name)
     trainer = trainer_cls(
         model            = model,
         processing_class = tokenizer,

@@ -1,12 +1,12 @@
 from typing import Dict, Any, List
 
 from src.utils.chat_types import ChatML, Message
-from src.prompters.qpl.base import QPLPrompter
-from src.prompters.base import PrompterRegistry
+from src.processors.qpl.base import QPLProcessor
+from src.processors.base import processorRegistry
 
 
-@PrompterRegistry.register
-class QPLDecomposerPrompter(QPLPrompter):
+@processorRegistry.register
+class QPLDecomposerProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl-decomposer-ds"
 
     def __init__(self, *args, **kwargs):

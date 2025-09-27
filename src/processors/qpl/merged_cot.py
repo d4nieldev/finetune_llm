@@ -3,33 +3,33 @@ from datasets import interleave_datasets, DatasetDict
 import numpy as np
 
 from src.utils.chat_types import ChatML
-from src.prompters.qpl.base import QPLPrompter
-from src.prompters.base import PrompterRegistry
-from src.prompters.qpl.decomposer_cot import QPLDecomposerCotPrompter
-from src.prompters.qpl.completer_cot import QPLCompleterCotPrompter
+from src.processors.qpl.base import QPLProcessor
+from src.processors.base import processorRegistry
+from src.processors.qpl.decomposer_cot import QPLDecomposerCotProcessor
+from src.processors.qpl.completer_cot import QPLCompleterCotProcessor
 
 from datasets import load_dataset
 
 
-@PrompterRegistry.register
-class QPLMergedCotPrompter(QPLPrompter):
+@processorRegistry.register
+class QPLMergedCotProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl-merged-cot-ds"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.with_assistant:
             raise ValueError("Merged dataset requires with_assistant=True")
-        self.decomposer_cot_prompter = QPLDecomposerCotPrompter(*args, **kwargs)
-        self.completer_cot_prompter = QPLCompleterCotPrompter(*args, **kwargs)
+        self.decomposer_cot_processor = QPLDecomposerCotProcessor(*args, **kwargs)
+        self.completer_cot_processor = QPLCompleterCotProcessor(*args, **kwargs)
 
     @property
     def trainer_cls_name(self) -> str:
         return "RecursiveEvalSFTTrainer"
 
     def load_dataset(self):
-        decomposer_ds = self.decomposer_cot_prompter.load_dataset("balanced")
+        decomposer_ds = self.decomposer_cot_processor.load_dataset("balanced")
         decomposer_ds = decomposer_ds.map(lambda _: {"task": "decomposer"})
-        completer_ds = self.completer_cot_prompter.load_dataset("balanced")
+        completer_ds = self.completer_cot_processor.load_dataset("balanced")
         completer_ds = completer_ds.map(lambda _: {"task": "completer"})
         
         # convert to decomposer dataset format for evaluation during training
@@ -50,10 +50,10 @@ class QPLMergedCotPrompter(QPLPrompter):
 
     def to_chat_template(self, example) -> ChatML:
         if example['task'] == 'decomposer':
-            return self.decomposer_cot_prompter.to_chat_template(example)
+            return self.decomposer_cot_processor.to_chat_template(example)
         elif example['task'] == 'completer':
-            return self.completer_cot_prompter.to_chat_template(example)
+            return self.completer_cot_processor.to_chat_template(example)
         elif example['task'] == 'development':
-            return self.decomposer_cot_prompter.to_chat_template(example)
+            return self.decomposer_cot_processor.to_chat_template(example)
         else:
             raise ValueError(f"Unknown task type: {example['task']}")

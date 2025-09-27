@@ -1,14 +1,14 @@
 from datasets import DatasetDict
 
 from src.utils.chat_types import ChatML, Message
-from src.prompters.qpl.base import QPLPrompter
-from src.prompters.base import PrompterRegistry
+from src.processors.qpl.base import QPLProcessor
+from src.processors.base import processorRegistry
 
 from datasets import load_dataset
 
 
-@PrompterRegistry.register
-class QPLDecomposerCotPrompter(QPLPrompter):
+@processorRegistry.register
+class QPLDecomposerCotProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl-decomposer-cot-ds"
 
     def __init__(self, *args, **kwargs):

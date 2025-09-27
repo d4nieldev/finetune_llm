@@ -17,7 +17,7 @@ from sklearn.metrics import classification_report, confusion_matrix, ConfusionMa
 
 from src.utils.paths import TRAINED_MODELS_DIR
 import src.utils.paths as p
-from src.prompters import QPLDecomposerCotPrompter, QPLDecomposerPrompter
+from src.processors import QPLDecomposerCotProcessor, QPLDecomposerProcessor
 from src.utils.generation import to_model_prompt, generate_batch
 from src.evaluation.text_to_qpl import get_generation_params, GenerationMode
 
@@ -50,12 +50,12 @@ if __name__ == "__main__":
 
     # Load and process data
     if args.no_cot:
-        prompter = QPLDecomposerPrompter(schema_representation="m_schema", with_assistant=True)
+        processor = QPLDecomposerProcessor(schema_representation="m_schema", with_assistant=True)
     else:
-        prompter = QPLDecomposerCotPrompter(schema_representation="m_schema", with_assistant=True)
+        processor = QPLDecomposerCotProcessor(schema_representation="m_schema", with_assistant=True)
 
-    test_dataset = list(prompter.load_dataset()['validation'])
-    chat_templates = list(map(prompter.to_chat_template, test_dataset))
+    test_dataset = list(processor.load_dataset()['validation'])
+    chat_templates = list(map(processor.to_chat_template, test_dataset))
 
     # Load model & tokenizer
     # model = AutoModelForCausalLM.from_pretrained(args.model_path, attn_implementation="flash_attention_2", torch_dtype=torch.float16).cuda()

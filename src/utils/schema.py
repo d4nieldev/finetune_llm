@@ -449,7 +449,7 @@ class DBSchema:
         return table_cols_lower
     
     
-    def link(self, table_cols: dict[str, set[str]], noise: float = 0, noise_strategy: NoiseStrategy = NoiseStrategy.MIXED) -> "DBSchema":
+    def linked(self, table_cols: dict[str, set[str]], noise: float = 0, noise_strategy: NoiseStrategy = NoiseStrategy.MIXED) -> "DBSchema":
         table_cols_lower = self._process_link_cols(table_cols=table_cols, noise=noise, noise_strategy=noise_strategy)
         lower_to_original_tbname = {k.lower(): k for k in self.tables.keys()}
         linked_schema = DBSchema(

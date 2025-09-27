@@ -13,7 +13,7 @@ from datasets import Dataset
 from dotenv import load_dotenv
 
 from src.callbacks import MemoryLoggingCallback
-from src.prompters import PrompterRegistry
+from src.processors import processorRegistry
 import src.utils.paths as p
 from src.training import trainers
 
@@ -116,8 +116,8 @@ def train(
     for k, v in vars(args).items():
         print(f"{k}={v}")
 
-    # Step 1. Load prompter
-    prompter = PrompterRegistry.get(args.dataset_id)(with_assistant=True)
+    # Step 1. Load processor
+    processor = processorRegistry.get(args.dataset_id)(with_assistant=True)
     
     # Step 2. Load model & tokenizer, and configure if needed
     torch.backends.cuda.enable_flash_sdp(True)
@@ -133,7 +133,7 @@ def train(
         attn_implementation="sdpa"
     )
     # TODO: solve bug in unsloth!
-    # add_new_tokens(model, tokenizer, list(prompter.special_tokens_to_add().values()))
+    # add_new_tokens(model, tokenizer, list(processor.special_tokens_to_add().values()))
     if args.lora:
         model = FastLanguageModel.get_peft_model(
             model,
@@ -148,24 +148,12 @@ def train(
         )
     
     # Step 3. Data preperation
-    train_dataset: Dataset = prompter.load_dataset()['train']
-    if args.sort_data:
-        # sort by prompt length
-        train_dataset = train_dataset.map(
-            lambda ex: {'len_text': sum(len(m['content']) for m in ex['messages'] if m['role'] == 'user')}, 
-        )
-        train_dataset = train_dataset.sort("len_text", reverse=False)
-    if args.shuffle_data:
-        train_dataset = train_dataset.shuffle(seed=args.random_seed)
-    train_dataset = train_dataset.map(
-        lambda ex: {'text': tokenizer.apply_chat_template(prompter.to_chat_template(ex)['messages'], tokenize=False, add_generation_prompt=False)}, 
-        remove_columns=train_dataset.column_names
-    )
-
-    eval_dataset: Dataset = prompter.load_dataset()['validation']
-    eval_dataset = eval_dataset.map(
-        lambda ex: {'text': tokenizer.apply_chat_template(prompter.to_chat_template(ex)['messages'], tokenize=False, add_generation_prompt=False)}, 
-        remove_columns=eval_dataset.column_names
+    train_dataset, eval_dataset = processor.prepare_dataset(
+        tokenizer=tokenizer,
+        num_epochs=args.num_train_epochs,
+        sort=args.sort_data,
+        shuffle=args.shuffle_data,
+        random_seed=args.random_seed,
     )
     
     # Step 4. Training
@@ -188,7 +176,7 @@ def train(
         gradient_accumulation_steps   = args.gradient_accumulation_steps,
         learning_rate                 = args.learning_rate,
         optim                         = args.optim,
-        num_train_epochs              = args.num_train_epochs,
+        num_train_epochs              = 1,
         lr_scheduler_type             = args.lr_scheduler_type,
         warmup_ratio                  = args.warmup_ratio,
         weight_decay                  = args.weight_decay,
@@ -228,7 +216,7 @@ def train(
         # save_safetensors              = args.lora  # Safetensors can't save tensors that share the same memory
     )
 
-    trainer_cls = getattr(trainers, prompter.trainer_cls_name)
+    trainer_cls = getattr(trainers, processor.trainer_cls_name)
     trainer = trainer_cls(
         model            = model,
         processing_class = tokenizer,
