@@ -63,31 +63,32 @@ class QPLCompleterCotProcessor(QPLProcessor):
             + "Before providing the final answer, you must first reason step by step about the question and the database schema."
         )
 
-        prefix_qpl_str = example['prefix_qpl']
+        prefix_qpl_str = example['prefix_qpl'].replace(' Top ', ' TopSort ')
+        qpl_line = example.get('qpl_line', '').replace(' Top ', ' TopSort ')
 
         line_num = example.get('line_num', None)
         children_str = example.get('children_str', None)
         if line_num is None or children_str is None:
             if not 'qpl_line' in example:
                 raise ValueError("Example must contain 'qpl_line' or 'line_num' and 'children_str'")
-            line_num = example['qpl_line'].split('=')[0].strip()[1:]
+            line_num = qpl_line.split('=')[0].strip()[1:]
             if example['op'] == "Scan":
                 children_str = "Table"
             else:
                 m = re.match(
                     r"#(?P<idx>\d+) = (?P<op>\w+) \[ (?P<ins>[^\]]+) \] ((?P<opt>\w+) \[ (?P<arg>[^\]]+) \] )*Output \[ (?P<out>[^\]]+) \]",
-                    example['qpl_line']
+                    qpl_line
                 )
                 if m:
                     children_str = f"[ {m.group('ins')} ]"
                 else:
-                    raise ValueError(f"QPL line does not match expected patterns: {example['qpl_line']}")
+                    raise ValueError(f"QPL line does not match expected patterns: {qpl_line}")
 
-        line_start = f"#{line_num} = {example['op']} {children_str}"
+        line_start = f"#{line_num} = {example['op'] if example['op'] != 'Top' else 'TopSort'} {children_str}"
 
         # inject noise to schema if needed
         if noise < 1.0:
-            qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str] + [example['qpl_line']]
+            qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str.split('\n') if line] + [qpl_line]
             table_cols = QPLTree.from_qpl_lines(qpl_lines).get_schema_items()
             schema_str = self._get_schema_str(db_id=example['db_id'], link_table_cols=table_cols, noise=noise)
         else:
@@ -109,7 +110,7 @@ class QPLCompleterCotProcessor(QPLProcessor):
 
         if self.with_assistant:
             response = f"<think>\n{example['cot']}\n</think>\n\n"
-            response += f"```QPL\n{example['qpl_line']}\n```"
+            response += f"```QPL\n{qpl_line}\n```"
             return ChatML(
                 messages=[
                     Message(role="system", content=system),

@@ -7,7 +7,7 @@ from datasets import Dataset
 from src.processors.base import BaseProcessor
 import src.utils.paths as p
 from src.utils.schema import DBSchema, NoiseStrategy, SchemaRepresentation
-from utils.chat_types import ChatML
+from src.utils.chat_types import ChatML
 
 
 class NoiseSchemaScheduler(StrEnum):
@@ -91,7 +91,7 @@ class QPLProcessor(BaseProcessor):
             raise ValueError(f"Unknown noise schema schedule: {noise_schema_sched}. Known schedules are: {list(NoiseSchemaScheduler)}.")
         train_dataset = train_dataset.repeat(num_epochs)
         train_dataset = train_dataset.map(
-            lambda i, ex: {'text': tokenizer.apply_chat_template(self.to_chat_template(ex, noise=noises[i])['messages'], tokenize=False, add_generation_prompt=False)}, 
+            lambda ex, i: {'text': tokenizer.apply_chat_template(self.to_chat_template(ex, noise=noises[i])['messages'], tokenize=False, add_generation_prompt=False)}, 
             remove_columns=train_dataset.column_names,
             with_indices=True,
             desc="Applying schema noise & chat template"
