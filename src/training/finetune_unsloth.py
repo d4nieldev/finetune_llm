@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+from datetime import datetime
 
 import torch
 import wandb
@@ -78,11 +79,12 @@ def parse_args():
     return args
 
 
-def args_str(args, run_id):
+def args_str(args):
     model_id = args.model_id_or_path.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     shortname = {
         'sort_data': 'sort',
+        'shuffle_data': 'shuf',
         'train_batch_size': 'bsz',
         'gradient_checkpointing': 'gc',
         'gradient_accumulation_steps': 'ga',
@@ -111,7 +113,7 @@ def args_str(args, run_id):
         for k, v in vars(args).items() 
         if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
     ])
-    return f"{run_id}_{model_id}-{dataset_id}_{other_args}"
+    return f"{model_id}_{dataset_id}_{datetime.now()}_{other_args}"
 
 
 def train(
@@ -168,9 +170,8 @@ def train(
         config=vars(args),
         resume="allow"
     )
-    run_id = run.id
     
-    dirname = args_str(args, run_id)
+    dirname = args_str(args)
     local_output_dir = str(p.TRAINED_MODELS_DIR / f"{dirname}")
     training_args = SFTConfig(
         dataset_text_field="text",
