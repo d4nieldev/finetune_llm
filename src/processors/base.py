@@ -7,6 +7,15 @@ from src.utils.chat_types import ChatML
 from datasets import load_dataset, Dataset, DatasetDict
 
 
+def chatml_to_dataset(messages: ChatML, tokenizer: PreTrainedTokenizerBase) -> dict[str, str]:
+    if tokenizer.chat_template:
+        return {'text': tokenizer.apply_chat_template(messages['messages'], tokenize=False, add_generation_prompt=False)}
+    prompt = "# Instructions:\n" +[m for m in messages['messages'] if m['role'] == 'system'][-1]['content']+"\n\n"
+    prompt += "# Input\n" + [m['content'] for m in messages['messages'] if m['role'] == 'user'][-1]+"\n\n"
+    completion = "# Answer\n" + [m['content'] for m in messages['messages'] if m['role'] == 'assistant'][-1] + tokenizer.eos_token
+    return {'text': prompt + completion}
+
+
 class BaseProcessor(ABC):
     dataset_id = None
 
@@ -28,7 +37,7 @@ class BaseProcessor(ABC):
             **kwargs
     ) -> Dataset:
         train_dataset = train_dataset.map(
-            lambda ex: {'text': tokenizer.apply_chat_template(self.to_chat_template(ex)['messages'], tokenize=False, add_generation_prompt=False)}, 
+            lambda ex: chatml_to_dataset(self.to_chat_template(ex), tokenizer), 
             remove_columns=train_dataset.column_names,
             desc="Applying chat template"
         )
@@ -63,7 +72,7 @@ class BaseProcessor(ABC):
         )
 
         eval_dataset = dataset['validation'].map(
-            lambda ex: {'text': tokenizer.apply_chat_template(self.to_chat_template(ex)['messages'], tokenize=False, add_generation_prompt=False)}, 
+            lambda ex: chatml_to_dataset(self.to_chat_template(ex), tokenizer), 
             remove_columns=dataset['validation'].column_names,
             desc="Applying chat template"
         )
