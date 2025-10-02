@@ -10,8 +10,9 @@ from src.utils.tree import QPLTree
 @processorRegistry.register
 class QPLCompleterCotProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl-completer-cot-ds"
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, use_think: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
+        self.use_think = use_think
 
     def load_dataset(self, subset: str = "balanced"):
         return load_dataset(self.dataset_id, subset)
@@ -105,12 +106,17 @@ class QPLCompleterCotProcessor(QPLProcessor):
             + f"[Complete]: `{line_start} ...`\n\n"
 
             + "First, understand the input stream, then determine operator-specific options, and finally select the output columns.\n"
-            + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final line of the QPL query in valid QPL.\n"
         )
 
+        if self.use_think:
+            user += "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final line of the QPL query in valid QPL.\n"
+
         if self.with_assistant:
-            response = f"<think>\n{example['cot']}\n</think>\n\n"
-            response += f"```QPL\n{qpl_line}\n```"
+            if self.use_think:
+                response = f"<think>\n{example['cot']}\n</think>\n\n"
+                response += f"```QPL\n{qpl_line}\n```"
+            else:
+                response = example['cot']
             return ChatML(
                 messages=[
                     Message(role="system", content=system),
