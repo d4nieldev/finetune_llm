@@ -258,7 +258,7 @@ class Table:
         if self.num_rows is not None:
             output += f" ({self.num_rows} rows)"
         output += "\n## Columns"
-        output += "\n| Name | Type | IS_PK | FK_TO | Description | Metadata | Examples |"
+        output += "\n| Name | Type | Is PK | Maps To | Description | Metadata | Examples |"
         output += "\n|---|---|---|---|---|---|---|\n"
         output += "\n".join([f"{col.m_schema(examples_random_order=examples_random_order, max_examples=max_examples)}" for col in self.columns])
         return output
