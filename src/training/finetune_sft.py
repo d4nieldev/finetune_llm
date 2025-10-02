@@ -3,6 +3,7 @@ import sys
 import json
 import argparse
 import logging
+from datetime import datetime
 from pathlib import Path
 
 import torch
@@ -19,6 +20,7 @@ from src.callbacks import MemoryLoggingCallback
 from src.processors import processorRegistry
 import src.utils.paths as p
 from src.training import trainers as t
+from src.utils.argparse import smart_cast
 
 load_dotenv()
 
@@ -47,8 +49,13 @@ def parse_args():
     hf_ids_group.add_argument("--model_revision", type=str, default="main", help="Model revision to use for fine-tuning.")
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
+    data_preprocessing_group = parser.add_argument_group("Data preprocessing")
+    data_preprocessing_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=False, help="Sort data in ascending order by prompt length before training.")
+    data_preprocessing_group.add_argument("--shuffle_data", action=argparse.BooleanOptionalAction, default=True, help="Shuffle data before training.")
+    data_preprocessing_group.add_argument("--processor_kwargs", type=smart_cast, default="{}", help="Additional kwargs to pass to `processor.__init__()`. Should be a dict-like string, e.g. \"{a:b,c:d,...}\"")
+    data_preprocessing_group.add_argument("--data_prep_kwargs", type=smart_cast, default="{}", help="Additional kwargs to pass to `processor.prepare_data()`. Should be a dict-like string, e.g. \"{a:b,c:d,...}\"")
+
     train_config_group = parser.add_argument_group("Training config")
-    train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=True, help="Sort data in ascending order by prompt length before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
     train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
@@ -89,34 +96,31 @@ def parse_args():
     return args
 
 
-def args_str(args, run_id):
+def args_str(args):
     model_id = args.model_id_or_path.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     shortname = {
-        'model_revision': 'rev',
         'sort_data': 'sort',
+        'shuffle_data': 'shuf',
         'train_batch_size': 'bsz',
         'gradient_checkpointing': 'gc',
-        'gradient_accumulation_steps': 'gacc',
+        'gradient_accumulation_steps': 'ga',
         'learning_rate': 'lr',
         'lr_scheduler_type': 'lrs',
         'optim': 'opt',
         'warmup_ratio': 'wr',
         'weight_decay': 'wd',
-        'fp16': 'fp16',
-        'bf16': 'bf16',
+        # 'quantization': 'q',
         'num_train_epochs': 'epochs',
         'max_seq_length': 'maxlen',
-        'deepspeed_config': 'ds',
         'random_seed': 'seed',
     }
     if args.lora:
         shortname.update({
             'lora': 'lora',
             'r': 'r',
-            'alpha': 'alpha',
-            'dropout': 'dropout',
-            'neftune_noise_alpha': 'neftune',
+            'alpha': 'a',
+            'dropout': 'dp',
         })
     other_args = "_".join([
         f"{shortname[k]}={v.replace('/', '-')}" if isinstance(v, str) else 
@@ -126,7 +130,7 @@ def args_str(args, run_id):
         for k, v in vars(args).items() 
         if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
     ])
-    return f"{run_id}_{model_id}-{dataset_id}_{other_args}"
+    return f"{model_id}_{dataset_id}_{datetime.now()}_{other_args}"
 
 
 def train(
@@ -140,7 +144,7 @@ def train(
     model_kwargs = {
         "device_map": None,
         "torch_dtype": torch.bfloat16 if args.bf16 else torch.float16,
-        "attn_implementation": "flash_attention_2",
+        "attn_implementation": "sdpa",
         "trust_remote_code": True,
     }
     if 'gemma' in args.model_id_or_path:
@@ -190,7 +194,7 @@ def train(
             deepspeed_config_dict = json.load(f)
             print(f"Using deepspeed config: {deepspeed_config_dict}")
 
-    processor = processorRegistry.get(args.dataset_id)(with_assistant=True)
+    processor = processorRegistry.get(args.dataset_id)(**args.processor_kwargs, with_assistant=True)
     tokenizer.add_special_tokens({"additional_special_tokens": list(processor.special_tokens_to_add().values())})
     logger.info(f"==== Length of Tokenizer: {len(tokenizer)} ====")
 
@@ -202,19 +206,14 @@ def train(
     
     
     # Step 3. Data preperation
-    train_dataset: Dataset = processor.load_dataset()['train'] # type: ignore
-    train_dataset = train_dataset.map(
-        lambda ex: processor.to_chat_template(ex), 
-        remove_columns=train_dataset.column_names
+    train_dataset, eval_dataset = processor.prepare_dataset(
+        **args.data_prep_kwargs,
+        tokenizer=tokenizer,
+        num_epochs=args.num_train_epochs,
+        sort=args.sort_data,
+        shuffle=args.shuffle_data,
+        random_seed=args.random_seed,
     )
-    train_dataset = train_dataset.map(
-        lambda ex: {'len_text': sum(len(m['content']) for m in ex['messages'] if m['role'] == 'user')}, 
-    )
-    if args.sort_data:
-        train_dataset = train_dataset.sort("len_text", reverse=False)
-    eval_dataset: Dataset = processor.load_dataset()['validation'] # type: ignore
-    eval_dataset = eval_dataset.map(lambda ex: processor.to_chat_template(ex), remove_columns=eval_dataset.column_names)
-    
 
     # Step 4. Training
     run = wandb.init(
@@ -222,9 +221,8 @@ def train(
         config=vars(args),
         resume="allow"
     )
-    run_id = run.id
-    
-    dirname = args_str(args, run_id)
+
+    dirname = args_str(args)
     local_output_dir = str(p.TRAINED_MODELS_DIR / f"{dirname}")
     training_args = SFTConfig(
         # local_rank                    = args.local_rank,
@@ -236,7 +234,7 @@ def train(
         gradient_accumulation_steps   = args.gradient_accumulation_steps,
         learning_rate                 = args.learning_rate,
         optim                         = args.optim,
-        num_train_epochs              = args.num_train_epochs,
+        num_train_epochs              = 1,
         lr_scheduler_type             = args.lr_scheduler_type,
         warmup_ratio                  = args.warmup_ratio,
         weight_decay                  = args.weight_decay,
@@ -265,7 +263,8 @@ def train(
         save_total_limit=args.save_total_limit,
         max_length=args.max_seq_length,
         pad_token=tokenizer.pad_token,
-        assistant_only_loss=True,
+        assistant_only_loss='base' not in args.model_id_or_path.lower(),
+        completion_only_loss='base' in args.model_id_or_path.lower(),
         packing=False,
         padding_free=False,
         # fsdp=["full_shard", "offload"],
@@ -301,7 +300,7 @@ def train(
 
     # All ranks must call save_model() for DeepSpeed
     # See Model Checkpointing in https://www.deepspeed.ai/getting-started/
-    print(f"[RANK {dist.get_rank()}] Saving model...")
+    # print(f"[RANK {dist.get_rank()}] Saving model...")
     trainer.save_model(output_dir=local_output_dir)
 
     # Only rank 0 saves tokenizer and does file operations
