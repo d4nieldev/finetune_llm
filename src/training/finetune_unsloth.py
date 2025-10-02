@@ -83,6 +83,9 @@ def args_str(args):
     model_id = args.model_id_or_path.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     shortname = {
+        'quantization': 'q',
+        'processor_kwargs': 'proc',
+        'data_prep_kwargs': 'prep',
         'sort_data': 'sort',
         'shuffle_data': 'shuf',
         'train_batch_size': 'bsz',
@@ -93,7 +96,6 @@ def args_str(args):
         'optim': 'opt',
         'warmup_ratio': 'wr',
         'weight_decay': 'wd',
-        'quantization': 'q',
         'num_train_epochs': 'epochs',
         'max_seq_length': 'maxlen',
         'random_seed': 'seed',
@@ -113,7 +115,7 @@ def args_str(args):
         for k, v in vars(args).items() 
         if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
     ])
-    return f"{model_id}_{dataset_id}_{datetime.now()}_{other_args}"
+    return f"{model_id}_{dataset_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{other_args}"
 
 
 def train(
@@ -173,6 +175,9 @@ def train(
     
     dirname = args_str(args)
     local_output_dir = str(p.TRAINED_MODELS_DIR / f"{dirname}")
+
+    is_base_model = 'base' in args.model_id_or_path.lower()
+
     training_args = SFTConfig(
         dataset_text_field="text",
         # local_rank                    = args.local_rank,
@@ -236,8 +241,8 @@ def train(
 
     trainer = train_on_responses_only(
         trainer,
-        instruction_part="<|im_start|>user\n",
-        response_part="<|im_start|>assistant\n",
+        instruction_part="<|im_start|>user\n" if not is_base_model else "# Input\n",
+        response_part="<|im_start|>assistant\n" if not is_base_model else "# Answer\n",
     )
 
     # Show current memory stats
