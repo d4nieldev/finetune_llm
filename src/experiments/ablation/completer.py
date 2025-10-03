@@ -11,6 +11,7 @@ from src.utils.tree import PartialQDTree, QPLQDTree
 from src.evaluation.text_to_qpl import complete
 import src.utils.paths as p
 from src.utils.paths import TRAINED_MODELS_DIR
+from src.utils.schema import SchemaRepresentation
 
 
 def parse_args():
@@ -18,6 +19,7 @@ def parse_args():
     parser.add_argument("--model_dir", type=str, required=True, help="Path to the model directory")
     parser.add_argument("--batch_size", type=int, default=12, help="Batch size for processing")
     parser.add_argument("--max_new_tokens", type=int, default=4096, help="Maximum number of new tokens to generate")
+    parser.add_argument("--schema_representation", type=SchemaRepresentation, default=SchemaRepresentation.M_SCHEMA, help="Schema representation to use")
     return parser.parse_args()
 
 if __name__ == "__main__":
@@ -51,7 +53,7 @@ if __name__ == "__main__":
         return qd_tree
 
 
-    processor = QPLCompleterCotProcessor(with_assistant=False, schema_representation="m_schema")
+    processor = QPLCompleterCotProcessor(with_assistant=False, schema_representation=args.schema_representation)
     decomposer_data = load_dataset("bgunlp/question_decomposer_ds", split="validation")
     nl2qpl_data = load_dataset('d4nieldev/nl2qpl-ds', split='validation')
     root_questions = set(row['question'] for row in nl2qpl_data)
