@@ -28,13 +28,18 @@ class GreedyFirstStep(LogitsProcessor):
 
 
 def to_model_prompt(tokenizer: PreTrainedTokenizerBase, chat_template: ChatML, **kwargs) -> ModelPrompt:
-    prompt = tokenizer.apply_chat_template(
-        [msg for msg in chat_template["messages"] if msg['role'] in ['system', 'user']],  # only the system and user
-        tokenize=False,
-        add_generation_prompt=True,
-        continue_final_message=False,
-        **kwargs
-    )
+    if tokenizer.chat_template:
+        prompt = tokenizer.apply_chat_template(
+            [msg for msg in chat_template["messages"] if msg['role'] in ['system', 'user']],  # only the system and user
+            tokenize=False,
+            add_generation_prompt=True,
+            continue_final_message=False,
+            **kwargs
+        )
+    else:
+        prompt = "# Instructions:\n" +[m for m in chat_template['messages'] if m['role'] == 'system'][-1]['content']+"\n\n"
+        prompt += "# Input:\n" + [m for m in chat_template['messages'] if m['role'] == 'user'][-1]['content']+"\n\n"
+        prompt += "# Answer:\n"
     return ModelPrompt(prompt=prompt)
 
 
