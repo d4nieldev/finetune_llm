@@ -150,11 +150,14 @@ def get_generation_params(mode: GenerationMode) -> Dict[str, Any]:
     elif mode == GenerationMode.SAMPLING:
         return {
             'do_sample': True,
-            'top_p': 0.95,
+            'top_p': 0.8,
+            # 'top_p': 0.95,
             'top_k': 20,
-            'temperature': 0.6,
+            # 'temperature': 0.6,
+            'temperature': 0.7,
         }
     elif mode == GenerationMode.FIRST_GREEDY:
+        # TODO: remove this generation mode
         return {
             'do_sample': True,
             'top_p': 0.95,
@@ -312,6 +315,8 @@ def complete(
         prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
 
         output_pattern = re.compile(r"(?P<reasoning><think>.*?</think>)?\s*```QPL\n(?P<answer>.*)\n```", re.DOTALL)
+        if 'base' in model.config.name_or_path.lower():
+            output_pattern = re.compile(r"(?P<reasoning>.*the final qpl line is:\s*`*(qpl)?\s*(?P<answer>#[^`]+)\s*`*\s*\Z)", re.DOTALL | re.IGNORECASE)
         def validate_completer_output(i: int, output: str) -> bool:
             # line_prefix = get_line_prefix(trees[i])
             if not (m := output_pattern.search(output)):
