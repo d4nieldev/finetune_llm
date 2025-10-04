@@ -20,7 +20,7 @@ class QPLProcessor(BaseProcessor):
 
     def __init__(
             self, 
-            schema_representation: SchemaRepresentation = SchemaRepresentation.M_SCHEMA, 
+            schema_representation: SchemaRepresentation = SchemaRepresentation.MARKDOWN, 
             schema_noise_strategy: NoiseStrategy = NoiseStrategy.DEPTH,
             *args, **kwargs
         ):
@@ -33,7 +33,7 @@ class QPLProcessor(BaseProcessor):
 
     
     def special_tokens_to_add(self) -> dict[str, str]:
-        if self.schema_representation == "m_schema":
+        if self.schema_representation in ["m_schema", "markdown"]:
             return {
                 "m_schema_open": "【",
                 "m_schema_close": "】"
@@ -118,7 +118,7 @@ class QPLProcessor(BaseProcessor):
 
         if self.schema_representation == SchemaRepresentation.DDL:
             return db_schema.ddl()
-        elif self.schema_representation == SchemaRepresentation.M_SCHEMA:
-            return db_schema.m_schema()
+        elif self.schema_representation == SchemaRepresentation.MARKDOWN:
+            return db_schema.markdown()
         else:
-            raise ValueError(f"Unknown representation: {self.schema_representation}. Use 'ddl' or 'm_schema'.")
+            raise ValueError(f"Unknown representation: {self.schema_representation}. Use 'ddl' or 'markdown'.")

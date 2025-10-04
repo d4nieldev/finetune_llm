@@ -107,7 +107,7 @@ def post_order_index_tree(tree: QPLQDTree, counter: int = 1) -> int:
 
 
 class RecursiveDecomposer(dspy.Module):
-    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
+    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.MARKDOWN):
         self.model = dspy.Predict(Decompose)
         self.schema_repr = schema_repr
 
@@ -118,7 +118,7 @@ class RecursiveDecomposer(dspy.Module):
         def rec(q: str, _parent: QPLQDTree | None = None) -> QPLQDTree:
             # 1) predict operator + sub_questions for this node
             output = self.model(
-                db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.m_schema(),
+                db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.markdown(),
                 question=q
             )
             
@@ -147,7 +147,7 @@ class RecursiveDecomposer(dspy.Module):
 
 
 class RecursiveCompleter(dspy.Module):
-    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
+    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.MARKDOWN):
         self.model = dspy.Predict(Complete)
         self.schema_repr = schema_repr
 
@@ -172,7 +172,7 @@ class RecursiveCompleter(dspy.Module):
 
             # 4) complete current node’s line
             output = self.model(
-                db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.m_schema(),
+                db_schema=db_schema.ddl() if self.schema_repr == SchemaRepresentation.DDL else db_schema.markdown(),
                 question=node.question,
                 prefix_qpl=prefix_qpl
             )
@@ -185,7 +185,7 @@ class RecursiveCompleter(dspy.Module):
 
 
 class TextToQPL(dspy.Module):
-    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.M_SCHEMA):
+    def __init__(self, schema_repr: SchemaRepresentation = SchemaRepresentation.MARKDOWN):
         self.decomposer = RecursiveDecomposer(schema_repr=schema_repr)
         self.completer = RecursiveCompleter(schema_repr=schema_repr)
         
