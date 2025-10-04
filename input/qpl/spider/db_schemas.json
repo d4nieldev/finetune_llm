@@ -4110,7 +4110,8 @@
     },
     "pk": {
       "players": ["player_id"],
-      "matches": ["tourney_id", "winner_id", "loser_id"]
+      "matches": ["tourney_id", "winner_id", "loser_id"],
+      "rankings": ["ranking_date", "player_id"]
     },
     "fk": {
       "matches": {

@@ -1,6 +1,7 @@
 import argparse
 import logging
 from pathlib import Path
+from datetime import datetime
 
 import torch
 import wandb
@@ -15,6 +16,7 @@ from dotenv import load_dotenv
 from src.callbacks import MemoryLoggingCallback
 from src.processors import processorRegistry
 import src.utils.paths as p
+from src.utils.argparse import smart_cast
 from src.training import trainers
 
 load_dotenv()
@@ -33,9 +35,13 @@ def parse_args():
     hf_ids_group.add_argument("--resume_from_checkpoint", type=Path, default=None, help="Path to a checkpoint to resume training from.")
     hf_ids_group.add_argument("--dataset_id", type=str, required=True, help="Dataset ID to use for fine-tuning.")
 
+    data_preprocessing_group = parser.add_argument_group("Data preprocessing")
+    data_preprocessing_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=False, help="Sort data in ascending order by prompt length before training.")
+    data_preprocessing_group.add_argument("--shuffle_data", action=argparse.BooleanOptionalAction, default=True, help="Shuffle data before training.")
+    data_preprocessing_group.add_argument("--processor_kwargs", type=smart_cast, default="{}", help="Additional kwargs to pass to `processor.__init__()`. Should be a dict-like string, e.g. \"{a:b,c:d,...}\"")
+    data_preprocessing_group.add_argument("--data_prep_kwargs", type=smart_cast, default="{}", help="Additional kwargs to pass to `processor.prepare_data()`. Should be a dict-like string, e.g. \"{a:b,c:d,...}\"")
+
     train_config_group = parser.add_argument_group("Training config")
-    train_config_group.add_argument("--sort_data", action=argparse.BooleanOptionalAction, default=False, help="Sort data in ascending order by prompt length before training.")
-    train_config_group.add_argument("--shuffle_data", action=argparse.BooleanOptionalAction, default=True, help="Shuffle data before training.")
     train_config_group.add_argument("--local_rank", type=int, default=-1, help="Local rank for distributed training.")
     train_config_group.add_argument("--train_batch_size", type=int, default=1, help="Training batch size (per GPU).")
     train_config_group.add_argument("--gradient_checkpointing", action=argparse.BooleanOptionalAction, default=True, help="Enable gradient checkpointing.")
@@ -73,11 +79,15 @@ def parse_args():
     return args
 
 
-def args_str(args, run_id):
+def args_str(args):
     model_id = args.model_id_or_path.split("/")[-1]
     dataset_id = args.dataset_id.split("/")[-1]
     shortname = {
+        'quantization': 'q',
+        'processor_kwargs': 'proc',
+        'data_prep_kwargs': 'prep',
         'sort_data': 'sort',
+        'shuffle_data': 'shuf',
         'train_batch_size': 'bsz',
         'gradient_checkpointing': 'gc',
         'gradient_accumulation_steps': 'ga',
@@ -86,7 +96,6 @@ def args_str(args, run_id):
         'optim': 'opt',
         'warmup_ratio': 'wr',
         'weight_decay': 'wd',
-        'quantization': 'q',
         'num_train_epochs': 'epochs',
         'max_seq_length': 'maxlen',
         'random_seed': 'seed',
@@ -106,7 +115,7 @@ def args_str(args, run_id):
         for k, v in vars(args).items() 
         if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
     ])
-    return f"{run_id}_{model_id}-{dataset_id}_{other_args}"
+    return f"{model_id}_{dataset_id}_{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}_{other_args}"
 
 
 def train(
@@ -117,7 +126,7 @@ def train(
         print(f"{k}={v}")
 
     # Step 1. Load processor
-    processor = processorRegistry.get(args.dataset_id)(with_assistant=True)
+    processor = processorRegistry.get(args.dataset_id)(**args.processor_kwargs, with_assistant=True)
     
     # Step 2. Load model & tokenizer, and configure if needed
     torch.backends.cuda.enable_flash_sdp(True)
@@ -149,6 +158,7 @@ def train(
     
     # Step 3. Data preperation
     train_dataset, eval_dataset = processor.prepare_dataset(
+        **args.data_prep_kwargs,
         tokenizer=tokenizer,
         num_epochs=args.num_train_epochs,
         sort=args.sort_data,
@@ -162,10 +172,12 @@ def train(
         config=vars(args),
         resume="allow"
     )
-    run_id = run.id
     
-    dirname = args_str(args, run_id)
+    dirname = args_str(args)
     local_output_dir = str(p.TRAINED_MODELS_DIR / f"{dirname}")
+
+    is_base_model = 'base' in args.model_id_or_path.lower()
+
     training_args = SFTConfig(
         dataset_text_field="text",
         # local_rank                    = args.local_rank,
@@ -229,8 +241,8 @@ def train(
 
     trainer = train_on_responses_only(
         trainer,
-        instruction_part="<|im_start|>user\n",
-        response_part="<|im_start|>assistant\n",
+        instruction_part="<|im_start|>user\n" if not is_base_model else "# Input\n",
+        response_part="<|im_start|>assistant\n" if not is_base_model else "# Answer\n",
     )
 
     # Show current memory stats

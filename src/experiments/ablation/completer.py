@@ -11,6 +11,7 @@ from src.utils.tree import PartialQDTree, QPLQDTree
 from src.evaluation.text_to_qpl import complete
 import src.utils.paths as p
 from src.utils.paths import TRAINED_MODELS_DIR
+from src.utils.schema import SchemaRepresentation
 
 
 def parse_args():
@@ -18,10 +19,14 @@ def parse_args():
     parser.add_argument("--model_dir", type=str, required=True, help="Path to the model directory")
     parser.add_argument("--batch_size", type=int, default=12, help="Batch size for processing")
     parser.add_argument("--max_new_tokens", type=int, default=4096, help="Maximum number of new tokens to generate")
+    parser.add_argument("--schema_representation", type=SchemaRepresentation, default=SchemaRepresentation.MARKDOWN, help="Schema representation to use")
+    parser.add_argument("--perfect_schema_linking", action="store_true", help="Whether to use perfect schema linking")
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
+
+    is_base_model = "base" in args.model_dir.lower()
 
     # Load model & tokenizer
     # model = AutoModelForCausalLM.from_pretrained(TRAINED_MODELS_DIR / args.model_dir, attn_implementation='flash_attention_2', torch_dtype=torch.float16).to('cuda')
@@ -29,7 +34,7 @@ if __name__ == "__main__":
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name = str(TRAINED_MODELS_DIR / args.model_dir),
         max_seq_length = 16*1024,
-        load_in_4bit = True,
+        load_in_4bit = False,
         load_in_8bit = False,
         # fast_inference = True, # uses vLLM
     )
@@ -51,7 +56,7 @@ if __name__ == "__main__":
         return qd_tree
 
 
-    processor = QPLCompleterCotProcessor(with_assistant=False, schema_representation="m_schema")
+    processor = QPLCompleterCotProcessor(with_assistant=False, schema_representation=args.schema_representation, use_think=not is_base_model)
     decomposer_data = load_dataset("bgunlp/question_decomposer_ds", split="validation")
     nl2qpl_data = load_dataset('d4nieldev/nl2qpl-ds', split='validation')
     root_questions = set(row['question'] for row in nl2qpl_data)
@@ -76,9 +81,18 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         batch_size=args.batch_size,
         max_new_tokens=args.max_new_tokens,
+        perfect_schema_linking=args.perfect_schema_linking,
+        ablation=True
     )
 
-    output_path = p.ABLATION_COMPLETER_OUTPUT_DIR / args.model_dir / "full_tree_outputs.json"
+    if args.perfect_schema_linking:
+        trees_file = "full_tree_outputs_perfect_schema_linking.json"
+        results_file = "results_perfect_schema_linking.json"
+    else:
+        trees_file = "full_tree_outputs.json"
+        results_file = "results.json"
+
+    output_path = p.ABLATION_COMPLETER_OUTPUT_DIR / args.model_dir / trees_file
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'w') as f:
         json.dump([tree.to_dict() for tree in root_qd_trees], f, indent=2)
@@ -95,6 +109,6 @@ if __name__ == "__main__":
         }
         for tree in root_qd_trees
     ]
-    results_path = p.ABLATION_COMPLETER_OUTPUT_DIR / args.model_dir / "results.json"
+    results_path = p.ABLATION_COMPLETER_OUTPUT_DIR / args.model_dir / results_file
     with open(results_path, 'w') as f:
         json.dump(results, f, indent=2)

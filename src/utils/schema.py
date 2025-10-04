@@ -19,7 +19,7 @@ class NoiseStrategy(StrEnum):
 
 class SchemaRepresentation(StrEnum):
     DDL = "ddl"
-    M_SCHEMA = "m_schema"
+    MARKDOWN = "markdown"
 
 
 @dataclass
@@ -159,7 +159,7 @@ class Column:
         
         return output.strip()
     
-    def m_schema(self, examples_random_order: bool, max_examples: int) -> str:
+    def markdown(self, examples_random_order: bool, max_examples: int) -> str:
         output = f"| {self.name} | {self.type.upper() if not self.apply_lower else self.type.lower()}"
         output += " | T" if self.is_pk else " | F"
         output += " | " + (self.maps_to if self.maps_to else "N/A")
@@ -256,14 +256,14 @@ class Table:
         cols_str = ",\n".join(f"    {col}" for col in [col.ddl() for col in self.columns] + pk_str + [fk.ddl() for fk in self.fks])
         return f"CREATE TABLE {self.name} (\n{cols_str}\n);"
     
-    def m_schema(self, examples_random_order: bool, max_examples: int) -> str:
+    def markdown(self, examples_random_order: bool, max_examples: int) -> str:
         output = f"# Table: {self.name}"
         if self.num_rows is not None:
             output += f" ({self.num_rows} rows)"
         output += "\n## Columns"
-        output += "\n| Name | Type | IS_PK | FK_TO | Description | Metadata | Examples |"
+        output += "\n| Name | Type | Is PK | Maps To | Description | Metadata | Examples |"
         output += "\n|---|---|---|---|---|---|---|\n"
-        output += "\n".join([f"{col.m_schema(examples_random_order=examples_random_order, max_examples=max_examples)}" for col in self.columns])
+        output += "\n".join([f"{col.markdown(examples_random_order=examples_random_order, max_examples=max_examples)}" for col in self.columns])
         return output
     
     def __len__(self):
@@ -477,10 +477,10 @@ class DBSchema:
         tables_str = "\n\n".join(table.ddl() for table in self.tables.values())
         return f"Database Name: {self.db_id}\n```DDL\n{tables_str}\n```"
     
-    def m_schema(self, examples_random_order: bool = True, max_examples: int = 5) -> str:
+    def markdown(self, examples_random_order: bool = True, max_examples: int = 5) -> str:
         output = f"【DB_ID】 {self.db_id}\n"
         output += f"【Schema】\n"
-        output += "\n".join([table.m_schema(examples_random_order=examples_random_order, max_examples=max_examples) for table in self.tables.values()])
+        output += "\n".join([table.markdown(examples_random_order=examples_random_order, max_examples=max_examples) for table in self.tables.values()])
         output += "\n【Foreign Keys】\n"
         for table in self.tables.values():
             for fk in table.fks:
@@ -499,7 +499,7 @@ if __name__ == "__main__":
 
     if representation == "ddl":
         print(schema.ddl())
-    elif representation == "m_schema":
-        print(schema.m_schema())
+    elif representation == "markdown":
+        print(schema.markdown())
     else:
-        raise ValueError(f"Unknown representation: {representation}. Use 'ddl' or 'm_schema'.")
+        raise ValueError(f"Unknown representation: {representation}. Use 'ddl' or 'markdown'.")

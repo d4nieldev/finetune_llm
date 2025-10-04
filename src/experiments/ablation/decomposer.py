@@ -50,9 +50,9 @@ if __name__ == "__main__":
 
     # Load and process data
     if args.no_cot:
-        processor = QPLDecomposerProcessor(schema_representation="m_schema", with_assistant=True)
+        processor = QPLDecomposerProcessor(schema_representation="markdown", with_assistant=True)
     else:
-        processor = QPLDecomposerCotProcessor(schema_representation="m_schema", with_assistant=True)
+        processor = QPLDecomposerCotProcessor(schema_representation="markdown", with_assistant=True)
 
     test_dataset = list(processor.load_dataset()['validation'])
     chat_templates = list(map(processor.to_chat_template, test_dataset))

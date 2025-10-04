@@ -10,13 +10,14 @@ from src.utils.tree import QPLTree
 @processorRegistry.register
 class QPLCompleterCotProcessor(QPLProcessor):
     dataset_id = "d4nieldev/qpl-completer-cot-ds"
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, use_think: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
+        self.use_think = use_think
 
     def load_dataset(self, subset: str = "balanced"):
         return load_dataset(self.dataset_id, subset)
 
-    def to_chat_template(self, example, *, noise: float = 1.0, **kwargs) -> ChatML:
+    def to_chat_template(self, example, *, noise: float = 1.0, table_cols: dict[str, set[str]] | None = None, **kwargs) -> ChatML:
         system = (
             "Given a database schema, a QPL query prefix, and a natural language question, "
             + "complete the final line of the query so it completes the user request.\n\n"
@@ -63,32 +64,34 @@ class QPLCompleterCotProcessor(QPLProcessor):
             + "Before providing the final answer, you must first reason step by step about the question and the database schema."
         )
 
-        prefix_qpl_str = example['prefix_qpl']
+        prefix_qpl_str = example['prefix_qpl'].replace(' Top ', ' TopSort ')
+        qpl_line = example.get('qpl_line', '').replace(' Top ', ' TopSort ')
 
         line_num = example.get('line_num', None)
         children_str = example.get('children_str', None)
         if line_num is None or children_str is None:
             if not 'qpl_line' in example:
                 raise ValueError("Example must contain 'qpl_line' or 'line_num' and 'children_str'")
-            line_num = example['qpl_line'].split('=')[0].strip()[1:]
+            line_num = qpl_line.split('=')[0].strip()[1:]
             if example['op'] == "Scan":
                 children_str = "Table"
             else:
                 m = re.match(
                     r"#(?P<idx>\d+) = (?P<op>\w+) \[ (?P<ins>[^\]]+) \] ((?P<opt>\w+) \[ (?P<arg>[^\]]+) \] )*Output \[ (?P<out>[^\]]+) \]",
-                    example['qpl_line']
+                    qpl_line
                 )
                 if m:
                     children_str = f"[ {m.group('ins')} ]"
                 else:
-                    raise ValueError(f"QPL line does not match expected patterns: {example['qpl_line']}")
+                    raise ValueError(f"QPL line does not match expected patterns: {qpl_line}")
 
-        line_start = f"#{line_num} = {example['op']} {children_str}"
+        line_start = f"#{line_num} = {example['op'] if example['op'] != 'Top' else 'TopSort'} {children_str}"
 
         # inject noise to schema if needed
         if noise < 1.0:
-            qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str] + [example['qpl_line']]
-            table_cols = QPLTree.from_qpl_lines(qpl_lines).get_schema_items()
+            if not table_cols:
+                qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str.split('\n') if line] + [qpl_line]
+                table_cols = QPLTree.from_qpl_lines([l for l in qpl_lines if l]).get_schema_items()
             schema_str = self._get_schema_str(db_id=example['db_id'], link_table_cols=table_cols, noise=noise)
         else:
             schema_str = self._get_schema_str(db_id=example['db_id'])
@@ -104,12 +107,17 @@ class QPLCompleterCotProcessor(QPLProcessor):
             + f"[Complete]: `{line_start} ...`\n\n"
 
             + "First, understand the input stream, then determine operator-specific options, and finally select the output columns.\n"
-            + "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final line of the QPL query in valid QPL.\n"
         )
 
+        if self.use_think:
+            user += "Provide your reasoning enclosed in <think> and </think> tags, and afterwards provide the final line of the QPL query in valid QPL.\n"
+
         if self.with_assistant:
-            response = f"<think>\n{example['cot']}\n</think>\n\n"
-            response += f"```QPL\n{example['qpl_line']}\n```"
+            if self.use_think:
+                response = f"<think>\n{example['cot']}\n</think>\n\n"
+                response += f"```QPL\n{qpl_line}\n```"
+            else:
+                response = example['cot']
             return ChatML(
                 messages=[
                     Message(role="system", content=system),
