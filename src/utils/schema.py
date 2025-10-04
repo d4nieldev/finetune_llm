@@ -283,6 +283,7 @@ class DBSchema:
     def from_db_schemas_file(
         db_schemas_file: os.PathLike = p.DB_SCHEMAS_JSON_PATH,
         dbs_metadata_file: os.PathLike | None = p.DB_PROFILES_PATH, 
+        columns_descriptions_file: os.PathLike | None = p.DB_COLS_DESCRIPTIONS_PATH,
         apply_lower: bool = False
     ) -> Dict[str, "DBSchema"]:
         with open(db_schemas_file, "r") as f:
@@ -290,17 +291,20 @@ class DBSchema:
         if dbs_metadata_file:
             with open(dbs_metadata_file, "r") as f:
                 dbs_metadata = json.load(f)
-        return DBSchema.from_db_schemas(db_schemas, dbs_metadata if dbs_metadata_file else None, apply_lower)
+        if columns_descriptions_file:
+            with open(columns_descriptions_file, "r") as f:
+                cols_descriptions = json.load(f)
+        return DBSchema.from_db_schemas(db_schemas, dbs_metadata if dbs_metadata_file else None, cols_descriptions if columns_descriptions_file else None, apply_lower)
 
     @staticmethod
-    def from_db_schemas(db_schemas: Dict, dbs_metadata: dict | None = None, apply_lower: bool = False) -> Dict[str, "DBSchema"]:
+    def from_db_schemas(db_schemas: Dict, dbs_metadata: dict | None = None, cols_descriptions: dict | None = None, apply_lower: bool = False) -> Dict[str, "DBSchema"]:
         return {
-            db_id: DBSchema.from_db_schema(db_id, tables_data, dbs_metadata[db_id] if dbs_metadata else None, apply_lower)
+            db_id: DBSchema.from_db_schema(db_id, tables_data, dbs_metadata[db_id] if dbs_metadata else None, cols_descriptions[db_id] if cols_descriptions else None, apply_lower)
             for db_id, tables_data in db_schemas.items()
         }
     
     @staticmethod
-    def from_db_schema(db_id: str, db_schema: Dict, db_metadata: Dict[str, Any] | None, apply_lower: bool = False) -> "DBSchema":
+    def from_db_schema(db_id: str, db_schema: Dict, db_metadata: Dict[str, Any] | None, cols_descriptions: Dict[str, Any] | None, apply_lower: bool = False) -> "DBSchema":
         tables: Dict[str, Table] = {}
         
         for table_name, cols_data in db_schema['tables'].items():
@@ -315,6 +319,7 @@ class DBSchema:
                         type=col_type, 
                         is_pk=False, 
                         maps_to=None, 
+                        description=cols_descriptions[table_name].get(col_name, None) if cols_descriptions else None,
                         constraint=col_constraint, 
                         apply_lower=apply_lower, 
                         examples_freq=db_metadata[table_name].get(col_name, {}).get('most_common_values', {}) if db_metadata else {},
