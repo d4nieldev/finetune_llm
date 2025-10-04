@@ -7,9 +7,9 @@ import numpy as np
 from tqdm import tqdm
 from datetime import date
 
-from src.experiments.qpl.validate_qpl import execute_sql
-from src.utilsema import DBSchema, Table
-from src.utilsort paths as p
+from src.evaluation.validate_qpl import execute_sql
+from src.utils.schema import DBSchema, Table
+from src.utils import paths as p
 
 
 connection_string = (
