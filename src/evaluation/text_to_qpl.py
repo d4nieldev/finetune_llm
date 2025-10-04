@@ -275,15 +275,18 @@ def complete(
         batch_size: int,
         max_new_tokens: int,
         max_retries: int = 3,
+        ablation: bool = False,
+        perfect_schema_linking: bool = False,
         mode: GenerationMode = GenerationMode.SAMPLING,
     ) -> None:
 
     num_nodes = sum([tree.line_num for tree in trees])
     progress_bar = tqdm(total=num_nodes, desc="Completing QPL", unit="node")
 
-    def get_line_prefix(tree: QPLQDTree) -> str:
-        children_str="Table" if tree.op == Operator.SCAN else f"[ {', '.join([f'#{child.line_num}' for child in tree.children])} ]"
-        return f"#{tree.line_num} = {tree.op.value} {children_str}"
+    if perfect_schema_linking:
+        assert ablation is True, "perfect_schema_linking can only be used in ablation mode!"
+        schema_linking_ds = load_dataset("d4nieldev/qpl-schema-linker-ds", split="validation")
+        q_to_schema_items = {(row['db_id'], row['question']): json.loads(row['schema_items']) for row in schema_linking_ds}
 
     def rec(trees: List[QPLQDTree]) -> None:
         if len(trees) == 0:
@@ -311,7 +314,18 @@ def complete(
             )
             for tree in trees
         ]
-        chat_templates = list(map(processor.to_chat_template, examples))
+        if perfect_schema_linking:
+            def map_func(ex):
+                db_id = ex['db_id'] if ex['db_id'] != 'car_11' else 'car_1'
+                schema_items = q_to_schema_items.get((db_id, ex['question']), None)
+                noise = 0
+                if schema_items is None:
+                    log.warning(f"No schema items found for question '{ex['question']}' in database '{db_id}'. Using full schema.")
+                    noise = 1
+                return processor.to_chat_template(ex, noise=noise, table_cols=schema_items)
+        else:
+            map_func = processor.to_chat_template
+        chat_templates = list(map(map_func, examples))
         prompts = list(map(lambda ct: to_model_prompt(tokenizer, ct), chat_templates))
 
         output_pattern = re.compile(r"(?P<reasoning><think>.*?</think>)?\s*```QPL\n(?P<answer>.*)\n```", re.DOTALL)
