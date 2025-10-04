@@ -17,7 +17,7 @@ class QPLCompleterCotProcessor(QPLProcessor):
     def load_dataset(self, subset: str = "balanced"):
         return load_dataset(self.dataset_id, subset)
 
-    def to_chat_template(self, example, *, noise: float = 1.0, **kwargs) -> ChatML:
+    def to_chat_template(self, example, *, noise: float = 1.0, table_cols: dict[str, set[str]] | None = None, **kwargs) -> ChatML:
         system = (
             "Given a database schema, a QPL query prefix, and a natural language question, "
             + "complete the final line of the query so it completes the user request.\n\n"
@@ -89,8 +89,9 @@ class QPLCompleterCotProcessor(QPLProcessor):
 
         # inject noise to schema if needed
         if noise < 1.0:
-            qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str.split('\n') if line] + [qpl_line]
-            table_cols = QPLTree.from_qpl_lines(qpl_lines).get_schema_items()
+            if not table_cols:
+                qpl_lines = [line.split(' ; ')[0] for line in prefix_qpl_str.split('\n') if line] + [qpl_line]
+                table_cols = QPLTree.from_qpl_lines([l for l in qpl_lines if l]).get_schema_items()
             schema_str = self._get_schema_str(db_id=example['db_id'], link_table_cols=table_cols, noise=noise)
         else:
             schema_str = self._get_schema_str(db_id=example['db_id'])
