@@ -105,6 +105,9 @@ class Column:
         return f"{self.name} {self.type}"
     
     def metadata_desc(self, max_examples: int) -> str:
+        if not self.metadata:
+            return "N/A"
+        
         output = f"This column has {self.metadata['num_nulls']} null values and {self.metadata['num_unique']} distinct values. "
 
         # values info
