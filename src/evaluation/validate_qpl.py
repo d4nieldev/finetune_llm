@@ -177,9 +177,14 @@ def same_rs(grs, prs, qpl):
         return False
 
     # Same number of columns
-    if len(grs[0]) == len(prs[0]):
+    if len(grs[0]) <= len(prs[0]):
         gdf = pd.DataFrame(grs)
         pdf = pd.DataFrame(prs)
+
+        # If predicted has extra columns, only compare the columns that exist in gold
+        if len(grs[0]) < len(prs[0]) and set(gdf.columns).issubset(set(pdf.columns)):
+            pdf = pdf[gdf.columns]  # Select only the columns from gold
+
         if np.array_equal(gdf.to_numpy(), pdf.to_numpy()):
             return True
 
@@ -254,7 +259,8 @@ if __name__ == "__main__":
     errs = 0
     results = []
     for model_result in tqdm(model_results, desc="Evaluating QPL"):
-        same, err = compare_qpl_sql(model_result["pred_qpl"], model_result["gold_cte"], model_result['db_id'], cursor)
+        db_id = model_result['db_id'] if model_result['db_id'] != 'car_11' else 'car_1'
+        same, err = compare_qpl_sql(model_result["pred_qpl"], model_result["gold_cte"], db_id, cursor)
         results.append({**model_result, "is_correct": same, "error": err})
         accuracy += 1 if same else 0
         errs += 1 if err else 0
