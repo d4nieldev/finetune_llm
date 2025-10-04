@@ -115,7 +115,7 @@ def args_str(args):
         for k, v in vars(args).items() 
         if k in shortname and v is not None and (not isinstance(v, bool) or v is True)
     ])
-    return f"{model_id}_{dataset_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{other_args}"
+    return f"{model_id}_{dataset_id}_{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}_{other_args}"
 
 
 def train(
